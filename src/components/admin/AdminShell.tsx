@@ -49,7 +49,63 @@ export function AdminShell() {
 
   return (
     <div className={`admin-shell ${dark ? 'dark' : ''} font-sans`}>
-      <div className="flex min-h-screen w-full">
+      {/* Fixed Header */}
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between px-6 md:px-8 py-3">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                {role ? (ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role) : 'Loading...'} Dashboard
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCmdOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search...</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold text-gray-400">K</kbd>
+            </button>
+
+            <button
+              onClick={() => setDark((v) => !v)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+              aria-label="Toggle dark mode"
+            >
+              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={() => setRightOpen((v) => !v)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400 relative"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            </button>
+
+            <button
+              onClick={signOut}
+              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-500"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Sidebar + Content Layout */}
+      <div className="flex w-full">
         <Sidebar
           collapsed={collapsed}
           mobileOpen={mobileOpen}
@@ -57,21 +113,10 @@ export function AdminShell() {
           onToggleCollapse={() => setCollapsed((v) => !v)}
         />
 
-        <div className="flex-1 min-w-0 flex flex-col">
-          <TopBar
-            onMenu={() => setMobileOpen(true)}
-            onOpenCmd={() => setCmdOpen(true)}
-            onToggleRight={() => setRightOpen((v) => !v)}
-            dark={dark}
-            onToggleDark={() => setDark((v) => !v)}
-            onSignOut={signOut}
-            role={role || null}
-          />
-          <main className="flex-1 px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto">
-            <Breadcrumbs />
-            <Outlet />
-          </main>
-        </div>
+        <main className="flex-1 min-w-0 px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto overflow-y-auto" style={{ height: 'calc(100vh - 57px)' }}>
+          <Breadcrumbs />
+          <Outlet />
+        </main>
 
         <AnimatePresence>
           {rightOpen && <RightPanel key="rp" onClose={() => setRightOpen(false)} />}
@@ -90,71 +135,6 @@ export function AdminShell() {
         </AnimatePresence>
       </div>
     </div>
-  );
-}
-
-function TopBar({
-  onMenu, onOpenCmd, onToggleRight, dark, onToggleDark, onSignOut, role,
-}: {
-  onMenu: () => void; onOpenCmd: () => void; onToggleRight: () => void;
-  dark: boolean; onToggleDark: () => void; onSignOut: () => void; role: string | null;
-}) {
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  return (
-    <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div className="flex items-center justify-between px-6 md:px-8 py-3">
-        <div className="flex items-center gap-4">
-          <button onClick={onMenu} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button>
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">{greeting}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-              {role ? (ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role) : 'Loading...'} Dashboard
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenCmd}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>Search...</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold text-gray-400">⌘K</kbd>
-          </button>
-
-          <button
-            onClick={onToggleDark}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={onToggleRight}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400 relative"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
-
-          <button
-            onClick={onSignOut}
-            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-500"
-            aria-label="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -281,8 +261,6 @@ function CommandPalette({ onClose, onNavigate }: { onClose: () => void; onNaviga
     { title: 'Settings', path: '/admin/settings' },
     { title: 'Courses', path: '/admin/courses' },
     { title: 'Attendance', path: '/admin/attendance' },
-    { title: 'Library', path: '/admin/library' },
-    { title: 'My Profile', path: '/admin/profile' },
   ].filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
 
   return (

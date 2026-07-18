@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, ChevronLeft, ChevronRight, LogOut, X, Moon, Sun,
+  LayoutDashboard, ChevronLeft, ChevronRight, LogOut, X,
   Search as SearchIcon, ChevronDown,
 } from 'lucide-react';
 import { StarLogo } from '@/components/site/StarLogo';
@@ -20,7 +20,6 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = getUserRole() as string | null;
-  const [dark, setDark] = useState(() => localStorage.getItem('admin-theme') === 'dark');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
@@ -40,11 +39,6 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
       .filter((section) => section.items.length > 0);
   }, [searchQuery, navSections]);
 
-  useEffect(() => {
-    localStorage.setItem('admin-theme', dark ? 'dark' : 'light');
-  }, [dark]);
-
-  // Auto-expand section containing active route
   useEffect(() => {
     const newExpanded: Record<string, boolean> = {};
     filteredSections.forEach((section) => {
@@ -145,6 +139,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
         className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${
           collapsed ? 'w-[72px]' : 'w-64'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        style={{ height: '100vh' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
@@ -176,8 +171,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 min-h-0 ap-scroll">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 overflow-y-auto py-2 px-2 min-h-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <style>{`nav::-webkit-scrollbar { display: none; }`}</style>
           {collapsed ? (
             <div className="flex flex-col items-center gap-1 px-1">
               {navSections.flatMap((s) => s.items).map((item) => {
@@ -209,24 +205,8 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
           )}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-gray-200 dark:border-gray-800 p-3 space-y-1 shrink-0">
-          <button
-            onClick={() => setDark(!dark)}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {!collapsed && <span>{dark ? 'Light mode' : 'Dark mode'}</span>}
-          </button>
-          {!collapsed && onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              className="hidden lg:flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Collapse sidebar</span>
-            </button>
-          )}
+        {/* Footer - Sign Out Only */}
+        <div className="border-t border-gray-200 dark:border-gray-800 p-3 shrink-0">
           <button
             onClick={handleSignOut}
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
