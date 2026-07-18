@@ -1,32 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Phone, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/crm/inquiries")({
-  component: () => (
+export function InquiriesPage() {
+  return (
     <ModulePage
       title="Inquiries"
-      subtitle="Phone · email · chat inquiries."
-      addLabel="Add"
+      subtitle="Track and respond to prospective student inquiries"
       stats={[
-    { label: "Total", value: 318, icon: Phone },
-    { label: "Today", value: 24, icon: Clock },
-    { label: "Converted", value: 72, icon: CheckCircle2, tone: "success" },
-    { label: "Missed", value: 6, icon: AlertCircle, tone: "danger" }
+        { label: "Total Inquiries", value: 234, icon: Phone, tone: "purple" },
+        { label: "Pending", value: 18, icon: Clock, tone: "warning" },
+        { label: "Converted", value: 142, icon: CheckCircle2, tone: "success" },
+        { label: "Follow-up Needed", value: 24, icon: AlertCircle, tone: "danger" },
       ]}
       columns={[
-    { key: "name", label: "Name" },
-    { key: "channel", label: "Channel" },
-    { key: "about", label: "About" },
-    { key: "when", label: "When" },
-    { key: "owner", label: "Owner" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Contact" },
+        { key: "course", label: "Course Interest" },
+        { key: "source", label: "Source" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","name":"Bina Sharma","channel":"Phone","about":"Loksewa fees","when":"1h ago","owner":"Reception","status":"Active"},
-    {"id":"2","name":"Mahesh Rai","channel":"WhatsApp","about":"Nepal Police batch","when":"2h ago","owner":"Suman","status":"Active"},
-    {"id":"3","name":"Diya Basnet","channel":"Email","about":"Scholarships","when":"5h ago","owner":"Anita","status":"Pending"}
+        { name: "Meera Joshi", course: "JEE Advanced", source: "Website", status: "New" },
+        { name: "Arjun Nair", course: "NEET", source: "Referral", status: "Contacted" },
+        { name: "Sakshi Banerjee", course: "Class 11 Foundation", source: "Walk-in", status: "Converted" },
+        { name: "Rishi Kapoor", course: "JEE Main", source: "Social Media", status: "Pending" },
       ]}
     />
-  ),
-});
+  );
+}

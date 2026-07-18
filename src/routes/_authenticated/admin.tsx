@@ -1,19 +1,21 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { supabase } from "@/integrations/supabase/client";
+﻿import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AdminShell } from '@/components/admin/AdminShell';
+import { getUserRole, isAuthenticated } from '@/lib/api-auth';
 
-export const Route = createFileRoute("/_authenticated/admin")({
-  beforeLoad: async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin");
-    if (!roles || roles.length === 0) {
-      throw redirect({ to: "/dashboard" });
+export function Admin() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/auth', { replace: true });
+      return;
     }
-  },
-  component: AdminShell,
-});
+    const role = getUserRole();
+    if (role !== 'super_admin') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  return <AdminShell />;
+}

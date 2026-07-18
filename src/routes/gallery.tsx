@@ -1,21 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import {  } from "react-router-dom";
 import { Camera } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-
-export const Route = createFileRoute("/gallery")({
-  head: () => ({
-    meta: [
-      { title: "Gallery — Star Coaching Institute" },
-      {
-        name: "description",
-        content:
-          "Photos and moments from Star Coaching Institute — classes, physical training, celebrations and student life.",
-      },
-    ],
-  }),
-  component: GalleryPage,
-});
 
 // Placeholder gradient tiles until real gallery images are uploaded.
 const tiles = [
@@ -30,7 +16,7 @@ const tiles = [
   { title: "Bridge Course batch", gradient: "from-brand-red to-navy" },
 ];
 
-function GalleryPage() {
+export function GalleryPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -70,3 +56,5 @@ function GalleryPage() {
     </div>
   );
 }
+
+

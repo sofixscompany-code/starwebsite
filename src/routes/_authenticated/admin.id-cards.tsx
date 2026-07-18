@@ -1,31 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { IdCard, Clock, AlertCircle, Layers } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/id-cards")({
-  component: () => (
+export function IdCardsPage() {
+  return (
     <ModulePage
       title="ID Cards"
-      subtitle="QR-enabled ID card builder."
-      addLabel="Add"
+      subtitle="Generate and manage student and staff identity cards"
       stats={[
-    { label: "Issued", value: "1,284", icon: IdCard },
-    { label: "Pending print", value: 32, icon: Clock },
-    { label: "Reprints", value: 14, icon: AlertCircle, tone: "warning" },
-    { label: "Templates", value: 6, icon: Layers }
+        { label: "Total Generated", value: 1304, icon: IdCard, tone: "purple" },
+        { label: "Pending Print", value: 24, icon: Clock, tone: "warning" },
+        { label: "Expired", value: 38, icon: AlertCircle, tone: "danger" },
+        { label: "Templates", value: 4, icon: Layers, tone: "info" },
       ]}
       columns={[
-    { key: "roll", label: "Roll #" },
-    { key: "name", label: "Student" },
-    { key: "course", label: "Course" },
-    { key: "issued", label: "Issued" },
-    { key: "expiry", label: "Expiry" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Name" },
+        { key: "type", label: "Type" },
+        { key: "validTill", label: "Valid Till" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","roll":"SCI-2024-001","name":"Aarav Sharma","course":"Nepal Police","issued":"2024-01-15","expiry":"2025-01-15","status":"Active"},
-    {"id":"2","roll":"SCI-2024-002","name":"Priya Karki","course":"Loksewa","issued":"2024-01-15","expiry":"2025-01-15","status":"Active"}
+        { name: "Aarav Patel", type: "Student", validTill: "2025-03-31", status: "Active" },
+        { name: "Rahul Sharma", type: "Staff", validTill: "2025-06-30", status: "Active" },
+        { name: "Sneha Gupta", type: "Student", validTill: "2024-12-31", status: "Expired" },
+        { name: "Priya Mehta", type: "Staff", validTill: "2025-06-30", status: "Pending Print" },
       ]}
     />
-  ),
-});
+  );
+}

@@ -1,24 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import {  } from "react-router-dom";
 import { Award } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { toppers } from "@/lib/site-config";
 
-export const Route = createFileRoute("/results")({
-  head: () => ({
-    meta: [
-      { title: "Results & Toppers — Star Coaching Institute" },
-      {
-        name: "description",
-        content:
-          "Star Coaching Institute's top selections and province toppers across Nepal Police, Army, Loksewa, Staff Nurse and Engineering exams.",
-      },
-    ],
-  }),
-  component: ResultsPage,
-});
-
-function ResultsPage() {
+export function ResultsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -74,3 +60,5 @@ function ResultsPage() {
     </div>
   );
 }
+
+

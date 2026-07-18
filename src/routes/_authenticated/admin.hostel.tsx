@@ -1,33 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Bed, CheckCircle2, Users, Wallet } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/hostel")({
-  component: () => (
+export function HostelPage() {
+  return (
     <ModulePage
       title="Hostel"
-      subtitle="Rooms · beds · mess & attendance."
-      addLabel="Add"
+      subtitle="Manage hostel rooms, occupancy and payments"
       stats={[
-    { label: "Rooms", value: 48, icon: Bed },
-    { label: "Occupied", value: 186, icon: CheckCircle2 },
-    { label: "Available", value: 32, icon: Users },
-    { label: "Dues", value: "₹68,500", icon: Wallet, tone: "warning" }
+        { label: "Total Rooms", value: 120, icon: Bed, tone: "purple" },
+        { label: "Occupied", value: 98, icon: Users, tone: "info" },
+        { label: "Available", value: 22, icon: CheckCircle2, tone: "success" },
+        { label: "Monthly Revenue", value: "₹3.6L", icon: Wallet, tone: "warning" },
       ]}
       columns={[
-    { key: "room", label: "Room" },
-    { key: "floor", label: "Floor" },
-    { key: "capacity", label: "Cap" },
-    { key: "occupied", label: "Occupied" },
-    { key: "type", label: "Type" },
-    { key: "status", label: "Status" }
+        { key: "room", label: "Room" },
+        { key: "block", label: "Block" },
+        { key: "occupant", label: "Occupant" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","room":"H-101","floor":"Ground","capacity":"4","occupied":"4","type":"AC","status":"Active"},
-    {"id":"2","room":"H-102","floor":"Ground","capacity":"4","occupied":"3","type":"AC","status":"Active"},
-    {"id":"3","room":"H-201","floor":"First","capacity":"6","occupied":"6","type":"Non-AC","status":"Active"},
-    {"id":"4","room":"H-202","floor":"First","capacity":"6","occupied":"4","type":"Non-AC","status":"Active"}
+        { room: "A-101", block: "Block A", occupant: "Rahul Verma", status: "Occupied" },
+        { room: "A-102", block: "Block A", occupant: "Vikram Patel", status: "Occupied" },
+        { room: "B-205", block: "Block B", occupant: "—", status: "Available" },
+        { room: "B-206", block: "Block B", occupant: "—", status: "Maintenance" },
       ]}
     />
-  ),
-});
+  );
+}

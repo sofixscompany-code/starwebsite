@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
 import { StarLogo } from "./StarLogo";
 import { site } from "@/lib/site-config";
@@ -9,7 +9,9 @@ export function SiteFooter() {
       <div className="max-w-6xl mx-auto px-4 py-12 grid gap-10 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3 mb-4">
-            <StarLogo size="sm" />
+            <div className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md shrink-0">
+              <StarLogo size="sm" />
+            </div>
             <div>
               <p className="font-display font-extrabold text-lg leading-tight">
                 Star Coaching Institute
@@ -71,10 +73,11 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/50">
-          <p>© {new Date().getFullYear()} {site.legalName}. All rights reserved.</p>
-          <p>Made with focus in Janakpurdham, Nepal.</p>
+          <p>&copy; 2025 {site.legalName}. All rights reserved.</p>
+          <p>Powered by <span className="text-white/70 font-semibold">Sofixs</span></p>
         </div>
       </div>
     </footer>
   );
 }
+

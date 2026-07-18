@@ -1,34 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Radio, Calendar, PlayCircle, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/live")({
-  component: () => (
+export function LiveClassesPage() {
+  return (
     <ModulePage
       title="Live Classes"
-      subtitle="Zoom · Google Meet · Jitsi"
-      addLabel="Add"
+      subtitle="Schedule and manage live online class sessions"
       stats={[
-    { label: "Today", value: 8, icon: Radio },
-    { label: "Upcoming", value: 23, icon: Calendar },
-    { label: "Recorded", value: 412, icon: PlayCircle },
-    { label: "Attendance avg", value: "89%", icon: CheckCircle2 }
+        { label: "Total Sessions", value: 246, icon: Radio, tone: "purple" },
+        { label: "Upcoming", value: 12, icon: Calendar, tone: "info" },
+        { label: "Recordings", value: 180, icon: PlayCircle, tone: "success" },
+        { label: "Completed", value: 210, icon: CheckCircle2, tone: "success" },
       ]}
       columns={[
-    { key: "title", label: "Class" },
-    { key: "teacher", label: "Teacher" },
-    { key: "course", label: "Course" },
-    { key: "when", label: "Scheduled" },
-    { key: "platform", label: "Platform" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Class" },
+        { key: "teacher", label: "Teacher" },
+        { key: "date", label: "Date" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","title":"Constitution — Part 1","teacher":"Kabita Shrestha","course":"Loksewa","when":"Today 4:00 PM","platform":"Zoom","status":"Scheduled"},
-    {"id":"2","title":"Reasoning drill","teacher":"Bishal Rai","course":"Nepal Police","when":"Today 6:00 PM","platform":"Google Meet","status":"Scheduled"},
-    {"id":"3","title":"GK current affairs","teacher":"Ram Bahadur K.C.","course":"APF","when":"Tomorrow 10 AM","platform":"Zoom","status":"Scheduled"},
-    {"id":"4","title":"English grammar","teacher":"Sunita Neupane","course":"Bank PO","when":"Tomorrow 2 PM","platform":"Jitsi","status":"Scheduled"},
-    {"id":"5","title":"Mock discussion","teacher":"Prakash Adhikari","course":"Nepal Army","when":"Fri 5 PM","platform":"Zoom","status":"Scheduled"}
+        { name: "JEE Advanced – Thermodynamics", teacher: "Dr. Mehta", date: "2024-01-16 10:00", status: "Upcoming" },
+        { name: "NEET – Human Biology", teacher: "Ms. Kapoor", date: "2024-01-15 14:00", status: "Completed" },
+        { name: "Class 12 – Calculus", teacher: "Mr. Verma", date: "2024-01-15 09:00", status: "Recorded" },
+        { name: "Foundation – Atomic Structure", teacher: "Dr. Mehta", date: "2024-01-14 11:00", status: "Recorded" },
       ]}
     />
-  ),
-});
+  );
+}

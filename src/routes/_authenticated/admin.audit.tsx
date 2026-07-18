@@ -1,32 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { History, Users, ShieldCheck, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/audit")({
-  component: () => (
+export function AuditLogsPage() {
+  return (
     <ModulePage
       title="Audit Logs"
-      subtitle="Every admin action, tracked."
-      addLabel="Add"
+      subtitle="Track all user and system actions across the platform"
       stats={[
-    { label: "Events 24h", value: "1,412", icon: History },
-    { label: "Users", value: 24, icon: Users },
-    { label: "Sensitive", value: 18, icon: ShieldCheck, tone: "warning" },
-    { label: "Anomalies", value: 0, icon: CheckCircle2, tone: "success" }
+        { label: "Total Events", value: "12.4k", icon: History, tone: "purple" },
+        { label: "Unique Users", value: 48, icon: Users, tone: "info" },
+        { label: "Security Events", value: 3, icon: ShieldCheck, tone: "warning" },
+        { label: "Successful Actions", value: "98%", icon: CheckCircle2, tone: "success" },
       ]}
       columns={[
-    { key: "when", label: "When" },
-    { key: "who", label: "Who" },
-    { key: "action", label: "Action" },
-    { key: "target", label: "Target" },
-    { key: "ip", label: "IP" },
-    { key: "status", label: "Status" }
+        { key: "user", label: "User" },
+        { key: "action", label: "Action" },
+        { key: "target", label: "Target" },
+        { key: "date", label: "Timestamp" },
       ]}
       rows={[
-    {"id":"1","when":"2 min ago","who":"admin@star","action":"admission.approve","target":"APP-1041","ip":"103.5.12.4","status":"Success"},
-    {"id":"2","when":"15 min ago","who":"suman@star","action":"fee.collect","target":"INV-1043","ip":"103.5.12.5","status":"Success"},
-    {"id":"3","when":"1h ago","who":"anita@star","action":"payroll.run","target":"Oct-2024","ip":"103.5.12.6","status":"Success"}
+        { user: "Rahul Sharma", action: "Login", target: "Admin Panel", date: "2024-01-15 09:12" },
+        { user: "Priya Mehta", action: "Updated Fee", target: "Student #1042", date: "2024-01-15 08:45" },
+        { user: "System", action: "Backup Completed", target: "Database", date: "2024-01-15 06:00" },
+        { user: "Ankit Kumar", action: "Deleted Record", target: "Attendance Log", date: "2024-01-14 17:30" },
       ]}
     />
-  ),
-});
+  );
+}

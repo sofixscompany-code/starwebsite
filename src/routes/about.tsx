@@ -1,24 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import {  } from "react-router-dom";
 import { Target, Eye, Trophy, Users } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/lib/site-config";
 
-export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: "About Star Coaching Institute — Janakpurdham" },
-      {
-        name: "description",
-        content:
-          "About Star Coaching Institute Pvt. Ltd., Janakpurdham — history, vision, mission, and message from Managing Director Er. Bablu Yadav.",
-      },
-    ],
-  }),
-  component: AboutPage,
-});
-
-function AboutPage() {
+export function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -98,7 +84,7 @@ function AboutPage() {
   );
 }
 
-function ValueCard({
+export function ValueCard({
   icon: Icon,
   title,
   body,
@@ -117,3 +103,5 @@ function ValueCard({
     </div>
   );
 }
+
+

@@ -1,40 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, IndianRupee, ArrowRight, Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/config";
 
-export const Route = createFileRoute("/courses")({
-  head: () => ({
-    meta: [
-      { title: "Courses — Star Coaching Institute Janakpurdham" },
-      {
-        name: "description",
-        content:
-          "Explore all courses offered at Star Coaching Institute — Nepal Police, Army, Loksewa, Staff Nurse, HA, CMA/ANM, Engineering Diploma, Computer training and school tuition.",
-      },
-    ],
-  }),
-  component: CoursesPage,
-});
-
-function CoursesPage() {
+export function CoursesPage() {
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses-all"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("courses")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-      return data ?? [];
+      const q = query(collection(db, "courses"), where("isActive", "==", true), orderBy("sortOrder"));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
   });
 
   const grouped = courses.reduce<Record<string, typeof courses>>((acc, c) => {
-    (acc[c.category] ||= []).push(c);
+    const category = (c as any).category || 'Other';
+    (acc[category] ||= []).push(c);
     return acc;
   }, {});
 
@@ -74,7 +59,7 @@ function CoursesPage() {
                   </span>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {list.map((c) => (
+                  {list.map((c: any) => (
                     <div
                       key={c.id}
                       className="bg-white rounded-2xl border border-border p-5 hover:border-brand-red/40 hover:shadow-md transition flex flex-col"
@@ -83,7 +68,7 @@ function CoursesPage() {
                         {c.title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-2 flex-1">
-                        {c.short_description}
+                        {c.shortDescription}
                       </p>
                       <div className="mt-4 flex items-center gap-4 text-xs text-foreground/70">
                         {c.duration && (
@@ -91,10 +76,10 @@ function CoursesPage() {
                             <Clock className="w-3.5 h-3.5" /> {c.duration}
                           </span>
                         )}
-                        {c.fee_npr && (
+                        {c.feeNpr && (
                           <span className="flex items-center gap-1 font-semibold text-brand-red">
                             <IndianRupee className="w-3.5 h-3.5" />
-                            Rs. {c.fee_npr.toLocaleString()}
+                            Rs. {c.feeNpr.toLocaleString()}
                           </span>
                         )}
                       </div>
@@ -102,10 +87,7 @@ function CoursesPage() {
                         asChild
                         className="mt-5 w-full bg-navy hover:bg-navy/90 text-navy-foreground font-bold"
                       >
-                        <Link
-                          to="/admission"
-                          search={{ course: c.slug }}
-                        >
+                        <Link to="/admission">
                           Apply for this course <ArrowRight className="w-4 h-4 ml-1" />
                         </Link>
                       </Button>
@@ -121,3 +103,5 @@ function CoursesPage() {
     </div>
   );
 }
+
+

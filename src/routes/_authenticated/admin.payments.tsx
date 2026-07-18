@@ -1,33 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Wallet, CheckCircle2, XCircle, TrendingDown } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/payments")({
-  component: () => (
+export function PaymentsPage() {
+  return (
     <ModulePage
       title="Payments"
-      subtitle="Gateway configuration & transactions."
-      addLabel="Add"
+      subtitle="Track all fee collections, refunds and payment status"
       stats={[
-    { label: "Received MTD", value: "₹9.82L", icon: Wallet, tone: "success" },
-    { label: "Success rate", value: "97%", icon: CheckCircle2, tone: "success" },
-    { label: "Failed", value: 28, icon: XCircle, tone: "danger" },
-    { label: "Refunds", value: "₹12,400", icon: TrendingDown, tone: "warning" }
+        { label: "Total Collected", value: "₹24.6L", icon: Wallet, tone: "purple" },
+        { label: "Successful", value: 842, icon: CheckCircle2, tone: "success" },
+        { label: "Failed", value: 18, icon: XCircle, tone: "danger" },
+        { label: "Refunds", value: "₹1.2L", icon: TrendingDown, tone: "warning" },
       ]}
       columns={[
-    { key: "txn", label: "Txn ID" },
-    { key: "student", label: "Student" },
-    { key: "gateway", label: "Gateway" },
-    { key: "amount", label: "Amount" },
-    { key: "date", label: "Date" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Student" },
+        { key: "amount", label: "Amount" },
+        { key: "method", label: "Method" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","txn":"TXN-8241","student":"Priya Karki","gateway":"eSewa","amount":"₹18,500","date":"2024-09-30","status":"Paid"},
-    {"id":"2","txn":"TXN-8242","student":"Aarav Sharma","gateway":"Khalti","amount":"₹25,000","date":"2024-09-30","status":"Paid"},
-    {"id":"3","txn":"TXN-8243","student":"Sita Rana","gateway":"IME Pay","amount":"₹8,500","date":"2024-10-01","status":"Failed"},
-    {"id":"4","txn":"TXN-8244","student":"Bikash Gurung","gateway":"Bank","amount":"₹30,000","date":"2024-10-02","status":"Paid"}
+        { name: "Aarav Patel", amount: "₹45,000", method: "UPI", status: "Success" },
+        { name: "Sneha Gupta", amount: "₹38,000", method: "Card", status: "Success" },
+        { name: "Vikram Singh", amount: "₹42,000", method: "Net Banking", status: "Pending" },
+        { name: "Priyanka Das", amount: "₹35,000", method: "UPI", status: "Failed" },
       ]}
     />
-  ),
-});
+  );
+}

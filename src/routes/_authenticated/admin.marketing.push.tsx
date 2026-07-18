@@ -1,31 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Bell, CheckCircle2, MousePointer, Smartphone } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/marketing/push")({
-  component: () => (
+export function PushPage() {
+  return (
     <ModulePage
       title="Push Notifications"
-      subtitle="Web & mobile push via Firebase."
-      addLabel="Add"
+      subtitle="Send and manage push notifications to students and parents"
       stats={[
-    { label: "Sent", value: "12,412", icon: Bell },
-    { label: "Delivered", value: "94%", icon: CheckCircle2, tone: "success" },
-    { label: "CTR", value: "18%", icon: MousePointer, tone: "info" },
-    { label: "Active devices", value: "8,241", icon: Smartphone }
+        { label: "Total Sent", value: "5.2k", icon: Bell, tone: "purple" },
+        { label: "Delivered", value: "4.9k", icon: CheckCircle2, tone: "success" },
+        { label: "Click Rate", value: "32%", icon: MousePointer, tone: "info" },
+        { label: "Subscribed", value: 1080, icon: Smartphone, tone: "success" },
       ]}
       columns={[
-    { key: "title", label: "Title" },
-    { key: "audience", label: "Audience" },
-    { key: "sent", label: "Sent" },
-    { key: "opens", label: "Opens" },
-    { key: "ctr", label: "CTR" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Notification" },
+        { key: "audience", label: "Audience" },
+        { key: "sent", label: "Sent" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","title":"New notice: Scholarship","audience":"Students","sent":"1,284","opens":"382","ctr":"30%","status":"Completed"},
-    {"id":"2","title":"Class reminder","audience":"Batch B-12","sent":"45","opens":"41","ctr":"91%","status":"Completed"}
+        { name: "Exam Timetable Released", audience: "All Students", sent: "Jan 15", status: "Sent" },
+        { name: "Fee Payment Reminder", audience: "Parents", sent: "Jan 14", status: "Sent" },
+        { name: "Holiday Notice – Jan 26", audience: "All Users", sent: "Jan 25", status: "Scheduled" },
+        { name: "New Batch Enrollment Open", audience: "Leads", sent: "—", status: "Draft" },
       ]}
     />
-  ),
-});
+  );
+}

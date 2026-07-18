@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ShieldCheck,
@@ -23,11 +23,11 @@ import { HeroSlider } from "@/components/site/HeroSlider";
 import { Button } from "@/components/ui/button";
 import { StarLogo } from "@/components/site/StarLogo";
 import { site, stats, toppers, testimonials } from "@/lib/site-config";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseAuth } from "@/integrations/firebase/auth";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/config";
 
-export const Route = createFileRoute("/")({
-  component: Index,
-});
+
 
 const categories = [
   {
@@ -68,17 +68,13 @@ const categories = [
   },
 ] as const;
 
-function Index() {
+export function Index() {
   const { data: notices = [] } = useQuery({
     queryKey: ["home-notices"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("notices")
-        .select("id, title, category, published_at")
-        .eq("is_published", true)
-        .order("published_at", { ascending: false })
-        .limit(4);
-      return data ?? [];
+      const q = query(collection(db, "notices"), where("isPublished", "==", true), orderBy("publishedAt", "desc"), limit(4));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
   });
 
@@ -95,7 +91,7 @@ function Index() {
           <div className="mb-6 -mx-4 md:mx-0">
             <div className="ribbon-slash px-6 py-2 md:rounded-md text-center">
               <p className="font-display font-black text-lg md:text-xl tracking-widest text-navy-foreground">
-                ★ ADMISSION OPEN — 2081/82 ★
+                &#9733; ADMISSION OPEN — 2081/82 &#9733;
               </p>
             </div>
           </div>
@@ -151,7 +147,9 @@ function Index() {
                   Super 40 · 40% Off
                 </div>
                 <div className="flex items-center gap-3 mb-4">
-                  <StarLogo size="md" />
+                  <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-sm">
+                    <StarLogo size="md" />
+                  </div>
                   <div>
                     <p className="font-display font-black text-navy text-lg leading-tight">
                       Scholarship Batch
@@ -249,7 +247,7 @@ function Index() {
               {notices.length === 0 && (
                 <li className="py-3 text-sm text-muted-foreground">No notices yet.</li>
               )}
-              {notices.map((n) => (
+              {notices.map((n: any) => (
                 <li key={n.id} className="py-3 flex items-start gap-3">
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-brand-red/10 text-brand-red mt-0.5">
                     {n.category}
@@ -258,11 +256,11 @@ function Index() {
                     <p className="text-sm font-semibold text-foreground leading-snug">{n.title}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {new Date(n.published_at).toLocaleDateString("en-GB", {
+                      {n.publishedAt ? new Date(n.publishedAt.toDate?.() ?? n.publishedAt).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
-                      })}
+                      }) : "—"}
                     </p>
                   </div>
                 </li>
@@ -418,7 +416,7 @@ function Index() {
   );
 }
 
-function SectionHead({
+export function SectionHead({
   eyebrow,
   title,
   subtitle,
@@ -439,3 +437,7 @@ function SectionHead({
     </div>
   );
 }
+
+
+
+

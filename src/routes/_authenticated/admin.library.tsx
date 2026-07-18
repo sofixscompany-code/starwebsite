@@ -1,32 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Library, BookOpen, AlertCircle, Wallet } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/library")({
-  component: () => (
+export function LibraryPage() {
+  return (
     <ModulePage
       title="Library"
-      subtitle="Books · issues · barcode scan."
-      addLabel="Add"
+      subtitle="Manage books, issues and returns for the institute library"
       stats={[
-    { label: "Books", value: "3,412", icon: Library },
-    { label: "Issued", value: 842, icon: BookOpen },
-    { label: "Overdue", value: 46, icon: AlertCircle, tone: "danger" },
-    { label: "Fines", value: "₹4,820", icon: Wallet, tone: "warning" }
+        { label: "Total Books", value: 2480, icon: Library, tone: "purple" },
+        { label: "Currently Issued", value: 186, icon: BookOpen, tone: "info" },
+        { label: "Overdue Returns", value: 14, icon: AlertCircle, tone: "warning" },
+        { label: "Fines Collected", value: "₹4,200", icon: Wallet, tone: "success" },
       ]}
       columns={[
-    { key: "book", label: "Book" },
-    { key: "author", label: "Author" },
-    { key: "issued", label: "Issued to" },
-    { key: "date", label: "Issue date" },
-    { key: "due", label: "Due date" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Book" },
+        { key: "author", label: "Author" },
+        { key: "copies", label: "Copies" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","book":"Nepal Constitution","author":"Bipin Adhikari","issued":"Aarav Sharma","date":"2024-09-15","due":"2024-10-15","status":"Active"},
-    {"id":"2","book":"English Grammar in Use","author":"Raymond Murphy","issued":"Priya Karki","date":"2024-09-20","due":"2024-10-20","status":"Active"},
-    {"id":"3","book":"Quantitative Aptitude","author":"R.S. Aggarwal","issued":"Sita Rana","date":"2024-08-10","due":"2024-09-10","status":"Overdue"}
+        { name: "HC Verma – Physics", author: "H.C. Verma", copies: 15, status: "Available" },
+        { name: "RD Sharma – Maths", author: "R.D. Sharma", copies: 12, status: "Available" },
+        { name: "NCERT Chemistry Class 12", author: "NCERT", copies: 20, status: "Issued" },
+        { name: "Trueman's Biology", author: "M.P. Tyagi", copies: 8, status: "Low Stock" },
       ]}
     />
-  ),
-});
+  );
+}

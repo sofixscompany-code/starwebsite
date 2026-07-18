@@ -2,30 +2,23 @@ import { cn } from "@/lib/utils";
 
 interface StarLogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const sizeMap = {
-  sm: { box: "w-9 h-9", text: "text-lg" },
-  md: { box: "w-11 h-11", text: "text-2xl" },
-  lg: { box: "w-16 h-16", text: "text-4xl" },
+  sm: "w-9 h-9",
+  md: "w-12 h-12",
+  lg: "w-16 h-16",
+  xl: "w-24 h-24",
 };
 
 export function StarLogo({ className, size = "md" }: StarLogoProps) {
-  const s = sizeMap[size];
   return (
-    <div
-      className={cn(
-        "relative flex items-center justify-center rounded-full bg-brand-red text-brand-red-foreground font-black border-4 border-navy shadow-md",
-        s.box,
-        s.text,
-        className,
-      )}
-      aria-hidden
-    >
-      S
-      <span className="pointer-events-none absolute -top-1 -right-1 text-gold text-[10px]">★</span>
-    </div>
+    <img
+      src="/logo.svg"
+      alt="Star Coaching Institute"
+      className={cn("object-contain", sizeMap[size], className)}
+    />
   );
 }
 
@@ -38,6 +31,15 @@ export function StarWordmark({ className }: { className?: string }) {
       <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase">
         Pvt. Ltd. · Janakpurdham
       </p>
+    </div>
+  );
+}
+
+export function StarLogoFull({ className, size = "md" }: StarLogoProps) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <StarLogo size={size} />
+      <StarWordmark />
     </div>
   );
 }

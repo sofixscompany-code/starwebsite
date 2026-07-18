@@ -1,31 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { UserPlus, Users, GraduationCap, Clock } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/crm/visitors")({
-  component: () => (
+export function VisitorsPage() {
+  return (
     <ModulePage
       title="Visitors"
-      subtitle="Walk-in log."
-      addLabel="Add"
+      subtitle="Track campus visits from prospective students and parents"
       stats={[
-    { label: "Today", value: 32, icon: UserPlus },
-    { label: "This week", value: 186, icon: Users },
-    { label: "Enrolled", value: 24, icon: GraduationCap, tone: "success" },
-    { label: "Follow-ups", value: 48, icon: Clock, tone: "warning" }
+        { label: "Total Visitors", value: 312, icon: UserPlus, tone: "purple" },
+        { label: "This Week", value: 28, icon: Users, tone: "info" },
+        { label: "Enrolled", value: 86, icon: GraduationCap, tone: "success" },
+        { label: "Scheduled", value: 14, icon: Clock, tone: "warning" },
       ]}
       columns={[
-    { key: "time", label: "Time" },
-    { key: "name", label: "Visitor" },
-    { key: "from", label: "City" },
-    { key: "purpose", label: "Purpose" },
-    { key: "staff", label: "Staff" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Visitor" },
+        { key: "purpose", label: "Purpose" },
+        { key: "branch", label: "Branch" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","time":"09:12 AM","name":"Ram Prasad B.","from":"Kathmandu","purpose":"Course info","staff":"Suman","status":"Completed"},
-    {"id":"2","time":"10:20 AM","name":"Kiran Basnet","from":"Lalitpur","purpose":"Fee","staff":"Reception","status":"Completed"}
+        { name: "Rajesh Kumar", purpose: "Campus Tour", branch: "Downtown", status: "Completed" },
+        { name: "Sunita Devi", purpose: "Admission Enquiry", branch: "North Campus", status: "Completed" },
+        { name: "Amit Tiwari", purpose: "Demo Class", branch: "South Wing", status: "Scheduled" },
+        { name: "Pooja Singh", purpose: "Fee Discussion", branch: "Downtown", status: "Scheduled" },
       ]}
     />
-  ),
-});
+  );
+}

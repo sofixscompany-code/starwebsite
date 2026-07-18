@@ -1,32 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { Database, Layers, Clock, ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/backup")({
-  component: () => (
+export function BackupPage() {
+  return (
     <ModulePage
-      title="Backup"
-      subtitle="Automated snapshots & restore."
-      addLabel="Add"
+      title="Backup & Restore"
+      subtitle="Manage database backups and restore points"
       stats={[
-    { label: "Latest", value: "2h ago", icon: Database, tone: "success" },
-    { label: "Storage", value: "4.8 GB", icon: Layers },
-    { label: "Retained", value: "30 days", icon: Clock },
-    { label: "Encrypted", value: "AES-256", icon: ShieldCheck, tone: "success" }
+        { label: "Total Backups", value: 34, icon: Database, tone: "purple" },
+        { label: "Storage Used", value: "2.8 GB", icon: Layers, tone: "info" },
+        { label: "Last Backup", value: "2h ago", icon: Clock, tone: "success" },
+        { label: "Integrity", value: "100%", icon: ShieldCheck, tone: "success" },
       ]}
       columns={[
-    { key: "name", label: "Snapshot" },
-    { key: "when", label: "When" },
-    { key: "size", label: "Size" },
-    { key: "type", label: "Type" },
-    { key: "by", label: "By" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Backup Name" },
+        { key: "type", label: "Type" },
+        { key: "size", label: "Size" },
+        { key: "date", label: "Created" },
       ]}
       rows={[
-    {"id":"1","name":"auto-snap-1041","when":"2h ago","size":"482 MB","type":"Auto","by":"System","status":"Completed"},
-    {"id":"2","name":"manual-migration","when":"1d ago","size":"512 MB","type":"Manual","by":"Admin","status":"Completed"},
-    {"id":"3","name":"auto-snap-1040","when":"1d ago","size":"478 MB","type":"Auto","by":"System","status":"Completed"}
+        { name: "Full Backup – Jan 15", type: "Full", size: "285 MB", date: "2024-01-15 06:00" },
+        { name: "Incremental – Jan 14", type: "Incremental", size: "42 MB", date: "2024-01-14 06:00" },
+        { name: "Full Backup – Jan 13", type: "Full", size: "278 MB", date: "2024-01-13 06:00" },
+        { name: "Emergency Snapshot", type: "Manual", size: "120 MB", date: "2024-01-12 14:30" },
       ]}
     />
-  ),
-});
+  );
+}

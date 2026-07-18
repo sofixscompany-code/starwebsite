@@ -1,31 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { MessageSquare, UserCog, GraduationCap, Clock } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/crm/counselling")({
-  component: () => (
+export function CounsellingPage() {
+  return (
     <ModulePage
       title="Counselling"
-      subtitle="Career guidance sessions."
-      addLabel="Add"
+      subtitle="Student counselling sessions and mentor assignments"
       stats={[
-    { label: "Sessions", value: 64, icon: MessageSquare },
-    { label: "Counsellors", value: 4, icon: UserCog },
-    { label: "Enrolled", value: 28, icon: GraduationCap, tone: "success" },
-    { label: "Pending", value: 10, icon: Clock, tone: "warning" }
+        { label: "Total Sessions", value: 156, icon: MessageSquare, tone: "purple" },
+        { label: "Counsellors", value: 8, icon: UserCog, tone: "info" },
+        { label: "Students Guided", value: 134, icon: GraduationCap, tone: "success" },
+        { label: "Pending Reviews", value: 12, icon: Clock, tone: "warning" },
       ]}
       columns={[
-    { key: "student", label: "Student" },
-    { key: "counsellor", label: "Counsellor" },
-    { key: "topic", label: "Topic" },
-    { key: "when", label: "When" },
-    { key: "mode", label: "Mode" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Student" },
+        { key: "counsellor", label: "Counsellor" },
+        { key: "topic", label: "Topic" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","student":"Aarav Sharma","counsellor":"Kabita S.","topic":"Course selection","when":"Today 3 PM","mode":"In-person","status":"Scheduled"},
-    {"id":"2","student":"Priya Karki","counsellor":"Ram B. K.C.","topic":"Career path","when":"Tomorrow","mode":"Video","status":"Scheduled"}
+        { name: "Rohan Verma", counsellor: "Dr. Sharma", topic: "Career Guidance", status: "Completed" },
+        { name: "Nisha Agarwal", counsellor: "Ms. Kapoor", topic: "Study Plan", status: "Scheduled" },
+        { name: "Karan Mehta", counsellor: "Dr. Sharma", topic: "Exam Stress", status: "Completed" },
+        { name: "Ananya Reddy", counsellor: "Mr. Joshi", topic: "Course Selection", status: "Pending" },
       ]}
     />
-  ),
-});
+  );
+}

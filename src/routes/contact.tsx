@@ -1,24 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import {  } from "react-router-dom";
 import { MapPin, Phone, Mail, MessageCircle, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/lib/site-config";
 
-export const Route = createFileRoute("/contact")({
-  head: () => ({
-    meta: [
-      { title: "Contact — Star Coaching Institute Janakpurdham" },
-      {
-        name: "description",
-        content:
-          "Contact Star Coaching Institute at Zeromile, Janakpurdham-7. Call 9804899123 or 9864176606 for admission and inquiries.",
-      },
-    ],
-  }),
-  component: ContactPage,
-});
-
-function ContactPage() {
+export function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -67,7 +53,7 @@ function ContactPage() {
   );
 }
 
-function ContactCard({
+export function ContactCard({
   icon: Icon,
   title,
   value,
@@ -93,3 +79,5 @@ function ContactCard({
   );
   return href ? <a href={href}>{inner}</a> : inner;
 }
+
+

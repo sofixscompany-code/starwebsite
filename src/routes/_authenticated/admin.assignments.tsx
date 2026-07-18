@@ -1,32 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/admin/ModulePage";
+﻿import { ModulePage } from "@/components/admin/ModulePage";
 import { FileText, Award, TrendingUp, AlertCircle } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/assignments")({
-  component: () => (
+export function AssignmentsPage() {
+  return (
     <ModulePage
       title="Assignments"
-      subtitle="Long-form submissions & grading."
-      addLabel="Add"
+      subtitle="Create, track and grade student assignments"
       stats={[
-    { label: "Open", value: 24, icon: FileText },
-    { label: "Graded", value: 186, icon: Award },
-    { label: "Avg score", value: "78%", icon: TrendingUp },
-    { label: "Delayed", value: 9, icon: AlertCircle, tone: "warning" }
+        { label: "Total Assigned", value: 86, icon: FileText, tone: "purple" },
+        { label: "Completed", value: 64, icon: Award, tone: "success" },
+        { label: "Submission Rate", value: "74%", icon: TrendingUp, tone: "info" },
+        { label: "Overdue", value: 5, icon: AlertCircle, tone: "warning" },
       ]}
       columns={[
-    { key: "title", label: "Assignment" },
-    { key: "course", label: "Course" },
-    { key: "due", label: "Due" },
-    { key: "subs", label: "Submissions" },
-    { key: "avg", label: "Avg score" },
-    { key: "status", label: "Status" }
+        { key: "name", label: "Assignment" },
+        { key: "subject", label: "Subject" },
+        { key: "dueDate", label: "Due Date" },
+        { key: "status", label: "Status" },
       ]}
       rows={[
-    {"id":"1","title":"Research paper — Federalism","course":"Loksewa","due":"2024-10-12","subs":"22/28","avg":"81%","status":"Active"},
-    {"id":"2","title":"Case study — Police reforms","course":"Nepal Police","due":"2024-10-15","subs":"30/45","avg":"74%","status":"Active"},
-    {"id":"3","title":"Financial analysis","course":"Bank PO","due":"2024-10-08","subs":"30/30","avg":"88%","status":"Completed"}
+        { name: "Quadratic Equations Worksheet", subject: "Mathematics", dueDate: "2024-01-20", status: "Active" },
+        { name: "Newton's Laws Lab Report", subject: "Physics", dueDate: "2024-01-18", status: "Overdue" },
+        { name: "Periodic Table Quiz", subject: "Chemistry", dueDate: "2024-01-22", status: "Active" },
+        { name: "Essay on Indian History", subject: "History", dueDate: "2024-01-15", status: "Completed" },
       ]}
     />
-  ),
-});
+  );
+}

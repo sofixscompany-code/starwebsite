@@ -1,23 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import {  } from "react-router-dom";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { faculty } from "@/lib/site-config";
 
-export const Route = createFileRoute("/faculty")({
-  head: () => ({
-    meta: [
-      { title: "Faculty — Star Coaching Institute Janakpurdham" },
-      {
-        name: "description",
-        content:
-          "Meet the experienced faculty at Star Coaching Institute — subject experts for Nepal Police, Loksewa, Medical, and Engineering preparation.",
-      },
-    ],
-  }),
-  component: FacultyPage,
-});
-
-function FacultyPage() {
+export function FacultyPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -63,3 +49,5 @@ function FacultyPage() {
     </div>
   );
 }
+
+
