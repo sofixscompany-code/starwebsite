@@ -22,12 +22,7 @@ import { GalleryPage as Gallery } from './routes/gallery';
 import { ContactPage as Contact } from './routes/contact';
 import { AdmissionPage as Admission } from './routes/admission';
 
-// Dashboard pages
-import { SuperAdminDashboard } from './routes/_authenticated/dashboard.super-admin';
-import { TeacherDashboard } from './routes/_authenticated/dashboard.teacher';
-import { StudentDashboard } from './routes/_authenticated/dashboard.student';
-import { ParentDashboard } from './routes/_authenticated/dashboard.parent';
-import { AccountantDashboard } from './routes/_authenticated/dashboard.accountant';
+// Dashboard pages - imported by admin.index, which routes by role
 
 // Admin shell
 import { Admin } from './routes/_authenticated/admin';
@@ -114,12 +109,12 @@ export default function App() {
         <Route element={<AuthGuard />}>
           <Route path="/profile" element={<ProfilePage />} />
           
-          {/* Dashboard routes */}
-          <Route path="/dashboard/super-admin" element={<SuperAdminDashboard />} />
-          <Route path="/dashboard/teacher" element={<TeacherDashboard />} />
-          <Route path="/dashboard/student" element={<StudentDashboard />} />
-          <Route path="/dashboard/parent" element={<ParentDashboard />} />
-          <Route path="/dashboard/accountant" element={<AccountantDashboard />} />
+          {/* Dashboard routes — all redirect to /admin with sidebar */}
+          <Route path="/dashboard/super-admin" element={<Navigate to="/admin" replace />} />
+          <Route path="/dashboard/teacher" element={<Navigate to="/admin" replace />} />
+          <Route path="/dashboard/student" element={<Navigate to="/admin" replace />} />
+          <Route path="/dashboard/parent" element={<Navigate to="/admin" replace />} />
+          <Route path="/dashboard/accountant" element={<Navigate to="/admin" replace />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<Admin />}>

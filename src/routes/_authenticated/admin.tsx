@@ -9,11 +9,6 @@ export function Admin() {
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/auth', { replace: true });
-      return;
-    }
-    const role = getUserRole();
-    if (role !== 'super_admin') {
-      navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
 
