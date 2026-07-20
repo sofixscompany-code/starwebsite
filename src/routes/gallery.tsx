@@ -13,7 +13,7 @@ const tiles = [
   { title: "Faculty session", gradient: "from-navy to-slate-700" },
   { title: "Hostel — Boys & Girls", gradient: "from-purple-600 to-brand-red" },
   { title: "Computer lab", gradient: "from-indigo-600 to-navy" },
-  { title: "Bridge Course batch", gradient: "from-brand-red to-navy" },
+  { title: "SEE Preparation batch", gradient: "from-brand-red to-navy" },
 ];
 
 export function GalleryPage() {

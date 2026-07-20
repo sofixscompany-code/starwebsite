@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { HeroSlider } from "@/components/site/HeroSlider";
+import { FeatureSlider } from "@/components/site/FeatureSlider";
 import { Button } from "@/components/ui/button";
 import { StarLogo } from "@/components/site/StarLogo";
 import { site, stats, toppers, testimonials } from "@/lib/site-config";
@@ -62,8 +62,8 @@ const categories = [
   },
   {
     icon: BookOpen,
-    title: "SEE & Bridge Course",
-    desc: "Class 8-10 · +2 Bridge",
+    title: "SEE Preparation",
+    desc: "Class 8-10 All Subjects",
     color: "bg-purple-50 text-purple-700",
   },
 ] as const;
@@ -82,17 +82,19 @@ export function Index() {
     <div className="min-h-screen flex flex-col bg-background">
       <SiteHeader />
 
-      <HeroSlider />
+      <FeatureSlider />
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-secondary/40">
         <div className="max-w-6xl mx-auto px-4 pt-8 md:pt-14 pb-6">
           {/* Admission Open ribbon */}
-          <div className="mb-6 -mx-4 md:mx-0">
-            <div className="ribbon-slash px-6 py-2 md:rounded-md text-center">
-              <p className="font-display font-black text-lg md:text-xl tracking-widest text-navy-foreground">
+          <div className="mb-6 -mx-4 md:mx-0 flex justify-center">
+            <div className="inline-flex items-center gap-2 px-6 py-2.5 md:rounded-full text-center bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-600/30 animate-pulse ring-2 ring-emerald-400/50">
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+              <p className="font-display font-black text-sm md:text-lg tracking-widest text-white drop-shadow-sm">
                 &#9733; ADMISSION OPEN — 2081/82 &#9733;
               </p>
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
             </div>
           </div>
 
@@ -162,7 +164,6 @@ export function Index() {
                 <ul className="space-y-2.5 text-sm">
                   {[
                     "Entrance Preparation (After SEE)",
-                    "Bridge Course +2 Science/Management",
                     "Police, Army & Loksewa Coaching",
                     "Hostel available — Boys & Girls",
                   ].map((f) => (
