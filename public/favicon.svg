@@ -1,8 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <circle cx="32" cy="32" r="30" fill="#FFFFFF" stroke="#228B22" stroke-width="3"/>
-  <circle cx="32" cy="32" r="24" fill="#FFF8DC" stroke="#228B22" stroke-width="1.5"/>
-  <text x="32" y="28" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="#CC0000">SCI</text>
-  <text x="32" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="5" fill="#555">KNOWLEDGE IS POWER</text>
-  <polygon points="14,16 16,22 22,22 17,26 19,32 14,28 9,32 11,26 6,22 12,22" fill="#FFD700"/>
-  <polygon points="50,16 52,22 58,22 53,26 55,32 50,28 45,32 47,26 42,22 48,22" fill="#FFD700"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF4444"/>
+      <stop offset="100%" style="stop-color:#CC0000"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4466FF"/>
+      <stop offset="100%" style="stop-color:#0033AA"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000033"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="190" fill="#FFFFFF" stroke="#228B22" stroke-width="8"/>
+  <circle cx="200" cy="200" r="175" fill="none" stroke="#228B22" stroke-width="3"/>
+  
+  <!-- Outer text ring -->
+  <path id="topArc" d="M 60,200 A 140,140 0 0,1 340,200" fill="none"/>
+  <text font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="#CC0000" letter-spacing="2">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">STAR COACHING INSTITUTE PVT. LTD.</textPath>
+  </text>
+  
+  <path id="bottomArc" d="M 80,260 A 140,140 0 0,0 320,260" fill="none"/>
+  <text font-family="Arial Black, sans-serif" font-size="20" font-weight="900" fill="#CC0000" letter-spacing="3">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">JANAKPURDHAM</textPath>
+  </text>
+  
+  <!-- Inner decorative circle -->
+  <circle cx="200" cy="180" r="100" fill="#FFF8DC" stroke="#228B22" stroke-width="2"/>
+  
+  <!-- Laurel wreaths -->
+  <g transform="translate(200,180)" fill="#228B22">
+    <!-- Left wreath -->
+    <path d="M-60,40 Q-50,20 -40,30 Q-45,10 -30,20 Q-35,0 -20,10 Q-25,-10 -10,0 Q-15,-20 0,-10 Q-5,-30 10,-20 Q5,-40 20,-30" fill="none" stroke="#228B22" stroke-width="4"/>
+    <ellipse cx="-50" cy="25" rx="8" ry="4" transform="rotate(-30,-50,25)" fill="#228B22"/>
+    <ellipse cx="-42" cy="15" rx="8" ry="4" transform="rotate(-20,-42,15)" fill="#228B22"/>
+    <ellipse cx="-32" cy="8" rx="8" ry="4" transform="rotate(-10,-32,8)" fill="#228B22"/>
+    <ellipse cx="-22" cy="2" rx="8" ry="4" transform="rotate(0,-22,2)" fill="#228B22"/>
+    <ellipse cx="-12" cy="-4" rx="8" ry="4" transform="rotate(10,-12,-4)" fill="#228B22"/>
+    <ellipse cx="-2" cy="-10" rx="8" ry="4" transform="rotate(20,-2,-10)" fill="#228B22"/>
+    <!-- Right wreath -->
+    <path d="M60,40 Q50,20 40,30 Q45,10 30,20 Q35,0 20,10 Q25,-10 10,0 Q15,-20 0,-10 Q5,-30 -10,-20 Q-5,-40 -20,-30" fill="none" stroke="#228B22" stroke-width="4"/>
+    <ellipse cx="50" cy="25" rx="8" ry="4" transform="rotate(30,50,25)" fill="#228B22"/>
+    <ellipse cx="42" cy="15" rx="8" ry="4" transform="rotate(20,42,15)" fill="#228B22"/>
+    <ellipse cx="32" cy="8" rx="8" ry="4" transform="rotate(10,32,8)" fill="#228B22"/>
+    <ellipse cx="22" cy="2" rx="8" ry="4" transform="rotate(0,22,2)" fill="#228B22"/>
+    <ellipse cx="12" cy="-4" rx="8" ry="4" transform="rotate(-10,12,-4)" fill="#228B22"/>
+    <ellipse cx="2" cy="-10" rx="8" ry="4" transform="rotate(-20,2,-10)" fill="#228B22"/>
+  </g>
+  
+  <!-- Stars -->
+  <polygon points="130,120 135,135 150,135 138,145 143,160 130,150 117,160 122,145 110,135 125,135" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+  <polygon points="270,120 275,135 290,135 278,145 283,160 270,150 257,160 262,145 250,135 265,135" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+  <polygon points="115,240 118,248 126,248 120,254 122,262 115,257 108,262 110,254 104,248 112,248" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+  <polygon points="285,240 288,248 296,248 290,254 292,262 285,257 278,262 280,254 274,248 282,248" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+  
+  <!-- SCI text -->
+  <text x="200" y="145" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="52" font-weight="900" fill="#CC0000" filter="url(#shadow)">SCI</text>
+  
+  <!-- Open book -->
+  <g transform="translate(200,195)">
+    <!-- Book pages -->
+    <path d="M-45,-15 Q-22,-25 0,-15 Q22,-25 45,-15 L45,20 Q22,10 0,20 Q-22,10 -45,20 Z" fill="#F5DEB3" stroke="#8B7355" stroke-width="2"/>
+    <!-- Book spine -->
+    <line x1="0" y1="-15" x2="0" y2="20" stroke="#8B7355" stroke-width="2"/>
+    <!-- Left page text -->
+    <text x="-22" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">KNOWLEDGE</text>
+    <text x="-22" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">IS POWER</text>
+    <!-- Right page text -->
+    <text x="22" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">EDUCATION</text>
+    <text x="22" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">IS LIFE</text>
+    <!-- Hands holding book -->
+    <path d="M-15,20 Q-20,35 -10,40 Q0,42 10,40 Q20,35 15,20" fill="#DEB887" stroke="#8B7355" stroke-width="1"/>
+    <path d="M-10,20 Q-15,32 -8,36 Q0,38 8,36 Q15,32 10,20" fill="#DEB887" stroke="#8B7355" stroke-width="1"/>
+    <!-- Fingers -->
+    <path d="M-12,22 L-18,30" stroke="#DEB887" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-8,21 L-12,28" stroke="#DEB887" stroke-width="3" stroke-linecap="round"/>
+    <path d="M12,22 L18,30" stroke="#DEB887" stroke-width="3" stroke-linecap="round"/>
+    <path d="M8,21 L12,28" stroke="#DEB887" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Water waves -->
+  <path d="M170,110 Q180,105 190,110 Q200,115 210,110 Q220,105 230,110" fill="none" stroke="#4488FF" stroke-width="2"/>
+  <path d="M175,115 Q185,110 195,115 Q205,120 215,115 Q225,110 235,115" fill="none" stroke="#4488FF" stroke-width="1.5" opacity="0.6"/>
 </svg>
