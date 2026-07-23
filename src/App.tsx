@@ -76,6 +76,24 @@ const BannersPage = lazy(() => import('./routes/_authenticated/admin.banners').t
 const FeeStructurePage = lazy(() => import('./routes/_authenticated/admin.fee-structure').then(m => ({ default: m.FeeStructurePage })));
 const ShiftAttendancePage = lazy(() => import('./routes/_authenticated/admin.hr.shift-attendance').then(m => ({ default: m.ShiftAttendancePage })));
 const LightManagerPage = lazy(() => import('./routes/_authenticated/admin.light').then(m => ({ default: m.LightManagerPage })));
+// Teacher pages
+const TeacherClassesPage = lazy(() => import('./routes/_authenticated/admin.teacher.classes'));
+const TeacherAttendancePage = lazy(() => import('./routes/_authenticated/admin.teacher.attendance'));
+const TeacherAssignmentsPage = lazy(() => import('./routes/_authenticated/admin.teacher.assignments'));
+const TeacherGradebookPage = lazy(() => import('./routes/_authenticated/admin.teacher.gradebook'));
+const TeacherResourcesPage = lazy(() => import('./routes/_authenticated/admin.teacher.resources'));
+const TeacherLearningMaterialsPage = lazy(() => import('./routes/_authenticated/admin.teacher.learning-materials'));
+const TeacherExaminationsPage = lazy(() => import('./routes/_authenticated/admin.teacher.examinations'));
+const TeacherResultsPage = lazy(() => import('./routes/_authenticated/admin.teacher.results'));
+const TeacherStudentsPage = lazy(() => import('./routes/_authenticated/admin.teacher.students'));
+const TeacherParentsPage = lazy(() => import('./routes/_authenticated/admin.teacher.parents'));
+
+// Shared pages
+const MessagesPage = lazy(() => import('./routes/_authenticated/admin.messages'));
+const CalendarPage = lazy(() => import('./routes/_authenticated/admin.calendar'));
+const AcademicsPeoplePage = lazy(() => import('./routes/_authenticated/admin.academics.people'));
+const AcademicsStudentsPage = lazy(() => import('./routes/_authenticated/admin.academics.students'));
+const CommunicationNoticesPage = lazy(() => import('./routes/_authenticated/admin.communication.notices'));
 
 function LazyPage({ Component }: { Component: React.LazyExoticComponent<React.ComponentType> }) {
   return (
@@ -166,6 +184,23 @@ export default function App() {
             <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
             <Route path="hr/shift-attendance" element={<LazyPage Component={ShiftAttendancePage} />} />
             <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
+            {/* Teacher portal pages */}
+            <Route path="teacher/classes" element={<LazyPage Component={TeacherClassesPage} />} />
+            <Route path="teacher/attendance" element={<LazyPage Component={TeacherAttendancePage} />} />
+            <Route path="teacher/assignments" element={<LazyPage Component={TeacherAssignmentsPage} />} />
+            <Route path="teacher/gradebook" element={<LazyPage Component={TeacherGradebookPage} />} />
+            <Route path="teacher/resources" element={<LazyPage Component={TeacherResourcesPage} />} />
+            <Route path="teacher/learning-materials" element={<LazyPage Component={TeacherLearningMaterialsPage} />} />
+            <Route path="teacher/examinations" element={<LazyPage Component={TeacherExaminationsPage} />} />
+            <Route path="teacher/results" element={<LazyPage Component={TeacherResultsPage} />} />
+            <Route path="teacher/students" element={<LazyPage Component={TeacherStudentsPage} />} />
+            <Route path="teacher/parents" element={<LazyPage Component={TeacherParentsPage} />} />
+            {/* Shared pages */}
+            <Route path="messages" element={<LazyPage Component={MessagesPage} />} />
+            <Route path="calendar" element={<LazyPage Component={CalendarPage} />} />
+            <Route path="academics/people" element={<LazyPage Component={AcademicsPeoplePage} />} />
+            <Route path="academics/students" element={<LazyPage Component={AcademicsStudentsPage} />} />
+            <Route path="communication/notices" element={<LazyPage Component={CommunicationNoticesPage} />} />
           </Route>
         </Route>
 

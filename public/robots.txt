@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /auth
+Disallow: /register
+Disallow: /403
+
+Sitemap: https://starcoachinginstitute.com.np/sitemap.xml

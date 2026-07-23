@@ -56,6 +56,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
   };
 
   const isActive = (path: string) => {
+    if (path === '/admin' || path === '/') {
+      return location.pathname === path;
+    }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
