@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
-import { Shield, LayoutDashboard, Users, Wallet, MessageCircle, GraduationCap, Eye, Bell } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Wallet, Eye } from "lucide-react";
 
-export type DemoRole = "super_admin" | "student" | "teacher" | "parent" | "whatsapp" | "admission" | "accountant" | "reception";
+export type DemoRole = "super_admin" | "student" | "teacher" | "parent" | "accountant";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -37,10 +37,7 @@ export const DEMO_ROLES: { icon: ComponentType<{ className?: string }>; label: s
   { icon: Users, label: "Teacher", desc: "LMS & homework", to: "/dashboard/teacher", role: "teacher", color: "from-orange-500 to-orange-700" },
   { icon: LayoutDashboard, label: "Student", desc: "Dashboard & courses", to: "/dashboard/student", role: "student", color: "from-blue-500 to-blue-700" },
   { icon: Wallet, label: "Accountant", desc: "Fees & ledger", to: "/dashboard/accountant", role: "accountant", color: "from-indigo-500 to-indigo-700" },
-  { icon: MessageCircle, label: "WhatsApp", desc: "Marketing & broadcast", to: "/admin/marketing/whatsapp", role: "whatsapp", color: "from-green-600 to-green-800" },
-  { icon: GraduationCap, label: "Admission", desc: "Public admission form", to: "/admission", role: "admission", color: "from-red-500 to-red-700" },
-  { icon: Eye, label: "Parent", desc: "Child progress", to: "/dashboard/student", role: "parent", color: "from-green-500 to-green-700" },
-  { icon: Bell, label: "Reception", desc: "Visitors & inquiries", to: "/admin", role: "reception", color: "from-cyan-500 to-cyan-700" },
+  { icon: Eye, label: "Parent", desc: "Child progress", to: "/dashboard/parent", role: "parent", color: "from-green-500 to-green-700" },
 ];
 
 export function setDemoMode(role: DemoRole, redirectTo: string) {

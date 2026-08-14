@@ -19,7 +19,8 @@ const PUBLIC_ROUTES: SitemapEntry[] = [
   { path: "/gallery", changefreq: "monthly", priority: 0.6 },
   { path: "/contact", changefreq: "monthly", priority: 0.8 },
   { path: "/admission", changefreq: "weekly", priority: 0.9 },
-  { path: "/auth", changefreq: "yearly", priority: 0.3 },
+  { path: "/register", changefreq: "yearly", priority: 0.3 },
+  { path: "/auth", changefreq: "yearly", priority: 0.2 },
 ];
 
 function generateSitemapXml(): string {

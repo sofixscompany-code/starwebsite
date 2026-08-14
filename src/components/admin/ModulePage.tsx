@@ -121,7 +121,7 @@ export type ModuleConfig = {
     tone?: "purple" | "orange" | "success" | "info" | "danger" | "warning";
   }[];
   columns: { key: string; label: string }[];
-  rows: Record<string, string | number>[];
+  rows: any[];
   addLabel?: string;
   extra?: React.ReactNode;
 };

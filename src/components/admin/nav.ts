@@ -20,7 +20,7 @@ export type NavSection = {
   roles?: string[];
 };
 
-const ALL_ROLES: string[] = ["super_admin", "branch_admin", "teacher", "student", "parent", "accountant", "receptionist"];
+export const ALL_ROLES: string[] = ["super_admin", "teacher", "student", "parent", "accountant"];
 
 export const NAV_SECTIONS: NavSection[] = [
   // ========== MAIN (all roles) ==========
@@ -50,10 +50,10 @@ export const NAV_SECTIONS: NavSection[] = [
     header: "People & Communication",
     roles: ["teacher"],
     items: [
-      { label: "Students", to: "/admin/teacher/students", icon: Users, roles: ["teacher"] },
+      { label: "Students", to: "/admin/teacher/students", icon: GraduationCap, roles: ["teacher"] },
       { label: "Parents", to: "/admin/teacher/parents", icon: Baby, roles: ["teacher"] },
       { label: "Messaging", to: "/admin/messages", icon: MessageSquare, roles: ["teacher"] },
-      { label: "Notices & Events", to: "/admin/notices", icon: Megaphone, roles: ["teacher"] },
+      { label: "Notices & Events", to: "/admin/communication/notices", icon: Megaphone, roles: ["teacher"] },
     ],
   },
   {
@@ -64,166 +64,195 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
 
-  // ========== ACADEMICS (super_admin, branch_admin) ==========
+  // ========== STUDENT ==========
   {
     header: "Academics",
-    roles: ["super_admin", "branch_admin"],
+    roles: ["student"],
     items: [
-      { label: "People", to: "/admin/academics/people", icon: Users, roles: ["super_admin", "branch_admin"] },
-      { label: "Students", to: "/admin/academics/students", icon: GraduationCap, roles: ["super_admin", "branch_admin"] },
+      { label: "My Courses", to: "/admin/courses", icon: BookOpen, roles: ["student"] },
+      { label: "LMS", to: "/admin/lms", icon: PlayCircle, badge: "NEW", roles: ["student"] },
+      { label: "Live Classes", to: "/admin/live", icon: Radio, roles: ["student"] },
+      { label: "Homework", to: "/admin/homework", icon: FileText, roles: ["student"] },
+      { label: "Assignments", to: "/admin/assignments", icon: FileText, roles: ["student"] },
     ],
   },
-
-  // ========== COMMUNICATION (super_admin, branch_admin, teacher) ==========
-  {
-    header: "Communication",
-    roles: ["super_admin", "teacher", "branch_admin"],
-    items: [
-      { label: "Notices & Events", to: "/admin/communication/notices", icon: Bell, roles: ["super_admin", "teacher", "branch_admin"] },
-      { label: "Support / Help", to: "/admin/support", icon: LifeBuoy },
-    ],
-  },
-
-  // ========== ADMISSIONS ==========
-  {
-    header: "Admissions",
-    roles: ["super_admin", "branch_admin"],
-    items: [
-      { label: "Admissions", to: "/admin/admissions", icon: FileText, roles: ["super_admin", "user"], badge: 24 },
-      { label: "Reception", to: "/admin/reception", icon: Users, roles: ["receptionist", "super_admin"] },
-    ],
-  },
-
-  // ========== STUDENT MANAGEMENT ==========
-  {
-    header: "Student Management",
-    roles: ["super_admin", "branch_admin"],
-    items: [
-      { label: "Students", to: "/admin/students", icon: GraduationCap, roles: ["super_admin", "branch_admin"] },
-      { label: "Teachers", to: "/admin/teachers", icon: Users, roles: ["super_admin", "branch_admin"] },
-      { label: "Parents", to: "/admin/parents", icon: Baby, roles: ["super_admin", "branch_admin"] },
-    ],
-  },
-
-  // ========== COURSES & STUDY ==========
-  {
-    header: "Courses & Study",
-    roles: ["super_admin", "user", "student"],
-    items: [
-      { label: "Courses", to: "/admin/courses", icon: BookOpen, roles: ["super_admin", "user"] },
-      { label: "LMS", to: "/admin/lms", icon: PlayCircle, badge: "NEW", roles: ["super_admin", "user"] },
-      { label: "Radio", to: "/admin/live", icon: Radio, roles: ["super_admin", "user", "student"] },
-      { label: "Homework", to: "/admin/homework", icon: FileText, roles: ["super_admin", "student"] },
-      { label: "Assignments", to: "/admin/assignments", icon: FileText, roles: ["super_admin", "student"] },
-    ],
-  },
-
-  // ========== EXAMS / ATTENDANCE ==========
   {
     header: "Attendance & Exams",
-    roles: ["super_admin", "student"],
+    roles: ["student"],
     items: [
-      { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck },
-      { label: "Exams", to: "/admin/exams", icon: FileText },
-      { label: "Results", to: "/admin/results", icon: Trophy },
-      { label: "Certificates", to: "/admin/certificates", icon: Award },
+      { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck, roles: ["student"] },
+      { label: "Exams", to: "/admin/exams", icon: FileText, roles: ["student"] },
+      { label: "Results", to: "/admin/results", icon: Trophy, roles: ["student"] },
+      { label: "Certificates", to: "/admin/certificates", icon: Award, roles: ["student"] },
     ],
   },
-
-  // === FINANCE ===
   {
     header: "Finance",
-    roles: ["super_admin", "user", "accountant", "receptionist"],
+    roles: ["student"],
     items: [
-      { label: "Accounting", to: "/admin/accounting", icon: Wallet },
-      { label: "Payments", to: "/admin/payments", icon: CreditCard },
-      { label: "Fee Structure", to: "/admin/fee-structure", icon: Receipt },
+      { label: "Fee Structure", to: "/admin/fee-structure", icon: Receipt, roles: ["student"] },
+      { label: "Payments", to: "/admin/payments", icon: CreditCard, roles: ["student"] },
+    ],
+  },
+  {
+    header: "Communication",
+    roles: ["student"],
+    items: [
+      { label: "Notices & Events", to: "/admin/communication/notices", icon: Bell, roles: ["student"] },
+      { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["student"] },
     ],
   },
 
-  // === FACILITIES ===
+  // ========== PARENT ==========
+  {
+    header: "Overview",
+    roles: ["parent"],
+    items: [
+      { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck, roles: ["parent"] },
+      { label: "Results", to: "/admin/results", icon: Trophy, roles: ["parent"] },
+      { label: "Fee Payments", to: "/admin/payments", icon: CreditCard, roles: ["parent"] },
+    ],
+  },
+  {
+    header: "Communication",
+    roles: ["parent"],
+    items: [
+      { label: "Notices & Events", to: "/admin/communication/notices", icon: Megaphone, roles: ["parent"] },
+      { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["parent"] },
+    ],
+  },
+
+  // ========== ACCOUNTANT ==========
+  {
+    header: "Finance",
+    roles: ["accountant"],
+    items: [
+      { label: "Accounting", to: "/admin/accounting", icon: Wallet, roles: ["accountant"] },
+      { label: "Payments", to: "/admin/payments", icon: CreditCard, roles: ["accountant"] },
+      { label: "Fee Structure", to: "/admin/fee-structure", icon: Receipt, roles: ["accountant"] },
+      { label: "Payroll", to: "/admin/hr/payroll", icon: BookMarked, roles: ["accountant"] },
+    ],
+  },
+  {
+    header: "Reports",
+    roles: ["accountant"],
+    items: [
+      { label: "Reports", to: "/admin/reports", icon: BarChart3, roles: ["accountant"] },
+      { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["accountant"] },
+    ],
+  },
+
+  // ========== SUPER ADMIN ==========
+  {
+    header: "Academics",
+    roles: ["super_admin"],
+    items: [
+      { label: "People", to: "/admin/academics/people", icon: Users, roles: ["super_admin"] },
+      { label: "Students", to: "/admin/academics/students", icon: GraduationCap, roles: ["super_admin"] },
+      { label: "Admissions", to: "/admin/admissions", icon: FileText, badge: 24, roles: ["super_admin"] },
+    ],
+  },
+  {
+    header: "Student Management",
+    roles: ["super_admin"],
+    items: [
+      { label: "Students", to: "/admin/students", icon: GraduationCap, roles: ["super_admin"] },
+      { label: "Teachers", to: "/admin/teachers", icon: Users, roles: ["super_admin"] },
+      { label: "Parents", to: "/admin/parents", icon: Baby, roles: ["super_admin"] },
+    ],
+  },
+  {
+    header: "Courses & Study",
+    roles: ["super_admin"],
+    items: [
+      { label: "Courses", to: "/admin/courses", icon: BookOpen, roles: ["super_admin"] },
+      { label: "LMS", to: "/admin/lms", icon: PlayCircle, badge: "NEW", roles: ["super_admin"] },
+      { label: "Live Classes", to: "/admin/live", icon: Radio, roles: ["super_admin"] },
+      { label: "Homework", to: "/admin/homework", icon: FileText, roles: ["super_admin"] },
+      { label: "Assignments", to: "/admin/assignments", icon: FileText, roles: ["super_admin"] },
+    ],
+  },
+  {
+    header: "Attendance & Exams",
+    roles: ["super_admin"],
+    items: [
+      { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck, roles: ["super_admin"] },
+      { label: "Exams", to: "/admin/exams", icon: FileText, roles: ["super_admin"] },
+      { label: "Results", to: "/admin/results", icon: Trophy, roles: ["super_admin"] },
+      { label: "Certificates", to: "/admin/certificates", icon: Award, roles: ["super_admin"] },
+      { label: "ID Cards", to: "/admin/id-cards", icon: Shield, roles: ["super_admin"] },
+    ],
+  },
+  {
+    header: "Finance",
+    roles: ["super_admin"],
+    items: [
+      { label: "Accounting", to: "/admin/accounting", icon: Wallet, roles: ["super_admin"] },
+      { label: "Payments", to: "/admin/payments", icon: CreditCard, roles: ["super_admin"] },
+      { label: "Fee Structure", to: "/admin/fee-structure", icon: Receipt, roles: ["super_admin"] },
+      { label: "Payroll", to: "/admin/hr/payroll", icon: BookMarked, roles: ["super_admin"] },
+    ],
+  },
   {
     header: "Facilities",
     roles: ["super_admin"],
     items: [
-      { label: "Hostel", to: "/admin/hostel", icon: Trophy },
+      { label: "Hostel", to: "/admin/hostel", icon: Trophy, roles: ["super_admin"] },
+      { label: "Transport", to: "/admin/transport", icon: BookMarked, roles: ["super_admin"] },
+      { label: "Library", to: "/admin/library", icon: BookOpen, roles: ["super_admin"] },
     ],
   },
-  {
-    header: "Transportation",
-    roles: ["super_admin"],
-    items: [
-      { label: "Transport", to: "/admin/transport", icon: BookMarked },
-      { label: "Library", to: "/admin/library", icon: BookOpen },
-    ],
-  },
-
-  // === COMMUNICATION (secondary) ===
-  {
-    header: "Marketing",
-    roles: ["super_admin"],
-    items: [
-      { label: "Notices", to: "/admin/notices", icon: Megaphone },
-    ],
-  },
-
-  // === REPORTS ===
   {
     header: "Reports & Analytics",
     roles: ["super_admin"],
     items: [
-      { label: "Reports", to: "/admin/reports", icon: BarChart3 },
-      { label: "Analytics", to: "/admin/analytics", icon: LineChart },
+      { label: "Reports", to: "/admin/reports", icon: BarChart3, roles: ["super_admin"] },
+      { label: "Analytics", to: "/admin/analytics", icon: LineChart, roles: ["super_admin"] },
     ],
   },
-
-  // === HR ===
+  {
+    header: "Communication",
+    roles: ["super_admin"],
+    items: [
+      { label: "Notices & Events", to: "/admin/communication/notices", icon: Bell, roles: ["super_admin"] },
+      { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["super_admin"] },
+    ],
+  },
   {
     header: "Human Resources",
     roles: ["super_admin"],
     items: [
-      { label: "Employees", to: "/admin/hr/employees", icon: Users },
-      { label: "Departments", to: "/admin/hr/departments", icon: BookMarked },
-      { label: "Leaves", to: "/admin/hr/leaves", icon: FileText },
+      { label: "Employees", to: "/admin/hr/employees", icon: Users, roles: ["super_admin"] },
+      { label: "Departments", to: "/admin/hr/departments", icon: BookMarked, roles: ["super_admin"] },
+      { label: "Leaves", to: "/admin/hr/leaves", icon: FileText, roles: ["super_admin"] },
+      { label: "Shift Attendance", to: "/admin/hr/shift-attendance", icon: CalendarCheck, roles: ["super_admin"] },
     ],
   },
-  {
-    header: "Attendance (HR)",
-    roles: ["super_admin"],
-    items: [
-      { label: "Shift Attendance", to: "/admin/hr/shift-attendance", icon: CalendarCheck },
-      { label: "Payroll", to: "/admin/hr/payroll", icon: Wallet },
-    ],
-  },
-
-  // === CRM ===
   {
     header: "CRM",
     roles: ["super_admin"],
     items: [
-      { label: "Leads", to: "/admin/crm/leads", icon: BookOpen, badge: 13 },
-      { label: "Inquiries", to: "/admin/notices", icon: MessageSquare },
-      { label: "Visitors", to: "/admin/crm/visitors", icon: Users },
-      { label: "Counselling", to: "/admin/crm/counselling", icon: Trophy },
+      { label: "Leads", to: "/admin/crm/leads", icon: BookOpen, badge: 13, roles: ["super_admin"] },
+      { label: "Inquiries", to: "/admin/crm/inquiries", icon: MessageSquare, roles: ["super_admin"] },
+      { label: "Visitors", to: "/admin/crm/visitors", icon: Users, roles: ["super_admin"] },
+      { label: "Counselling", to: "/admin/crm/counselling", icon: Trophy, roles: ["super_admin"] },
     ],
   },
-
-  // === SYSTEM ===
   {
     header: "System",
     roles: ["super_admin"],
     items: [
-      { label: "Users", to: "/admin/users", icon: Users },
-      { label: "Roles", to: "/admin/roles", icon: Users },
-      { label: "Permissions", to: "/admin/permissions", icon: Shield },
-      { label: "Branches", to: "/admin/branches", icon: BookMarked },
-      { label: "Settings", to: "/admin/settings", icon: Settings },
-      { label: "Audit Logs", to: "/admin/audit", icon: FileText },
-      { label: "AI Assistant", to: "/admin/ai", icon: Trophy },
-      { label: "Backup", to: "/admin/backup", icon: FileText, badge: "New" },
-      { label: "Integration", to: "/admin/integrations", icon: Radio },
-      { label: "API Keys", to: "/admin/api-keys", icon: Shield },
-      { label: "Feature Slides", to: "/admin/light", icon: Image },
+      { label: "Users", to: "/admin/users", icon: Users, roles: ["super_admin"] },
+      { label: "Roles", to: "/admin/roles", icon: Shield, roles: ["super_admin"] },
+      { label: "Permissions", to: "/admin/permissions", icon: Shield, roles: ["super_admin"] },
+      { label: "Branches", to: "/admin/branches", icon: BookMarked, roles: ["super_admin"] },
+      { label: "Settings", to: "/admin/settings", icon: Settings, roles: ["super_admin"] },
+      { label: "Audit Logs", to: "/admin/audit", icon: FileText, roles: ["super_admin"] },
+      { label: "AI Assistant", to: "/admin/ai", icon: Trophy, roles: ["super_admin"] },
+      { label: "Backup", to: "/admin/backup", icon: FileText, badge: "New", roles: ["super_admin"] },
+      { label: "Integrations", to: "/admin/integrations", icon: Radio, roles: ["super_admin"] },
+      { label: "API Keys", to: "/admin/api-keys", icon: Shield, roles: ["super_admin"] },
+      { label: "Feature Slides", to: "/admin/light", icon: Image, roles: ["super_admin"] },
     ],
   },
 ];

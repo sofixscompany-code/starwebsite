@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs, Kanban } from "@/components/admin/ui";
+import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs } from "@/components/admin/ui";
 
 const EXAMS = [
   { id: "1", name: "IOE Mock #14", course: "Nepal Police", date: "2024-10-10", questions: 100, marks: 100, duration: "2 hrs", attempts: 42, type: "MCQ", status: "Scheduled", negative: true },

@@ -461,14 +461,14 @@ export function DataTable({
   columns,
   actions,
 }: {
-  rows: Record<string, unknown>[];
+  rows: any[];
   columns: {
     key: string;
     label: string;
-    render?: (row: Record<string, unknown>) => React.ReactNode;
+    render?: (row: any) => React.ReactNode;
     className?: string;
   }[];
-  actions?: (row: Record<string, unknown>) => React.ReactNode;
+  actions?: (row: any) => React.ReactNode;
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
