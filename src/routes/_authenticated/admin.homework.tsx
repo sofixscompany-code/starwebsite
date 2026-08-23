@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { PenSquare, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 export function HomeworkPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="homework"
       title="Homework"
       subtitle="Assign, track and evaluate daily homework"
       stats={[

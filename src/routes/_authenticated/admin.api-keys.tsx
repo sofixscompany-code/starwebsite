@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { KeyRound, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
 
 export function ApiKeysPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="api_keys"
       title="API Keys"
       subtitle="Manage API keys for external integrations"
       stats={[

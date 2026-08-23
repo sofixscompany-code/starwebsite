@@ -1,24 +1,122 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { useState } from "react";
 import {
-  Trophy, TrendingUp, Award, Clock, Download, Search, Filter,
-  Eye, Edit, Printer, Share2, FileText, BarChart3, Star,
-  MoreVertical, ChevronRight, Medal,
+  Trophy,
+  TrendingUp,
+  Award,
+  Clock,
+  Download,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Printer,
+  Share2,
+  FileText,
+  BarChart3,
+  Star,
+  MoreVertical,
+  ChevronRight,
+  Medal,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LineChart,
+  Line,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs, Modal } from "@/components/admin/ui";
 
 const RESULTS = [
-  { id: "1", exam: "IOE Mock #13", course: "Nepal Police", date: "2024-09-25", appeared: 45, passed: 38, avgScore: 78, topper: "Aarav S.", topperScore: 96, status: "Published", merit: true },
-  { id: "2", exam: "Bank Reasoning", course: "Bank PO", date: "2024-10-08", appeared: 30, passed: 28, avgScore: 82, topper: "Sita R.", topperScore: 91, status: "Published", merit: true },
-  { id: "3", exam: "Loksewa Prelim", course: "Loksewa", date: "2024-09-28", appeared: 32, passed: 24, avgScore: 72, topper: "Anisha M.", topperScore: 89, status: "Published", merit: true },
-  { id: "4", exam: "APF Fitness", course: "APF", date: "2024-10-05", appeared: 35, passed: 30, avgScore: 75, topper: "Krishna A.", topperScore: 88, status: "Published", merit: false },
-  { id: "5", exam: "IOE Mock #14", course: "Nepal Police", date: "2024-10-10", appeared: 42, passed: 0, avgScore: 0, topper: "—", topperScore: 0, status: "Pending", merit: false },
-  { id: "6", exam: "Army Written", course: "Nepal Army", date: "2024-10-12", appeared: 0, passed: 0, avgScore: 0, topper: "—", topperScore: 0, status: "Scheduled", merit: false },
+  {
+    id: "1",
+    exam: "IOE Mock #13",
+    course: "Nepal Police",
+    date: "2024-09-25",
+    appeared: 45,
+    passed: 38,
+    avgScore: 78,
+    topper: "Aarav S.",
+    topperScore: 96,
+    status: "Published",
+    merit: true,
+  },
+  {
+    id: "2",
+    exam: "Bank Reasoning",
+    course: "Bank PO",
+    date: "2024-10-08",
+    appeared: 30,
+    passed: 28,
+    avgScore: 82,
+    topper: "Sita R.",
+    topperScore: 91,
+    status: "Published",
+    merit: true,
+  },
+  {
+    id: "3",
+    exam: "Loksewa Prelim",
+    course: "Loksewa",
+    date: "2024-09-28",
+    appeared: 32,
+    passed: 24,
+    avgScore: 72,
+    topper: "Anisha M.",
+    topperScore: 89,
+    status: "Published",
+    merit: true,
+  },
+  {
+    id: "4",
+    exam: "APF Fitness",
+    course: "APF",
+    date: "2024-10-05",
+    appeared: 35,
+    passed: 30,
+    avgScore: 75,
+    topper: "Krishna A.",
+    topperScore: 88,
+    status: "Published",
+    merit: false,
+  },
+  {
+    id: "5",
+    exam: "IOE Mock #14",
+    course: "Nepal Police",
+    date: "2024-10-10",
+    appeared: 42,
+    passed: 0,
+    avgScore: 0,
+    topper: "—",
+    topperScore: 0,
+    status: "Pending",
+    merit: false,
+  },
+  {
+    id: "6",
+    exam: "Army Written",
+    course: "Nepal Army",
+    date: "2024-10-12",
+    appeared: 0,
+    passed: 0,
+    avgScore: 0,
+    topper: "—",
+    topperScore: 0,
+    status: "Scheduled",
+    merit: false,
+  },
 ];
 
 const scoreTrend = [
@@ -42,7 +140,10 @@ export function ResultsPage() {
   const [meritOpen, setMeritOpen] = useState(false);
 
   const filtered = RESULTS.filter(
-    (r) => !q || r.exam.toLowerCase().includes(q.toLowerCase()) || r.course.toLowerCase().includes(q.toLowerCase()),
+    (r) =>
+      !q ||
+      r.exam.toLowerCase().includes(q.toLowerCase()) ||
+      r.course.toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
@@ -52,8 +153,12 @@ export function ResultsPage() {
         subtitle="Merit lists, rank analysis, and result publications."
         actions={
           <>
-            <button className="ap-btn-ghost"><Download className="w-4 h-4" /> Export</button>
-            <button className="ap-btn"><FileText className="w-4 h-4" /> Publish Results</button>
+            <button className="ap-btn-ghost">
+              <Download className="w-4 h-4" /> Export
+            </button>
+            <button className="ap-btn">
+              <FileText className="w-4 h-4" /> Publish Results
+            </button>
           </>
         }
       />
@@ -81,51 +186,111 @@ export function ResultsPage() {
             <Toolbar>
               <div className="relative flex-1 max-w-xs">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ap-muted))]" />
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search results..." className="ap-input pl-9" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search results..."
+                  className="ap-input pl-9"
+                />
               </div>
-              <button className="ap-btn-ghost"><Filter className="w-4 h-4" /> Filters</button>
-              <select className="ap-input max-w-[160px]"><option>All courses</option><option>Nepal Police</option><option>Loksewa</option><option>Bank PO</option></select>
-              <select className="ap-input max-w-[160px]"><option>All status</option><option>Published</option><option>Pending</option><option>Scheduled</option></select>
+              <button className="ap-btn-ghost">
+                <Filter className="w-4 h-4" /> Filters
+              </button>
+              <select className="ap-input max-w-[160px]">
+                <option>All courses</option>
+                <option>Nepal Police</option>
+                <option>Loksewa</option>
+                <option>Bank PO</option>
+              </select>
+              <select className="ap-input max-w-[160px]">
+                <option>All status</option>
+                <option>Published</option>
+                <option>Pending</option>
+                <option>Scheduled</option>
+              </select>
             </Toolbar>
 
             <DataTable
               rows={filtered}
               columns={[
-                { key: "exam", label: "Exam", render: (r) => <span className="font-bold">{r.exam}</span> },
+                {
+                  key: "exam",
+                  label: "Exam",
+                  render: (r) => <span className="font-bold">{r.exam}</span>,
+                },
                 { key: "course", label: "Course" },
                 { key: "date", label: "Date" },
                 { key: "appeared", label: "Appeared" },
-                { key: "passed", label: "Passed", render: (r) => r.passed > 0 ? <span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span> : "—" },
                 {
-                  key: "avgScore", label: "Avg Score",
-                  render: (r) => r.avgScore > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 rounded-full bg-[hsl(var(--ap-border))]">
-                        <div className="h-1.5 rounded-full ap-grad" style={{ width: `${r.avgScore}%` }} />
+                  key: "passed",
+                  label: "Passed",
+                  render: (r) =>
+                    r.passed > 0 ? (
+                      <span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span>
+                    ) : (
+                      "—"
+                    ),
+                },
+                {
+                  key: "avgScore",
+                  label: "Avg Score",
+                  render: (r) =>
+                    r.avgScore > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-1.5 rounded-full bg-[hsl(var(--ap-border))]">
+                          <div
+                            className="h-1.5 rounded-full ap-grad"
+                            style={{ width: `${r.avgScore}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold">{r.avgScore}%</span>
                       </div>
-                      <span className="text-xs font-bold">{r.avgScore}%</span>
-                    </div>
-                  ) : "—",
+                    ) : (
+                      "—"
+                    ),
                 },
                 {
-                  key: "topper", label: "Topper",
-                  render: (r) => r.topper !== "—" ? (
-                    <div>
-                      <p className="font-semibold">{r.topper}</p>
-                      <p className="text-xs text-[hsl(var(--ap-success))]">{r.topperScore}/100</p>
-                    </div>
-                  ) : "—",
+                  key: "topper",
+                  label: "Topper",
+                  render: (r) =>
+                    r.topper !== "—" ? (
+                      <div>
+                        <p className="font-semibold">{r.topper}</p>
+                        <p className="text-xs text-[hsl(var(--ap-success))]">{r.topperScore}/100</p>
+                      </div>
+                    ) : (
+                      "—"
+                    ),
                 },
                 {
-                  key: "status", label: "Status",
-                  render: (r) => <Badge tone={r.status === "Published" ? "success" : r.status === "Pending" ? "warning" : "muted"}>{r.status}</Badge>,
+                  key: "status",
+                  label: "Status",
+                  render: (r) => (
+                    <Badge
+                      tone={
+                        r.status === "Published"
+                          ? "success"
+                          : r.status === "Pending"
+                            ? "warning"
+                            : "muted"
+                      }
+                    >
+                      {r.status}
+                    </Badge>
+                  ),
                 },
               ]}
               actions={() => (
                 <div className="flex gap-1">
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"><Eye className="w-3.5 h-3.5" /></button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"><Printer className="w-3.5 h-3.5" /></button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"><Share2 className="w-3.5 h-3.5" /></button>
+                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
+                    <Printer className="w-3.5 h-3.5" />
+                  </button>
+                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
             />
@@ -134,22 +299,90 @@ export function ResultsPage() {
 
         {activeTab === "merit" && (
           <>
-            <Panel title="Merit List — IOE Mock #13" subtitle="Nepal Police · 45 appeared · 38 passed">
+            <Panel
+              title="Merit List — IOE Mock #13"
+              subtitle="Nepal Police · 45 appeared · 38 passed"
+            >
               <div className="space-y-2">
                 {[
-                  { rank: 1, name: "Aarav Sharma", score: 96, course: "Nepal Police", batch: "B-12" },
-                  { rank: 2, name: "Anisha Magar", score: 94, course: "Nepal Police", batch: "B-12" },
-                  { rank: 3, name: "Krishna Adhikari", score: 91, course: "Nepal Police", batch: "B-12" },
-                  { rank: 4, name: "Priya Karki", score: 88, course: "Nepal Police", batch: "B-12" },
-                  { rank: 5, name: "Nisha Basnet", score: 85, course: "Nepal Police", batch: "B-12" },
-                  { rank: 6, name: "Rohan Thapa", score: 82, course: "Nepal Police", batch: "B-12" },
-                  { rank: 7, name: "Bikash Gurung", score: 79, course: "Nepal Police", batch: "B-12" },
-                  { rank: 8, name: "Manisha Shrestha", score: 76, course: "Nepal Police", batch: "B-12" },
-                  { rank: 9, name: "Suman Poudel", score: 73, course: "Nepal Police", batch: "B-12" },
-                  { rank: 10, name: "Rajesh Hamal", score: 70, course: "Nepal Police", batch: "B-12" },
+                  {
+                    rank: 1,
+                    name: "Aarav Sharma",
+                    score: 96,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 2,
+                    name: "Anisha Magar",
+                    score: 94,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 3,
+                    name: "Krishna Adhikari",
+                    score: 91,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 4,
+                    name: "Priya Karki",
+                    score: 88,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 5,
+                    name: "Nisha Basnet",
+                    score: 85,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 6,
+                    name: "Rohan Thapa",
+                    score: 82,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 7,
+                    name: "Bikash Gurung",
+                    score: 79,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 8,
+                    name: "Manisha Shrestha",
+                    score: 76,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 9,
+                    name: "Suman Poudel",
+                    score: 73,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
+                  {
+                    rank: 10,
+                    name: "Rajesh Hamal",
+                    score: 70,
+                    course: "Nepal Police",
+                    batch: "B-12",
+                  },
                 ].map((m) => (
-                  <div key={m.rank} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] transition">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black ${m.rank === 1 ? "ap-grad" : m.rank === 2 ? "bg-[hsl(var(--ap-orange))]" : m.rank === 3 ? "bg-[hsl(var(--ap-info))]" : "bg-[hsl(var(--ap-border))] text-[hsl(var(--ap-muted))]"}`}>
+                  <div
+                    key={m.rank}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] transition"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black ${m.rank === 1 ? "ap-grad" : m.rank === 2 ? "bg-[hsl(var(--ap-orange))]" : m.rank === 3 ? "bg-[hsl(var(--ap-info))]" : "bg-[hsl(var(--ap-border))] text-[hsl(var(--ap-muted))]"}`}
+                    >
                       {m.rank <= 3 ? <Medal className="w-4 h-4" /> : m.rank}
                     </div>
                     <div className="flex-1">
@@ -157,7 +390,9 @@ export function ResultsPage() {
                       <p className="text-xs text-[hsl(var(--ap-muted))]">{m.batch}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-black text-[hsl(var(--ap-success))]">{m.score}/100</p>
+                      <p className="text-lg font-black text-[hsl(var(--ap-success))]">
+                        {m.score}/100
+                      </p>
                       <p className="text-xs text-[hsl(var(--ap-muted))]">{m.course}</p>
                     </div>
                   </div>
@@ -176,9 +411,30 @@ export function ResultsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                     <XAxis dataKey="exam" stroke="hsl(var(--ap-muted))" fontSize={11} />
                     <YAxis domain={[60, 100]} stroke="hsl(var(--ap-muted))" fontSize={11} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                    <Line type="monotone" dataKey="avg" name="Average" stroke="hsl(262 83% 58%)" strokeWidth={2} dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="pass" name="Pass %" stroke="hsl(152 60% 42%)" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 5" />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--ap-panel))",
+                        border: "1px solid hsl(var(--ap-border))",
+                        borderRadius: 12,
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="avg"
+                      name="Average"
+                      stroke="hsl(262 83% 58%)"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pass"
+                      name="Pass %"
+                      stroke="hsl(152 60% 42%)"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      strokeDasharray="5 5"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -190,8 +446,20 @@ export function ResultsPage() {
                     <PolarGrid stroke="hsl(var(--ap-border))" />
                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <Radar name="Score" dataKey="score" stroke="hsl(262 83% 58%)" fill="hsl(262 83% 58%)" fillOpacity={0.3} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
+                    <Radar
+                      name="Score"
+                      dataKey="score"
+                      stroke="hsl(262 83% 58%)"
+                      fill="hsl(262 83% 58%)"
+                      fillOpacity={0.3}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--ap-panel))",
+                        border: "1px solid hsl(var(--ap-border))",
+                        borderRadius: 12,
+                      }}
+                    />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -214,13 +482,28 @@ export function ResultsPage() {
                     </div>
                   </div>
                   <div className="space-y-1 text-xs">
-                    <div className="flex justify-between"><span className="text-[hsl(var(--ap-muted))]">Appeared</span><span className="font-bold">{r.appeared}</span></div>
-                    <div className="flex justify-between"><span className="text-[hsl(var(--ap-muted))]">Passed</span><span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span></div>
-                    <div className="flex justify-between"><span className="text-[hsl(var(--ap-muted))]">Topper</span><span className="font-bold">{r.topper} ({r.topperScore})</span></div>
+                    <div className="flex justify-between">
+                      <span className="text-[hsl(var(--ap-muted))]">Appeared</span>
+                      <span className="font-bold">{r.appeared}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[hsl(var(--ap-muted))]">Passed</span>
+                      <span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[hsl(var(--ap-muted))]">Topper</span>
+                      <span className="font-bold">
+                        {r.topper} ({r.topperScore})
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <button className="ap-btn-ghost flex-1 text-xs"><Printer className="w-3.5 h-3.5" /> Print</button>
-                    <button className="ap-btn-ghost flex-1 text-xs"><Share2 className="w-3.5 h-3.5" /> Share</button>
+                    <button className="ap-btn-ghost flex-1 text-xs">
+                      <Printer className="w-3.5 h-3.5" /> Print
+                    </button>
+                    <button className="ap-btn-ghost flex-1 text-xs">
+                      <Share2 className="w-3.5 h-3.5" /> Share
+                    </button>
                   </div>
                 </div>
               ))}
@@ -231,5 +514,3 @@ export function ResultsPage() {
     </div>
   );
 }
-
-

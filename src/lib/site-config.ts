@@ -44,7 +44,12 @@ export const toppers = [
 ];
 
 export const faculty = [
-  { name: "Er. Bablu Yadav", role: "Managing Director", subject: "Engineering & Loksewa Mentor", initials: "BY" },
+  {
+    name: "Er. Bablu Yadav",
+    role: "Managing Director",
+    subject: "Engineering & Loksewa Mentor",
+    initials: "BY",
+  },
   { name: "Suraj Pandit", role: "Senior Faculty", subject: "Veterinary Science", initials: "SP" },
   { name: "Ramesh Yadav", role: "Senior Faculty", subject: "Staff Nurse / HA", initials: "RY" },
   { name: "Purushotam Mandal", role: "Faculty", subject: "Electrical Engineering", initials: "PM" },

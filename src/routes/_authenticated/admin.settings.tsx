@@ -1,10 +1,32 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { useState } from "react";
 import {
-  Cog, PlugZap, Users, History, Download, Search, Save, Upload,
-  ShieldCheck, KeyRound, Database, Bell, Mail, MessageSquare,
-  Palette, Globe, CreditCard, Cloud, MapPin, Camera, Lock, Video,
-  Eye, EyeOff, CheckCircle2, AlertTriangle,
+  Cog,
+  PlugZap,
+  Users,
+  History,
+  Download,
+  Search,
+  Save,
+  Upload,
+  ShieldCheck,
+  KeyRound,
+  Database,
+  Bell,
+  Mail,
+  MessageSquare,
+  Palette,
+  Globe,
+  CreditCard,
+  Cloud,
+  MapPin,
+  Camera,
+  Lock,
+  Video,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { StatCard, Panel, Badge, Tabs, Modal } from "@/components/admin/ui";
@@ -20,8 +42,12 @@ export function SettingsPage() {
         subtitle="Institute branding, integrations, security & system configuration."
         actions={
           <>
-            <button className="ap-btn-ghost"><Upload className="w-4 h-4" /> Import</button>
-            <button className="ap-btn"><Save className="w-4 h-4" /> Save Changes</button>
+            <button className="ap-btn-ghost">
+              <Upload className="w-4 h-4" /> Import
+            </button>
+            <button className="ap-btn">
+              <Save className="w-4 h-4" /> Save Changes
+            </button>
           </>
         }
       />
@@ -59,7 +85,9 @@ export function SettingsPage() {
                   ["PAN/VAT", "123456789"],
                 ].map(([label, value]) => (
                   <label key={label} className="block">
-                    <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">{label}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                      {label}
+                    </span>
                     <input defaultValue={value} className="ap-input mt-1" />
                   </label>
                 ))}
@@ -75,7 +103,9 @@ export function SettingsPage() {
                   ["Address", "Janakpurdham-5, Dhanusha, Nepal"],
                 ].map(([label, value]) => (
                   <label key={label} className="block">
-                    <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">{label}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                      {label}
+                    </span>
                     <input defaultValue={value} className="ap-input mt-1" />
                   </label>
                 ))}
@@ -84,7 +114,9 @@ export function SettingsPage() {
             <Panel title="Academic Settings">
               <div className="space-y-4">
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">Current Academic Year</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                    Current Academic Year
+                  </span>
                   <select className="ap-input mt-1" defaultValue="2082">
                     <option value="2081">2081 BS</option>
                     <option value="2082">2082 BS</option>
@@ -92,14 +124,18 @@ export function SettingsPage() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">Default Language</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                    Default Language
+                  </span>
                   <select className="ap-input mt-1" defaultValue="en">
                     <option value="en">English</option>
                     <option value="ne">Nepali</option>
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">Timezone</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                    Timezone
+                  </span>
                   <select className="ap-input mt-1" defaultValue="asia/kathmandu">
                     <option value="asia/kathmandu">Asia/Kathmandu (UTC+5:45)</option>
                   </select>
@@ -118,9 +154,16 @@ export function SettingsPage() {
                   ["Enable Online Fee Payment", true],
                   ["Enable Live Classes", true],
                 ].map(([label, value]) => (
-                  <label key={label as string} className="flex items-center justify-between p-2 rounded-lg hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer">
+                  <label
+                    key={label as string}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer"
+                  >
                     <span className="text-sm">{label}</span>
-                    <input type="checkbox" defaultChecked={value === true} className="w-4 h-4 accent-[hsl(var(--ap-purple))]" />
+                    <input
+                      type="checkbox"
+                      defaultChecked={value === true}
+                      className="w-4 h-4 accent-[hsl(var(--ap-purple))]"
+                    />
                   </label>
                 ))}
               </div>
@@ -135,14 +178,20 @@ export function SettingsPage() {
                 <div className="ap-card p-6 text-center border-2 border-dashed border-[hsl(var(--ap-border))]">
                   <Camera className="w-8 h-8 mx-auto text-[hsl(var(--ap-muted))] mb-2" />
                   <p className="text-sm font-semibold">Upload Logo</p>
-                  <p className="text-xs text-[hsl(var(--ap-muted))] mt-1">PNG, SVG · Max 2MB · 200x200px recommended</p>
-                  <button className="ap-btn mt-3"><Upload className="w-4 h-4" /> Browse</button>
+                  <p className="text-xs text-[hsl(var(--ap-muted))] mt-1">
+                    PNG, SVG · Max 2MB · 200x200px recommended
+                  </p>
+                  <button className="ap-btn mt-3">
+                    <Upload className="w-4 h-4" /> Browse
+                  </button>
                 </div>
                 <div className="ap-card p-6 text-center border-2 border-dashed border-[hsl(var(--ap-border))]">
                   <Camera className="w-8 h-8 mx-auto text-[hsl(var(--ap-muted))] mb-2" />
                   <p className="text-sm font-semibold">Upload Favicon</p>
                   <p className="text-xs text-[hsl(var(--ap-muted))] mt-1">ICO, PNG · 32x32px</p>
-                  <button className="ap-btn mt-3"><Upload className="w-4 h-4" /> Browse</button>
+                  <button className="ap-btn mt-3">
+                    <Upload className="w-4 h-4" /> Browse
+                  </button>
                 </div>
               </div>
             </Panel>
@@ -158,9 +207,14 @@ export function SettingsPage() {
                   ["Danger", "#EF4444"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg border border-[hsl(var(--ap-border))]" style={{ background: value }} />
+                    <div
+                      className="w-10 h-10 rounded-lg border border-[hsl(var(--ap-border))]"
+                      style={{ background: value }}
+                    />
                     <div className="flex-1">
-                      <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">{label}</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                        {label}
+                      </span>
                       <input defaultValue={value} className="ap-input mt-1 font-mono text-sm" />
                     </div>
                   </div>
@@ -182,7 +236,10 @@ export function SettingsPage() {
                 ].map((g) => {
                   const Icon = g.icon;
                   return (
-                    <div key={g.name} className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]">
+                    <div
+                      key={g.name}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[hsl(var(--ap-border)/0.4)] flex items-center justify-center">
                           <Icon className="w-4 h-4" />
@@ -192,7 +249,9 @@ export function SettingsPage() {
                           <p className="text-xs text-[hsl(var(--ap-muted))]">Payment processing</p>
                         </div>
                       </div>
-                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>{g.status}</Badge>
+                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>
+                        {g.status}
+                      </Badge>
                     </div>
                   );
                 })}
@@ -208,17 +267,24 @@ export function SettingsPage() {
                 ].map((g) => {
                   const Icon = g.icon;
                   return (
-                    <div key={g.name} className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]">
+                    <div
+                      key={g.name}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[hsl(var(--ap-border)/0.4)] flex items-center justify-center">
                           <Icon className="w-4 h-4" />
                         </div>
                         <div>
                           <p className="font-semibold text-sm">{g.name}</p>
-                          <p className="text-xs text-[hsl(var(--ap-muted))]">Communication channel</p>
+                          <p className="text-xs text-[hsl(var(--ap-muted))]">
+                            Communication channel
+                          </p>
                         </div>
                       </div>
-                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>{g.status}</Badge>
+                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>
+                        {g.status}
+                      </Badge>
                     </div>
                   );
                 })}
@@ -227,14 +293,32 @@ export function SettingsPage() {
             <Panel title="Cloud Services">
               <div className="space-y-3">
                 {[
-                  { name: "Cloudinary", status: "Connected", icon: Cloud, desc: "Image & video storage" },
-                  { name: "Google Maps", status: "Connected", icon: MapPin, desc: "Location services" },
+                  {
+                    name: "Cloudinary",
+                    status: "Connected",
+                    icon: Cloud,
+                    desc: "Image & video storage",
+                  },
+                  {
+                    name: "Google Maps",
+                    status: "Connected",
+                    icon: MapPin,
+                    desc: "Location services",
+                  },
                   { name: "Zoom API", status: "Connected", icon: Video, desc: "Live classes" },
-                  { name: "Google Meet", status: "Disconnected", icon: Video, desc: "Alternative live class" },
+                  {
+                    name: "Google Meet",
+                    status: "Disconnected",
+                    icon: Video,
+                    desc: "Alternative live class",
+                  },
                 ].map((g) => {
                   const Icon = g.icon;
                   return (
-                    <div key={g.name} className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]">
+                    <div
+                      key={g.name}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)]"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[hsl(var(--ap-border)/0.4)] flex items-center justify-center">
                           <Icon className="w-4 h-4" />
@@ -244,7 +328,9 @@ export function SettingsPage() {
                           <p className="text-xs text-[hsl(var(--ap-muted))]">{g.desc}</p>
                         </div>
                       </div>
-                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>{g.status}</Badge>
+                      <Badge tone={g.status === "Connected" ? "success" : "muted"}>
+                        {g.status}
+                      </Badge>
                     </div>
                   );
                 })}
@@ -258,13 +344,25 @@ export function SettingsPage() {
                   { name: "Firebase Project ID", value: "star-coaching-erp" },
                   { name: "Cloudinary Cloud", value: "starcoaching" },
                 ].map((k) => (
-                  <div key={k.name} className="flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--ap-border)/0.3)]">
+                  <div
+                    key={k.name}
+                    className="flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--ap-border)/0.3)]"
+                  >
                     <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase text-[hsl(var(--ap-muted))]">{k.name}</p>
+                      <p className="text-xs font-bold uppercase text-[hsl(var(--ap-muted))]">
+                        {k.name}
+                      </p>
                       <p className="text-sm font-mono truncate">{k.value}</p>
                     </div>
-                    <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]" onClick={() => setShowKeys(!showKeys)}>
-                      {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <button
+                      className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
+                      onClick={() => setShowKeys(!showKeys)}
+                    >
+                      {showKeys ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 ))}
@@ -278,10 +376,18 @@ export function SettingsPage() {
             <Panel title="Email Templates">
               <div className="space-y-2">
                 {[
-                  "Welcome Email", "Fee Receipt", "Attendance Alert", "Exam Result",
-                  "Notice Broadcast", "Password Reset", "Admission Confirmation",
+                  "Welcome Email",
+                  "Fee Receipt",
+                  "Attendance Alert",
+                  "Exam Result",
+                  "Notice Broadcast",
+                  "Password Reset",
+                  "Admission Confirmation",
                 ].map((t) => (
-                  <div key={t} className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer">
+                  <div
+                    key={t}
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer"
+                  >
                     <span className="text-sm font-semibold">{t}</span>
                     <Badge tone="success">Active</Badge>
                   </div>
@@ -291,10 +397,17 @@ export function SettingsPage() {
             <Panel title="SMS Templates">
               <div className="space-y-2">
                 {[
-                  "Fee Reminder", "Attendance Alert", "Exam Schedule", "Result Published",
-                  "Notice Alert", "Admission Status",
+                  "Fee Reminder",
+                  "Attendance Alert",
+                  "Exam Schedule",
+                  "Result Published",
+                  "Notice Alert",
+                  "Admission Status",
                 ].map((t) => (
-                  <div key={t} className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer">
+                  <div
+                    key={t}
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] cursor-pointer"
+                  >
                     <span className="text-sm font-semibold">{t}</span>
                     <Badge tone="success">Active</Badge>
                   </div>
@@ -318,7 +431,11 @@ export function SettingsPage() {
                   <div key={label as string} className="flex items-center justify-between p-2">
                     <span className="text-sm">{label}</span>
                     {typeof value === "boolean" ? (
-                    <input type="checkbox" defaultChecked={Boolean(value)} className="w-4 h-4 accent-[hsl(var(--ap-purple))]" />
+                      <input
+                        type="checkbox"
+                        defaultChecked={Boolean(value)}
+                        className="w-4 h-4 accent-[hsl(var(--ap-purple))]"
+                      />
                     ) : (
                       <input defaultValue={value} className="ap-input w-32 text-sm" />
                     )}
@@ -329,10 +446,25 @@ export function SettingsPage() {
             <Panel title="Audit Log" subtitle="Recent system changes">
               <div className="space-y-2">
                 {[
-                  { action: "Updated institute name", by: "Admin", time: "2h ago", icon: CheckCircle2 },
+                  {
+                    action: "Updated institute name",
+                    by: "Admin",
+                    time: "2h ago",
+                    icon: CheckCircle2,
+                  },
                   { action: "Added new API key", by: "Admin", time: "5h ago", icon: KeyRound },
-                  { action: "Changed password policy", by: "Super Admin", time: "1d ago", icon: Lock },
-                  { action: "Enabled eSewa gateway", by: "Admin", time: "3d ago", icon: CreditCard },
+                  {
+                    action: "Changed password policy",
+                    by: "Super Admin",
+                    time: "1d ago",
+                    icon: Lock,
+                  },
+                  {
+                    action: "Enabled eSewa gateway",
+                    by: "Admin",
+                    time: "3d ago",
+                    icon: CreditCard,
+                  },
                 ].map((l, i) => {
                   const Icon = l.icon;
                   return (
@@ -340,7 +472,9 @@ export function SettingsPage() {
                       <Icon className="w-4 h-4 text-[hsl(var(--ap-purple))]" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{l.action}</p>
-                        <p className="text-xs text-[hsl(var(--ap-muted))]">{l.by} · {l.time}</p>
+                        <p className="text-xs text-[hsl(var(--ap-muted))]">
+                          {l.by} · {l.time}
+                        </p>
                       </div>
                     </div>
                   );
@@ -363,11 +497,17 @@ export function SettingsPage() {
                   <p className="text-xs text-[hsl(var(--ap-muted))]">Size: 245 MB · Auto backup</p>
                 </div>
                 <div className="flex gap-3">
-                  <button className="ap-btn flex-1 justify-center"><Database className="w-4 h-4" /> Backup Now</button>
-                  <button className="ap-btn-ghost flex-1 justify-center"><Upload className="w-4 h-4" /> Restore</button>
+                  <button className="ap-btn flex-1 justify-center">
+                    <Database className="w-4 h-4" /> Backup Now
+                  </button>
+                  <button className="ap-btn-ghost flex-1 justify-center">
+                    <Upload className="w-4 h-4" /> Restore
+                  </button>
                 </div>
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">Backup Schedule</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                    Backup Schedule
+                  </span>
                   <select className="ap-input mt-1" defaultValue="6h">
                     <option value="1h">Every hour</option>
                     <option value="6h">Every 6 hours</option>
@@ -386,10 +526,15 @@ export function SettingsPage() {
                   { date: "Oct 7, 2024", size: "235 MB", status: "Success", type: "Manual" },
                   { date: "Oct 6, 2024", size: "230 MB", status: "Failed", type: "Auto" },
                 ].map((b, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-[hsl(var(--ap-border)/0.3)]">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-[hsl(var(--ap-border)/0.3)]"
+                  >
                     <div>
                       <p className="text-sm font-semibold">{b.date}</p>
-                      <p className="text-xs text-[hsl(var(--ap-muted))]">{b.size} · {b.type}</p>
+                      <p className="text-xs text-[hsl(var(--ap-muted))]">
+                        {b.size} · {b.type}
+                      </p>
                     </div>
                     <Badge tone={b.status === "Success" ? "success" : "danger"}>{b.status}</Badge>
                   </div>
@@ -402,5 +547,3 @@ export function SettingsPage() {
     </div>
   );
 }
-
-

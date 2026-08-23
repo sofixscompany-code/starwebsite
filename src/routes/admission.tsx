@@ -3,9 +3,20 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import {
-  CheckCircle2, Loader2, Copy, MessageCircle, Printer,
-  Home, UserPlus, ArrowRight, Shield, LayoutDashboard,
-  ChevronRight, ChevronLeft, AlertCircle, Smartphone,
+  CheckCircle2,
+  Loader2,
+  Copy,
+  MessageCircle,
+  Printer,
+  Home,
+  UserPlus,
+  ArrowRight,
+  Shield,
+  LayoutDashboard,
+  ChevronRight,
+  ChevronLeft,
+  AlertCircle,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -22,7 +33,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { firebaseAuth } from "@/integrations/firebase/auth";
-import { collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
 const WHATSAPP_NUMBER = "977984XXXXXXX";
@@ -62,14 +81,14 @@ export function formatWhatsAppMessage(data: {
 }) {
   return encodeURIComponent(
     ` *New Admission — Star Coaching Institute*\n\n` +
-    ` *Admission #:* ${data.admissionNumber}\n` +
-    ` *Name:* ${data.fullName}\n` +
-    ` *Phone:* ${data.phone}\n` +
-    ` *Course:* ${data.courseTitle}\n` +
-    ` *Guardian:* ${data.parentName}\n` +
-    ` *Guardian Phone:* ${data.parentPhone}\n` +
-    ` *Address:* ${data.address}\n\n` +
-    `_Please verify and process this admission._`
+      ` *Admission #:* ${data.admissionNumber}\n` +
+      ` *Name:* ${data.fullName}\n` +
+      ` *Phone:* ${data.phone}\n` +
+      ` *Course:* ${data.courseTitle}\n` +
+      ` *Guardian:* ${data.parentName}\n` +
+      ` *Guardian Phone:* ${data.parentPhone}\n` +
+      ` *Address:* ${data.address}\n\n` +
+      `_Please verify and process this admission._`,
   );
 }
 
@@ -85,7 +104,11 @@ export function AdmissionPage() {
   const { data: courses = [] } = useQuery({
     queryKey: ["admission-courses"],
     queryFn: async () => {
-      const q = query(collection(db, "courses"), where("isActive", "==", true), orderBy("sortOrder"));
+      const q = query(
+        collection(db, "courses"),
+        where("isActive", "==", true),
+        orderBy("sortOrder"),
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
@@ -117,10 +140,16 @@ export function AdmissionPage() {
     }
   }, [prefilledCourse, courses]);
 
-  const handleChange = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-    if (errors[key]) setErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
-  };
+  const handleChange =
+    (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((f) => ({ ...f, [key]: e.target.value }));
+      if (errors[key])
+        setErrors((prev) => {
+          const n = { ...prev };
+          delete n[key];
+          return n;
+        });
+    };
 
   const validateStep = (s: number): boolean => {
     const fields: Record<number, (keyof typeof form)[]> = {
@@ -241,7 +270,9 @@ export function AdmissionPage() {
       <main className="flex-1">
         <section className="bg-navy text-navy-foreground py-10 md:py-14">
           <div className="max-w-3xl mx-auto px-4 text-center">
-            <p className="text-xs uppercase tracking-widest text-gold font-bold">Admission Open 2082/83</p>
+            <p className="text-xs uppercase tracking-widest text-gold font-bold">
+              Admission Open 2082/83
+            </p>
             <h1 className="font-display font-black text-3xl md:text-4xl mt-2">Online Admission</h1>
             <p className="mt-3 text-white/70">
               Fill this form and we'll generate your admission number instantly.
@@ -261,8 +292,8 @@ export function AdmissionPage() {
                         i < step
                           ? "ap-grad text-white"
                           : i === step
-                          ? "ap-grad text-white ring-4 ring-purple-200"
-                          : "bg-gray-200 text-gray-500"
+                            ? "ap-grad text-white ring-4 ring-purple-200"
+                            : "bg-gray-200 text-gray-500"
                       }`}
                     >
                       {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
@@ -297,11 +328,20 @@ export function AdmissionPage() {
                   </Field>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Date of Birth">
-                      <Input type="date" value={form.dateOfBirth} onChange={handleChange("dateOfBirth")} />
+                      <Input
+                        type="date"
+                        value={form.dateOfBirth}
+                        onChange={handleChange("dateOfBirth")}
+                      />
                     </Field>
                     <Field label="Gender">
-                      <Select value={form.gender} onValueChange={(v) => setForm((f) => ({ ...f, gender: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <Select
+                        value={form.gender}
+                        onValueChange={(v) => setForm((f) => ({ ...f, gender: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
@@ -321,7 +361,13 @@ export function AdmissionPage() {
                       />
                     </Field>
                     <Field label="Email">
-                      <Input type="email" value={form.email} onChange={handleChange("email")} maxLength={255} placeholder="your@email.com" />
+                      <Input
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange("email")}
+                        maxLength={255}
+                        placeholder="your@email.com"
+                      />
                     </Field>
                   </div>
                   <Field label="Full Address *" error={errors.address}>
@@ -334,7 +380,12 @@ export function AdmissionPage() {
                     />
                   </Field>
                   <Field label="Citizenship Number">
-                    <Input value={form.citizenshipNumber} onChange={handleChange("citizenshipNumber")} maxLength={50} placeholder="XX-XX-XX-XXXXX" />
+                    <Input
+                      value={form.citizenshipNumber}
+                      onChange={handleChange("citizenshipNumber")}
+                      maxLength={50}
+                      placeholder="XX-XX-XX-XXXXX"
+                    />
                   </Field>
                 </FormSection>
               )}
@@ -363,7 +414,8 @@ export function AdmissionPage() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
                     <p className="text-sm text-blue-800">
-                      We'll use this number to contact your guardian regarding admission verification and fee details.
+                      We'll use this number to contact your guardian regarding admission
+                      verification and fee details.
                     </p>
                   </div>
                 </FormSection>
@@ -374,10 +426,20 @@ export function AdmissionPage() {
                 <FormSection title="Education Background" icon={UserPlus}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Previous School">
-                      <Input value={form.previousSchool} onChange={handleChange("previousSchool")} maxLength={150} placeholder="School name" />
+                      <Input
+                        value={form.previousSchool}
+                        onChange={handleChange("previousSchool")}
+                        maxLength={150}
+                        placeholder="School name"
+                      />
                     </Field>
                     <Field label="Last Qualification">
-                      <Input value={form.previousQualification} onChange={handleChange("previousQualification")} maxLength={150} placeholder="e.g. SEE, +2, BSc" />
+                      <Input
+                        value={form.previousQualification}
+                        onChange={handleChange("previousQualification")}
+                        maxLength={150}
+                        placeholder="e.g. SEE, +2, BSc"
+                      />
                     </Field>
                   </div>
                 </FormSection>
@@ -387,7 +449,10 @@ export function AdmissionPage() {
               {step === 3 && (
                 <FormSection title="Course Selection" icon={UserPlus}>
                   <Field label="Choose Course *" error={errors.courseId}>
-                    <Select value={form.courseId} onValueChange={(v) => setForm((f) => ({ ...f, courseId: v }))}>
+                    <Select
+                      value={form.courseId}
+                      onValueChange={(v) => setForm((f) => ({ ...f, courseId: v }))}
+                    >
                       <SelectTrigger className={errors.courseId ? "border-red-400" : ""}>
                         <SelectValue placeholder="Select a course" />
                       </SelectTrigger>
@@ -403,7 +468,9 @@ export function AdmissionPage() {
                           </SelectItem>
                         ))}
                         {courses.length === 0 && (
-                          <SelectItem value="_none" disabled>Loading courses...</SelectItem>
+                          <SelectItem value="_none" disabled>
+                            Loading courses...
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -422,8 +489,16 @@ export function AdmissionPage() {
                             <div>
                               <p className="font-bold text-navy">{(c as any).title}</p>
                               <p className="text-xs text-muted-foreground">{(c as any).category}</p>
-                              {(c as any).duration && <p className="text-xs text-muted-foreground mt-1">Duration: {(c as any).duration}</p>}
-                              {(c as any).feeNpr && <p className="text-sm font-bold text-green-700 mt-1">Fee: ₹{(c as any).feeNpr.toLocaleString()}</p>}
+                              {(c as any).duration && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Duration: {(c as any).duration}
+                                </p>
+                              )}
+                              {(c as any).feeNpr && (
+                                <p className="text-sm font-bold text-green-700 mt-1">
+                                  Fee: ₹{(c as any).feeNpr.toLocaleString()}
+                                </p>
+                              )}
                             </div>
                           </div>
                         );
@@ -432,7 +507,13 @@ export function AdmissionPage() {
                   )}
 
                   <Field label="Notes (optional)">
-                    <Textarea value={form.notes} onChange={handleChange("notes")} maxLength={500} rows={3} placeholder="Any specific request or question" />
+                    <Textarea
+                      value={form.notes}
+                      onChange={handleChange("notes")}
+                      maxLength={500}
+                      rows={3}
+                      placeholder="Any specific request or question"
+                    />
                   </Field>
                 </FormSection>
               )}
@@ -453,12 +534,22 @@ export function AdmissionPage() {
                       <ReviewRow label="Guardian" value={form.parentName} />
                       <ReviewRow label="Guardian Phone" value={form.parentPhone} />
                     </div>
-                    {form.previousSchool && <ReviewRow label="Previous School" value={form.previousSchool} />}
-                    {form.previousQualification && <ReviewRow label="Qualification" value={form.previousQualification} />}
+                    {form.previousSchool && (
+                      <ReviewRow label="Previous School" value={form.previousSchool} />
+                    )}
+                    {form.previousQualification && (
+                      <ReviewRow label="Qualification" value={form.previousQualification} />
+                    )}
                     <div className="border-t pt-3 mt-3">
                       {(() => {
                         const c = courses.find((x: any) => x.id === form.courseId);
-                        return c ? <ReviewRow label="Course" value={`${(c as any).title} (${(c as any).category})`} highlight /> : null;
+                        return c ? (
+                          <ReviewRow
+                            label="Course"
+                            value={`${(c as any).title} (${(c as any).category})`}
+                            highlight
+                          />
+                        ) : null;
                       })()}
                     </div>
                     {form.notes && <ReviewRow label="Notes" value={form.notes} />}
@@ -469,7 +560,8 @@ export function AdmissionPage() {
                     <div>
                       <p className="text-sm font-semibold text-green-800">WhatsApp Confirmation</p>
                       <p className="text-xs text-green-700 mt-1">
-                        After submission, you can share your admission details via WhatsApp for faster processing.
+                        After submission, you can share your admission details via WhatsApp for
+                        faster processing.
                       </p>
                     </div>
                   </div>
@@ -478,14 +570,19 @@ export function AdmissionPage() {
 
               {/* Agreement */}
               <div className="bg-secondary/60 border border-border rounded-2xl p-5 text-sm text-muted-foreground">
-                By submitting this form, you agree to be contacted by Star Coaching Institute regarding your admission.
-                Fee payment (eSewa · Khalti · FonePay · IME Pay · Cash) is handled after verification.
+                By submitting this form, you agree to be contacted by Star Coaching Institute
+                regarding your admission. Fee payment (eSewa · Khalti · FonePay · IME Pay · Cash) is
+                handled after verification.
               </div>
 
               {/* Navigation */}
               <div className="flex items-center justify-between gap-3">
                 {step > 0 ? (
-                  <button type="button" onClick={prevStep} className="ap-btn-ghost flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="ap-btn-ghost flex items-center gap-2"
+                  >
                     <ChevronLeft className="w-4 h-4" /> Back
                   </button>
                 ) : (
@@ -493,7 +590,11 @@ export function AdmissionPage() {
                 )}
 
                 {step < 4 ? (
-                  <button type="button" onClick={nextStep} className="ap-btn flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    className="ap-btn flex items-center gap-2"
+                  >
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
                 ) : (
@@ -504,9 +605,13 @@ export function AdmissionPage() {
                     disabled={submitting}
                   >
                     {submitting ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...
+                      </>
                     ) : (
-                      <><CheckCircle2 className="w-4 h-4 mr-2" /> Submit Application</>
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" /> Submit Application
+                      </>
                     )}
                   </Button>
                 )}
@@ -531,7 +636,13 @@ interface AdmissionResult {
   address: string;
 }
 
-export function SuccessPage({ result, navigate }: { result: AdmissionResult; navigate: (to: string) => void }) {
+export function SuccessPage({
+  result,
+  navigate,
+}: {
+  result: AdmissionResult;
+  navigate: (to: string) => void;
+}) {
   const waMsg = formatWhatsAppMessage(result);
   const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`;
 
@@ -548,21 +659,31 @@ export function SuccessPage({ result, navigate }: { result: AdmissionResult; nav
               Admission Submitted!
             </h1>
             <p className="text-muted-foreground mt-2">
-              Welcome, <strong className="text-foreground">{result.fullName}</strong>. Our team will call you shortly.
+              Welcome, <strong className="text-foreground">{result.fullName}</strong>. Our team will
+              call you shortly.
             </p>
 
             <div className="mt-6 bg-navy text-navy-foreground rounded-xl p-5">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold">Your Admission Number</p>
+              <p className="text-xs uppercase tracking-widest text-gold font-bold">
+                Your Admission Number
+              </p>
               <div className="flex items-center justify-center gap-2 mt-2">
-                <p className="font-display font-black text-3xl tracking-wider">{result.admissionNumber}</p>
+                <p className="font-display font-black text-3xl tracking-wider">
+                  {result.admissionNumber}
+                </p>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(result.admissionNumber); toast.success("Copied!"); }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(result.admissionNumber);
+                    toast.success("Copied!");
+                  }}
                   className="p-2 rounded-lg hover:bg-white/10 transition"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-[11px] text-white/60 mt-2">Keep this number safe for your first visit.</p>
+              <p className="text-[11px] text-white/60 mt-2">
+                Keep this number safe for your first visit.
+              </p>
             </div>
 
             {/* Quick info */}
@@ -621,9 +742,13 @@ export function SuccessPage({ result, navigate }: { result: AdmissionResult; nav
 
 /* -------------------- FORM COMPONENTS -------------------- */
 export function FormSection({
-  title, icon: Icon, children,
+  title,
+  icon: Icon,
+  children,
 }: {
-  title: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
 }) {
   return (
     <div className="bg-white border border-border rounded-2xl p-5 md:p-6 space-y-4">
@@ -639,9 +764,13 @@ export function FormSection({
 }
 
 export function Field({
-  label, children, error,
+  label,
+  children,
+  error,
 }: {
-  label: string; children: React.ReactNode; error?: string;
+  label: string;
+  children: React.ReactNode;
+  error?: string;
 }) {
   return (
     <div className="space-y-1.5">
@@ -655,20 +784,22 @@ export function Field({
 }
 
 export function ReviewRow({
-  label, value, highlight,
+  label,
+  value,
+  highlight,
 }: {
-  label: string; value: string; highlight?: boolean;
+  label: string;
+  value: string;
+  highlight?: boolean;
 }) {
   return (
     <div className="flex justify-between items-start py-1.5">
       <span className="text-xs uppercase text-muted-foreground font-bold">{label}</span>
-      <span className={`text-sm text-right max-w-[60%] ${highlight ? "font-bold text-navy" : "font-medium"}`}>
+      <span
+        className={`text-sm text-right max-w-[60%] ${highlight ? "font-bold text-navy" : "font-medium"}`}
+      >
         {value}
       </span>
     </div>
   );
 }
-
-
-
-

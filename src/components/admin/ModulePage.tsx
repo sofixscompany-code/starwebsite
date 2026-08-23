@@ -64,19 +64,11 @@ interface FilterDef {
   options: { value: string; label: string }[];
 }
 
-interface FieldDef {
+export interface FieldDef {
   key: string;
   label: string;
   type:
-    | "text"
-    | "email"
-    | "tel"
-    | "number"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "password";
+    "text" | "email" | "tel" | "number" | "select" | "textarea" | "date" | "checkbox" | "password";
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
@@ -176,10 +168,7 @@ export function ModulePage({
   const [actionMenuRow, setActionMenuRow] = useState<any | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
-  const getId = useCallback(
-    (row: any) => String(row[idKey] ?? ""),
-    [idKey]
-  );
+  const getId = useCallback((row: any) => String(row[idKey] ?? ""), [idKey]);
 
   /* ---- Filtering ---- */
   const filteredRows = useMemo(() => {
@@ -191,7 +180,7 @@ export function ModulePage({
         columns.some((col) => {
           const val = row[col.key];
           return val != null && String(val).toLowerCase().includes(q);
-        })
+        }),
       );
     }
 
@@ -217,9 +206,7 @@ export function ModulePage({
       if (!isNaN(aNum) && !isNaN(bNum)) {
         return sortDir === "asc" ? aNum - bNum : bNum - aNum;
       }
-      return sortDir === "asc"
-        ? aStr.localeCompare(bStr)
-        : bStr.localeCompare(aStr);
+      return sortDir === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
     });
   }, [filteredRows, sortKey, sortDir]);
 
@@ -257,13 +244,12 @@ export function ModulePage({
         setSortDir("asc");
       }
     },
-    [sortKey]
+    [sortKey],
   );
 
   /* ---- Select handlers ---- */
   const allSelected =
-    paginatedRows.length > 0 &&
-    paginatedRows.every((r) => selectedIds.has(getId(r)));
+    paginatedRows.length > 0 && paginatedRows.every((r) => selectedIds.has(getId(r)));
 
   const toggleAll = useCallback(() => {
     if (allSelected) {
@@ -273,17 +259,14 @@ export function ModulePage({
     }
   }, [allSelected, paginatedRows, getId]);
 
-  const toggleOne = useCallback(
-    (id: string) => {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-    },
-    []
-  );
+  const toggleOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   /* ---- Form handlers ---- */
   const openCreate = useCallback(() => {
@@ -306,7 +289,7 @@ export function ModulePage({
       setFormData(initial);
       setFormOpen(true);
     },
-    [fields]
+    [fields],
   );
 
   const closeForm = useCallback(() => {
@@ -315,12 +298,9 @@ export function ModulePage({
     setFormData({});
   }, []);
 
-  const handleFormChange = useCallback(
-    (key: string, value: any) => {
-      setFormData((prev) => ({ ...prev, [key]: value }));
-    },
-    []
-  );
+  const handleFormChange = useCallback((key: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     for (const f of fields) {
@@ -367,7 +347,7 @@ export function ModulePage({
       });
       setConfirmOpen(true);
     },
-    [onDelete]
+    [onDelete],
   );
 
   /* ---- Bulk delete ---- */
@@ -399,7 +379,7 @@ export function ModulePage({
     if (!onBulkUpdate) return;
     const ids = Array.from(selectedIds);
     const data = Object.fromEntries(
-      Object.entries(bulkFormData).filter(([, v]) => v !== "" && v !== undefined)
+      Object.entries(bulkFormData).filter(([, v]) => v !== "" && v !== undefined),
     );
     if (Object.keys(data).length === 0) return toast.error("No changes specified");
     setSaving(true);
@@ -428,7 +408,7 @@ export function ModulePage({
         const val = row[c.key];
         const str = val == null ? "" : String(val);
         return `"${str.replace(/"/g, '""')}"`;
-      })
+      }),
     );
     const csv = [headers.join(","), ...csvRows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -458,7 +438,7 @@ export function ModulePage({
       }
       if (importRef.current) importRef.current.value = "";
     },
-    [onImport]
+    [onImport],
   );
 
   /* ---- Status toggle helper ---- */
@@ -466,11 +446,11 @@ export function ModulePage({
     (row: any, fieldKey: string) => {
       if (onUpdate) {
         onUpdate(getId(row), { [fieldKey]: !row[fieldKey] }).catch(() =>
-          toast.error("Toggle failed")
+          toast.error("Toggle failed"),
         );
       }
     },
-    [onUpdate, getId]
+    [onUpdate, getId],
   );
 
   /* ---- Close confirm ---- */
@@ -487,8 +467,7 @@ export function ModulePage({
 
   /* ---- Sort icon ---- */
   const SortIcon = ({ colKey }: { colKey: string }) => {
-    if (sortKey !== colKey)
-      return <ArrowUpDown className="w-3 h-3 text-gray-400 ml-1" />;
+    if (sortKey !== colKey) return <ArrowUpDown className="w-3 h-3 text-gray-400 ml-1" />;
     return sortDir === "asc" ? (
       <ChevronUp className="w-3 h-3 text-blue-500 ml-1" />
     ) : (
@@ -520,18 +499,25 @@ export function ModulePage({
       }
       const s = String(val);
       if (
-        ["Active", "Paid", "Approved", "Success", "Completed", "Published", "Yes", "Enabled"].includes(s)
+        [
+          "Active",
+          "Paid",
+          "Approved",
+          "Success",
+          "Completed",
+          "Published",
+          "Yes",
+          "Enabled",
+        ].includes(s)
       )
         return <Badge tone="success">{s}</Badge>;
       if (["Pending", "Partial", "Scheduled", "Draft", "Processing"].includes(s))
         return <Badge tone="warning">{s}</Badge>;
-      if (
-        ["Failed", "Rejected", "Inactive", "Overdue", "No", "Disabled", "Cancelled"].includes(s)
-      )
+      if (["Failed", "Rejected", "Inactive", "Overdue", "No", "Disabled", "Cancelled"].includes(s))
         return <Badge tone="danger">{s}</Badge>;
       return <span>{s}</span>;
     },
-    [handleToggleField]
+    [handleToggleField],
   );
 
   /* ---- Stat grid ---- */
@@ -539,10 +525,10 @@ export function ModulePage({
     stats.length <= 2
       ? "grid-cols-2"
       : stats.length === 3
-      ? "grid-cols-2 md:grid-cols-3"
-      : stats.length === 4
-      ? "grid-cols-2 md:grid-cols-4"
-      : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+        ? "grid-cols-2 md:grid-cols-3"
+        : stats.length === 4
+          ? "grid-cols-2 md:grid-cols-4"
+          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
 
   return (
     <div>
@@ -567,10 +553,7 @@ export function ModulePage({
                   className="hidden"
                   onChange={handleImport}
                 />
-                <button
-                  onClick={() => importRef.current?.click()}
-                  className="ap-btn-ghost"
-                >
+                <button onClick={() => importRef.current?.click()} className="ap-btn-ghost">
                   <Upload className="w-4 h-4" /> Import
                 </button>
               </>
@@ -629,9 +612,7 @@ export function ModulePage({
               <select
                 key={f.key}
                 value={filterValues[f.key] || "__all__"}
-                onChange={(e) =>
-                  setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-                }
+                onChange={(e) => setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
                 className="ap-input max-w-[160px]"
               >
                 <option value="__all__">{f.label}</option>
@@ -667,7 +648,9 @@ export function ModulePage({
       )}
 
       {/* Table */}
-      {paginatedRows.length === 0 && !search && Object.values(filterValues).every((v) => !v || v === "__all__") ? (
+      {paginatedRows.length === 0 &&
+      !search &&
+      Object.values(filterValues).every((v) => !v || v === "__all__") ? (
         <Panel title="" subtitle="">
           <EmptyState
             icon={FileText}
@@ -766,11 +749,7 @@ export function ModulePage({
                           )}
                           <div className="relative">
                             <button
-                              onClick={() =>
-                                setActionMenuRow(
-                                  actionMenuRow === row ? null : row
-                                )
-                              }
+                              onClick={() => setActionMenuRow(actionMenuRow === row ? null : row)}
                               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition"
                             >
                               <MoreHorizontal className="w-4 h-4 text-gray-500" />
@@ -899,13 +878,20 @@ export function ModulePage({
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                {editingRow ? `Edit ${title.slice(0, -1) || "Item"}` : `New ${title.slice(0, -1) || "Item"}`}
+                {editingRow
+                  ? `Edit ${title.slice(0, -1) || "Item"}`
+                  : `New ${title.slice(0, -1) || "Item"}`}
               </h2>
               <p className="text-xs text-gray-500 mt-1">
-                {editingRow ? "Update the details below" : "Fill in the details to create a new record"}
+                {editingRow
+                  ? "Update the details below"
+                  : "Fill in the details to create a new record"}
               </p>
             </div>
-            <button onClick={closeForm} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+            <button
+              onClick={closeForm}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -955,7 +941,9 @@ export function ModulePage({
                     onChange={(e) =>
                       handleFormChange(
                         field.key,
-                        field.type === "number" ? e.target.valueAsNumber || e.target.value : e.target.value
+                        field.type === "number"
+                          ? e.target.valueAsNumber || e.target.value
+                          : e.target.value,
                       )
                     }
                     placeholder={field.placeholder}
@@ -975,11 +963,7 @@ export function ModulePage({
               disabled={saving || (!onCreate && !editingRow)}
               className="ap-btn"
             >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {editingRow ? "Update" : "Create"}
             </button>
           </div>
@@ -1130,7 +1114,10 @@ export function ModulePage({
                     onChange={(e) =>
                       setBulkFormData((prev) => ({
                         ...prev,
-                        [field.key]: field.type === "number" ? e.target.valueAsNumber || e.target.value : e.target.value,
+                        [field.key]:
+                          field.type === "number"
+                            ? e.target.valueAsNumber || e.target.value
+                            : e.target.value,
                       }))
                     }
                     placeholder="Leave empty to skip"

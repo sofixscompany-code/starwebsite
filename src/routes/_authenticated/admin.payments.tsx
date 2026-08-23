@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Wallet, CheckCircle2, XCircle, TrendingDown } from "lucide-react";
 
 export function PaymentsPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="payments"
       title="Payments"
       subtitle="Track all fee collections, refunds and payment status"
       stats={[

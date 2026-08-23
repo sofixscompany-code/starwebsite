@@ -34,77 +34,77 @@
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-navy: #1E3A8A;
-  --color-navy-foreground: #FFFFFF;
-  --color-brand-red: #EF4444;
-  --color-brand-red-foreground: #FFFFFF;
-  --color-gold: #FBBF24;
+  --color-navy: #1e3a8a;
+  --color-navy-foreground: #ffffff;
+  --color-brand-red: #ef4444;
+  --color-brand-red-foreground: #ffffff;
+  --color-gold: #fbbf24;
 }
 
 :root {
   --radius: 0.75rem;
 
-  --background: #F8FAFC;
+  --background: #f8fafc;
   --foreground: #111827;
 
-  --card: #FFFFFF;
+  --card: #ffffff;
   --card-foreground: #111827;
 
-  --popover: #FFFFFF;
+  --popover: #ffffff;
   --popover-foreground: #111827;
 
-  --primary: #4F46E5;
-  --primary-foreground: #FFFFFF;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
 
-  --secondary: #F1F5F9;
-  --secondary-foreground: #1E293B;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
 
-  --muted: #F1F5F9;
-  --muted-foreground: #6B7280;
+  --muted: #f1f5f9;
+  --muted-foreground: #6b7280;
 
-  --accent: #EEF2FF;
-  --accent-foreground: #4F46E5;
+  --accent: #eef2ff;
+  --accent-foreground: #4f46e5;
 
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --border: #E5E7EB;
-  --input: #E5E7EB;
-  --ring: #4F46E5;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #4f46e5;
 
-  --nay: #1E3A8A;
-  --brand-red: #EF4444;
-  --gold: #FBBF24;
+  --nay: #1e3a8a;
+  --brand-red: #ef4444;
+  --gold: #fbbf24;
 }
 
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
+  --background: #0f172a;
+  --foreground: #f8fafc;
 
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
 
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
 
-  --primary: #818CF8;
-  --primary-foreground: #0F172A;
+  --primary: #818cf8;
+  --primary-foreground: #0f172a;
 
-  --secondary: #1E293B;
-  --secondary-foreground: #E2E8F0;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
 
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
 
-  --accent: #1E293B;
-  --accent-foreground: #C7D2FE;
+  --accent: #1e293b;
+  --accent-foreground: #c7d2fe;
 
-  --destructive: #F87171;
-  --destructive-foreground: #0F172A;
+  --destructive: #f87171;
+  --destructive-foreground: #0f172a;
 
   --border: #334155;
   --input: #334155;
-  --ring: #818CF8;
+  --ring: #818cf8;
 }
 
 @layer base {
@@ -120,25 +120,30 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
   }
 }
 
 .admin-shell {
-  --ap-bg: #F8FAFC;
-  --ap-card: #FFFFFF;
+  --ap-bg: #f8fafc;
+  --ap-card: #ffffff;
   --ap-ink: #111827;
-  --ap-muted: #6B7280;
-  --ap-border: #E5E7EB;
-  --ap-primary: #4F46E5;
-  --ap-primary-hover: #6366F1;
-  --ap-primary-light: #EEF2FF;
-  --ap-success: #22C55E;
-  --ap-warning: #F59E0B;
-  --ap-danger: #EF4444;
-  --ap-info: #3B82F6;
+  --ap-muted: #6b7280;
+  --ap-border: #e5e7eb;
+  --ap-primary: #4f46e5;
+  --ap-primary-hover: #6366f1;
+  --ap-primary-light: #eef2ff;
+  --ap-success: #22c55e;
+  --ap-warning: #f59e0b;
+  --ap-danger: #ef4444;
+  --ap-info: #3b82f6;
 
   background: var(--ap-bg);
   color: var(--ap-ink);
@@ -146,86 +151,156 @@
 }
 
 .admin-shell.dark {
-  --ap-bg: #0F172A;
-  --ap-card: #1E293B;
-  --ap-ink: #F8FAFC;
-  --ap-muted: #94A3B8;
+  --ap-bg: #0f172a;
+  --ap-card: #1e293b;
+  --ap-ink: #f8fafc;
+  --ap-muted: #94a3b8;
   --ap-border: #334155;
-  --ap-primary: #818CF8;
-  --ap-primary-hover: #A5B4FC;
-  --ap-primary-light: #1E293B;
+  --ap-primary: #818cf8;
+  --ap-primary-hover: #a5b4fc;
+  --ap-primary-light: #1e293b;
 }
 
 .admin-shell .ap-card {
   background: var(--ap-card);
   border: 1px solid var(--ap-border);
   border-radius: 20px;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 6px -1px rgb(0 0 0 / 0.02);
-  transition: box-shadow .2s ease, transform .2s ease;
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.03),
+    0 1px 6px -1px rgb(0 0 0 / 0.02);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .admin-shell .ap-card:hover {
-  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+  box-shadow:
+    0 4px 12px -2px rgb(0 0 0 / 0.06),
+    0 2px 4px -2px rgb(0 0 0 / 0.03);
   transform: translateY(-1px);
 }
 
 .admin-shell .ap-btn {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.625rem 1.25rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem;
-  background: var(--ap-primary); color: white; border: none; cursor: pointer;
-  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--ap-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
-.admin-shell .ap-btn:hover { background: var(--ap-primary-hover); transform: scale(1.02); }
-.admin-shell .ap-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.admin-shell .ap-btn:hover {
+  background: var(--ap-primary-hover);
+  transform: scale(1.02);
+}
+.admin-shell .ap-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
 
 .admin-shell .ap-btn-secondary {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.625rem 1.25rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem;
-  background: white; color: var(--ap-ink);
-  border: 1px solid var(--ap-border); cursor: pointer;
-  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: white;
+  color: var(--ap-ink);
+  border: 1px solid var(--ap-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.admin-shell .ap-btn-secondary:hover { border-color: var(--ap-primary); color: var(--ap-primary); }
+.admin-shell .ap-btn-secondary:hover {
+  border-color: var(--ap-primary);
+  color: var(--ap-primary);
+}
 
 .admin-shell .ap-btn-danger {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.625rem 1.25rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem;
-  background: var(--ap-danger); color: white; border: none; cursor: pointer;
-  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--ap-danger);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.admin-shell .ap-btn-danger:hover { opacity: 0.9; transform: scale(1.02); }
+.admin-shell .ap-btn-danger:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
 
 .admin-shell .ap-btn-ghost {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.5rem 0.85rem; border-radius: 12px; font-weight: 500; font-size: 0.85rem;
-  background: transparent; color: var(--ap-muted);
-  border: none; cursor: pointer;
-  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  background: transparent;
+  color: var(--ap-muted);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.admin-shell .ap-btn-ghost:hover { background: var(--ap-primary-light); color: var(--ap-primary); }
+.admin-shell .ap-btn-ghost:hover {
+  background: var(--ap-primary-light);
+  color: var(--ap-primary);
+}
 
 .admin-shell .ap-input {
-  width: 100%; padding: 0.625rem 0.875rem; border-radius: 12px;
-  background: white; border: 1px solid var(--ap-border);
-  color: var(--ap-ink); font-size: 0.875rem; outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid var(--ap-border);
+  color: var(--ap-ink);
+  font-size: 0.875rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .admin-shell .ap-input:focus {
   border-color: var(--ap-primary);
-  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.10);
+  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.1);
 }
 
-.admin-shell .ap-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.admin-shell .ap-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 .admin-shell .ap-scroll::-webkit-scrollbar-thumb {
-  background: var(--ap-border); border-radius: 999px;
+  background: var(--ap-border);
+  border-radius: 999px;
 }
-.admin-shell .ap-scroll::-webkit-scrollbar-thumb:hover { background: var(--ap-muted); }
+.admin-shell .ap-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--ap-muted);
+}
 
-.admin-shell .hidden-scrollbar::-webkit-scrollbar { display: none; }
-.admin-shell .hidden-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.admin-shell .hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.admin-shell .hidden-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

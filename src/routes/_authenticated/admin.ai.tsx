@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Sparkles, BarChart3, TrendingUp, CheckCircle2 } from "lucide-react";
 
 export function AIPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="ai_prompts"
       title="AI Assistant"
       subtitle="Intelligent automation and assistance"
       stats={[

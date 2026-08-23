@@ -1,35 +1,49 @@
 ﻿import { useEffect, useState } from "react";
 import {
-  GraduationCap, FileText, CalendarCheck, Wallet, Download,
-  Video, Upload, CreditCard, Loader2, Trophy, BookOpen,
-  Clock, CheckCircle2, AlertCircle, BarChart3, PlayCircle,
+  GraduationCap,
+  FileText,
+  CalendarCheck,
+  Wallet,
+  Download,
+  Video,
+  Upload,
+  CreditCard,
+  Loader2,
+  Trophy,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  BarChart3,
+  PlayCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useStudentDashboard } from "@/hooks/use-dashboard-data";
+import { useStudentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 
 const upcomingClasses = [
-  { time: '08:00 AM', name: 'Mathematics', room: 'Room 101', teacher: 'Mr. Sharma' },
-  { time: '09:30 AM', name: 'Physics', room: 'Room 203', teacher: 'Mrs. Thapa' },
-  { time: '11:00 AM', name: 'English', room: 'Room 105', teacher: 'Mr. Adhikari' },
+  { time: "08:00 AM", name: "Mathematics", room: "Room 101", teacher: "Mr. Sharma" },
+  { time: "09:30 AM", name: "Physics", room: "Room 203", teacher: "Mrs. Thapa" },
+  { time: "11:00 AM", name: "English", room: "Room 105", teacher: "Mr. Adhikari" },
 ];
 
 const recentScores = [
-  { subject: 'Mathematics', score: 85, total: 100 },
-  { subject: 'Physics', score: 72, total: 100 },
-  { subject: 'English', score: 91, total: 100 },
+  { subject: "Mathematics", score: 85, total: 100 },
+  { subject: "Physics", score: 72, total: 100 },
+  { subject: "English", score: 91, total: 100 },
 ];
 
 export function StudentDashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (getUserRole() === 'student' || localStorage.getItem('demo_role') === 'student') {
+    if (getUserRole() === "student" || localStorage.getItem("demo_role") === "student") {
       setMounted(true);
     }
   }, []);
 
-  const { data: stats, isLoading } = useStudentDashboard();
+  const storedUser = getStoredAuthUser();
+  const { data: stats, isLoading } = useStudentDashboard(storedUser?.uid);
 
   if (!mounted || isLoading) {
     return (
@@ -42,15 +56,82 @@ export function StudentDashboard() {
     );
   }
 
+  const fmtTime = (v: unknown) => {
+    const ms = Date.parse(String(v));
+    if (!Number.isFinite(ms)) return "";
+    return new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
+  const classRows = (stats?.upcomingClasses || []).length
+    ? (stats?.upcomingClasses || []).map((c) => ({
+        time: fmtTime(c.startTime),
+        name: String(c.name || "Class"),
+        room: String(c.room || "TBA"),
+        teacher: String(c.teacherName || ""),
+      }))
+    : upcomingClasses;
+
+  const scoreRows = (stats?.results || []).length
+    ? (stats?.results || []).map((r) => ({
+        subject: String(r.subject || "Exam"),
+        score: Number(r.score || 0),
+        total: Number(r.total || 100),
+      }))
+    : recentScores;
+
+  const examRows = [
+    ...(stats?.homework || [])
+      .filter((h) => Date.parse(String(h.dueDate)) > Date.now())
+      .slice(0, 3)
+      .map((h) => ({
+        subject: String(h.title || h.subject || ""),
+        date: new Date(Date.parse(String(h.dueDate))).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        type: "Homework Due",
+      })),
+    ...(scoreRows.length === recentScores.length
+      ? []
+      : [
+          { subject: "Mathematics", date: "Dec 18", type: "Unit Test" },
+          { subject: "Physics", date: "Dec 20", type: "Mid Term" },
+          { subject: "English", date: "Dec 23", type: "Assignment" },
+        ]),
+  ].slice(0, 3);
+
   const attPercent = stats?.attendancePercent || 85;
-  const attColor = attPercent >= 80 ? 'from-emerald-500 to-emerald-600' : 'from-gold to-gold/80';
-  const attBg = attPercent >= 80 ? 'bg-emerald-50' : 'bg-gold/5';
+  const attColor = attPercent >= 80 ? "from-emerald-500 to-emerald-600" : "from-gold to-gold/80";
+  const attBg = attPercent >= 80 ? "bg-emerald-50" : "bg-gold/5";
 
   const statCards = [
-    { label: 'Enrolled Courses', value: stats?.enrollments?.length || 4, icon: GraduationCap, color: 'from-navy to-navy/80', bg: 'bg-navy/5' },
-    { label: 'Attendance', value: attPercent + '%', icon: CalendarCheck, color: attColor, bg: attBg },
-    { label: 'Homework', value: stats?.homework?.length || 6, icon: FileText, color: 'from-brand-red to-brand-red/80', bg: 'bg-brand-red/5' },
-    { label: 'Results', value: stats?.results?.length || 3, icon: Trophy, color: 'from-gold to-gold/80', bg: 'bg-gold/5' },
+    {
+      label: "Enrolled Courses",
+      value: stats?.enrollments?.length || 4,
+      icon: GraduationCap,
+      color: "from-navy to-navy/80",
+      bg: "bg-navy/5",
+    },
+    {
+      label: "Attendance",
+      value: attPercent + "%",
+      icon: CalendarCheck,
+      color: attColor,
+      bg: attBg,
+    },
+    {
+      label: "Homework",
+      value: stats?.homework?.length || 6,
+      icon: FileText,
+      color: "from-brand-red to-brand-red/80",
+      bg: "bg-brand-red/5",
+    },
+    {
+      label: "Results",
+      value: stats?.results?.length || 3,
+      icon: Trophy,
+      color: "from-gold to-gold/80",
+      bg: "bg-gold/5",
+    },
   ];
 
   return (
@@ -80,9 +161,15 @@ export function StudentDashboard() {
             <motion.div
               key={s.label}
               whileHover={{ y: -4 }}
-              className={s.bg + ' rounded-xl p-4 border border-gray-200/60 shadow-sm'}
+              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
             >
-              <div className={'w-10 h-10 rounded-xl bg-gradient-to-br ' + s.color + ' flex items-center justify-center shadow-md mb-3'}>
+              <div
+                className={
+                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                  s.color +
+                  " flex items-center justify-center shadow-md mb-3"
+                }
+              >
                 <Icon className="w-5 h-5 text-white" />
               </div>
               <p className="text-xs text-gray-500 font-medium">{s.label}</p>
@@ -95,18 +182,25 @@ export function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Today's Classes</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              Today's Classes
+            </h3>
             <p className="text-xs text-gray-400 mb-4">Your schedule for today</p>
             <div className="space-y-2">
-              {upcomingClasses.map((c, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+              {classRows.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                >
                   <div className="w-16 text-center shrink-0">
                     <p className="text-xs font-bold text-navy">{c.time}</p>
                   </div>
                   <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                    <p className="text-xs text-gray-400">{c.room} · {c.teacher}</p>
+                    <p className="text-xs text-gray-400">
+                      {c.room} · {c.teacher}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -117,18 +211,25 @@ export function StudentDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Scores</h3>
             <p className="text-xs text-gray-400 mb-4">Your latest exam results</p>
             <div className="space-y-3">
-              {recentScores.map((r, i) => {
+              {scoreRows.map((r, i) => {
                 const pct = Math.round((r.score / r.total) * 100);
                 return (
                   <div key={i} className="flex items-center gap-4">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-24 shrink-0">{r.subject}</p>
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-24 shrink-0">
+                      {r.subject}
+                    </p>
                     <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
-                        className={'h-full rounded-full ' + (pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-gold' : 'bg-brand-red')}
-                        style={{ width: pct + '%' }}
+                        className={
+                          "h-full rounded-full " +
+                          (pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-gold" : "bg-brand-red")
+                        }
+                        style={{ width: pct + "%" }}
                       />
                     </div>
-                    <p className="text-xs font-bold text-gray-900 dark:text-white w-16 text-right">{r.score}/{r.total}</p>
+                    <p className="text-xs font-bold text-gray-900 dark:text-white w-16 text-right">
+                      {r.score}/{r.total}
+                    </p>
                   </div>
                 );
               })}
@@ -141,22 +242,41 @@ export function StudentDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Access</h3>
             <div className="space-y-2">
               {[
-                { label: 'Study Materials', icon: Download, to: '/admin/lms', desc: 'Notes & videos' },
-                { label: 'Homework', icon: Upload, to: '/admin/homework', desc: 'Pending submissions' },
-                { label: 'View Results', icon: Trophy, to: '/admin/results', desc: 'Exam scores' },
-                { label: 'Pay Fees', icon: CreditCard, to: '/admin/payments', desc: 'Online payment' },
-                { label: 'Live Classes', icon: PlayCircle, to: '/admin/live', desc: 'Join now' },
+                {
+                  label: "Study Materials",
+                  icon: Download,
+                  to: "/admin/lms",
+                  desc: "Notes & videos",
+                },
+                {
+                  label: "Homework",
+                  icon: Upload,
+                  to: "/admin/homework",
+                  desc: "Pending submissions",
+                },
+                { label: "View Results", icon: Trophy, to: "/admin/results", desc: "Exam scores" },
+                {
+                  label: "Pay Fees",
+                  icon: CreditCard,
+                  to: "/admin/payments",
+                  desc: "Online payment",
+                },
+                { label: "Live Classes", icon: PlayCircle, to: "/admin/live", desc: "Join now" },
               ].map((a) => {
                 const Icon = a.icon;
                 return (
-                  <Link key={a.label} to={a.to}
+                  <Link
+                    key={a.label}
+                    to={a.to}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group"
                   >
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy to-navy/80 flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{a.label}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                        {a.label}
+                      </p>
                       <p className="text-xs text-gray-400">{a.desc}</p>
                     </div>
                   </Link>
@@ -169,18 +289,18 @@ export function StudentDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Exams</h3>
             <p className="text-xs text-gray-400 mb-3">Next tests scheduled</p>
             <div className="space-y-3">
-              {[
-                { subject: 'Mathematics', date: 'Dec 18', type: 'Unit Test' },
-                { subject: 'Physics', date: 'Dec 20', type: 'Mid Term' },
-                { subject: 'English', date: 'Dec 23', type: 'Assignment' },
-              ].map((ex, i) => (
+              {examRows.map((ex, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
                     <BookOpen className="w-4 h-4 text-navy" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white">{ex.subject}</p>
-                    <p className="text-[11px] text-gray-400">{ex.date} · {ex.type}</p>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white">
+                      {ex.subject}
+                    </p>
+                    <p className="text-[11px] text-gray-400">
+                      {ex.date} · {ex.type}
+                    </p>
                   </div>
                 </div>
               ))}

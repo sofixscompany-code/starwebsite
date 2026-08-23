@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Mail, TrendingUp, MousePointer, AlertCircle } from "lucide-react";
 
 export function EmailPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="email_campaigns"
       title="Email Campaigns"
       subtitle="Create and track email marketing campaigns"
       stats={[

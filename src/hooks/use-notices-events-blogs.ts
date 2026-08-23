@@ -1,7 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
@@ -38,7 +45,10 @@ function useCmsCollection(collectionName: string) {
 
   const addItem = useMutation({
     mutationFn: async (item: Omit<CmsItem, "id">) => {
-      const docRef = await addDoc(collection(db, collectionName), { ...item, createdAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, collectionName), {
+        ...item,
+        createdAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
@@ -61,7 +71,10 @@ function useCmsCollection(collectionName: string) {
 
   const toggleItem = useMutation({
     mutationFn: async ({ id, field, value }: { id: string; field: string; value: any }) => {
-      await updateDoc(doc(db, collectionName, id), { [field]: value, updatedAt: serverTimestamp() });
+      await updateDoc(doc(db, collectionName, id), {
+        [field]: value,
+        updatedAt: serverTimestamp(),
+      });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });

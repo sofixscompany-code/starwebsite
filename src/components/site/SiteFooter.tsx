@@ -46,11 +46,31 @@ export function SiteFooter() {
             Quick Links
           </p>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/about" className="hover:text-gold">About</Link></li>
-            <li><Link to="/courses" className="hover:text-gold">Courses</Link></li>
-            <li><Link to="/faculty" className="hover:text-gold">Faculty</Link></li>
-            <li><Link to="/results" className="hover:text-gold">Results</Link></li>
-            <li><Link to="/gallery" className="hover:text-gold">Gallery</Link></li>
+            <li>
+              <Link to="/about" className="hover:text-gold">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link to="/courses" className="hover:text-gold">
+                Courses
+              </Link>
+            </li>
+            <li>
+              <Link to="/faculty" className="hover:text-gold">
+                Faculty
+              </Link>
+            </li>
+            <li>
+              <Link to="/results" className="hover:text-gold">
+                Results
+              </Link>
+            </li>
+            <li>
+              <Link to="/gallery" className="hover:text-gold">
+                Gallery
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -59,9 +79,21 @@ export function SiteFooter() {
             Get Started
           </p>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/admission" className="hover:text-gold">Online Admission</Link></li>
-            <li><Link to="/auth" className="hover:text-gold">Student Login</Link></li>
-            <li><Link to="/contact" className="hover:text-gold">Contact Us</Link></li>
+            <li>
+              <Link to="/admission" className="hover:text-gold">
+                Online Admission
+              </Link>
+            </li>
+            <li>
+              <Link to="/auth" className="hover:text-gold">
+                Student Login
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="hover:text-gold">
+                Contact Us
+              </Link>
+            </li>
             <li>
               <a href={`https://wa.me/977${site.whatsapp}`} className="hover:text-gold">
                 WhatsApp
@@ -74,10 +106,11 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/50">
           <p>&copy; 2025 {site.legalName}. All rights reserved.</p>
-          <p>Powered by <span className="text-white/70 font-semibold">Sofixs</span></p>
+          <p>
+            Powered by <span className="text-white/70 font-semibold">Sofixs</span>
+          </p>
         </div>
       </div>
     </footer>
   );
 }
-

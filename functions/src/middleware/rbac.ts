@@ -61,7 +61,9 @@ export function verifyDashboardAccess(req: AuthRequest, res: Response, next: Nex
 
   if (requestedPath.startsWith("/dashboard/") && requestedPath !== allowedPath) {
     const userLevel = ROLE_HIERARCHY[role] || 0;
-    const targetRole = Object.entries(ROLE_DASHBOARD_MAP).find(([, path]) => path === requestedPath)?.[0];
+    const targetRole = Object.entries(ROLE_DASHBOARD_MAP).find(
+      ([, path]) => path === requestedPath,
+    )?.[0];
     const targetLevel = targetRole ? ROLE_HIERARCHY[targetRole] || 0 : 0;
 
     if (userLevel < targetLevel) {

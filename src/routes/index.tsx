@@ -27,8 +27,6 @@ import { firebaseAuth } from "@/integrations/firebase/auth";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
-
-
 const categories = [
   {
     icon: ShieldCheck,
@@ -72,7 +70,12 @@ export function Index() {
   const { data: notices = [] } = useQuery({
     queryKey: ["home-notices"],
     queryFn: async () => {
-      const q = query(collection(db, "notices"), where("isPublished", "==", true), orderBy("publishedAt", "desc"), limit(4));
+      const q = query(
+        collection(db, "notices"),
+        where("isPublished", "==", true),
+        orderBy("publishedAt", "desc"),
+        limit(4),
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
@@ -111,17 +114,29 @@ export function Index() {
                 Story
               </h1>
               <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Focused coaching for <strong>Nepal Police, Nepal Army, Armed Police, Loksewa,
-                Medical & Technical entrance</strong> — plus school tuition, since 2015.
+                Focused coaching for{" "}
+                <strong>
+                  Nepal Police, Nepal Army, Armed Police, Loksewa, Medical & Technical entrance
+                </strong>{" "}
+                — plus school tuition, since 2015.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button asChild size="lg" className="bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold shadow-red">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold shadow-red"
+                >
                   <Link to="/admission">
                     Online Admission <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-2 border-navy text-navy font-bold">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-navy text-navy font-bold"
+                >
                   <Link to="/courses">Explore Courses</Link>
                 </Button>
               </div>
@@ -162,16 +177,14 @@ export function Index() {
                   </div>
                 </div>
                 <ul className="space-y-2.5 text-sm">
-                  {[
-                    "Entrance Preparation (After SEE)",
-                    "Police, Army & Loksewa Coaching",
-                    "Hostel available — Boys & Girls",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-brand-red mt-0.5 shrink-0" />
-                      <span className="text-foreground">{f}</span>
-                    </li>
-                  ))}
+                  {["Police, Army & Loksewa Coaching", "Hostel available — Boys & Girls"].map(
+                    (f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-brand-red mt-0.5 shrink-0" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ),
+                  )}
                 </ul>
                 <div className="mt-5 pt-5 border-t border-border grid grid-cols-3 gap-2 text-center">
                   {stats.slice(0, 3).map((s) => (
@@ -220,7 +233,9 @@ export function Index() {
                 to="/courses"
                 className="group bg-white border border-border rounded-2xl p-4 md:p-5 hover:border-navy/30 hover:shadow-md transition"
               >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${c.color}`}>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${c.color}`}
+                >
                   <c.icon className="w-5 h-5" />
                 </div>
                 <h3 className="font-display font-bold text-sm md:text-base text-foreground leading-tight">
@@ -257,11 +272,16 @@ export function Index() {
                     <p className="text-sm font-semibold text-foreground leading-snug">{n.title}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {n.publishedAt ? new Date(n.publishedAt.toDate?.() ?? n.publishedAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }) : "—"}
+                      {n.publishedAt
+                        ? new Date(n.publishedAt.toDate?.() ?? n.publishedAt).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )
+                        : "—"}
                     </p>
                   </div>
                 </li>
@@ -270,7 +290,9 @@ export function Index() {
           </div>
 
           <div className="bg-navy text-navy-foreground rounded-2xl p-6">
-            <p className="text-xs uppercase tracking-widest text-gold font-bold mb-2">Why choose us</p>
+            <p className="text-xs uppercase tracking-widest text-gold font-bold mb-2">
+              Why choose us
+            </p>
             <h3 className="font-display font-black text-2xl leading-tight">
               Result-focused. Locally rooted. Nationally trusted.
             </h3>
@@ -349,8 +371,8 @@ export function Index() {
                   {site.managingDirector}
                 </h3>
                 <p className="mt-4 text-foreground leading-relaxed">
-                  "Dear students and parents, as the Managing Director of Star Coaching Institute,
-                  I want to say that education is not just about academics — it's a journey of
+                  "Dear students and parents, as the Managing Director of Star Coaching Institute, I
+                  want to say that education is not just about academics — it's a journey of
                   personal growth, skill development, and pursuit of dreams. Our dedicated team is
                   committed to your success. Stay focused, work hard, and never hesitate to reach
                   out. We are here for you."
@@ -400,10 +422,19 @@ export function Index() {
                 Apply online in under 3 minutes. Our team will call you back to complete admission.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                <Button asChild size="lg" className="bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold"
+                >
                   <Link to="/admission">Start Online Admission</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/30 text-navy-foreground hover:bg-white/10 hover:text-navy-foreground font-bold">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-navy-foreground hover:bg-white/10 hover:text-navy-foreground font-bold"
+                >
                   <a href={`tel:${site.phones[0]}`}>Call {site.phones[0]}</a>
                 </Button>
               </div>
@@ -432,13 +463,7 @@ export function SectionHead({
       <h2 className="mt-2 font-display font-black text-2xl md:text-4xl text-navy leading-tight">
         {title}
       </h2>
-      {subtitle && (
-        <p className="mt-3 text-sm md:text-base text-muted-foreground">{subtitle}</p>
-      )}
+      {subtitle && <p className="mt-3 text-sm md:text-base text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }
-
-
-
-

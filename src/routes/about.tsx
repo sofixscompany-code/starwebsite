@@ -1,4 +1,4 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { Target, Eye, Trophy, Users } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -103,5 +103,3 @@ export function ValueCard({
     </div>
   );
 }
-
-

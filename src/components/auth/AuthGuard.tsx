@@ -1,5 +1,5 @@
-import { Outlet, Navigate } from 'react-router-dom';
-import { isAuthenticated } from '@/lib/api-auth';
+import { Outlet, Navigate } from "react-router-dom";
+import { isAuthenticated } from "@/lib/api-auth";
 
 export function AuthGuard() {
   if (!isAuthenticated()) {

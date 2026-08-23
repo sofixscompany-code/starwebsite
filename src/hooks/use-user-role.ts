@@ -15,8 +15,29 @@ export const ROLE_LABELS: Record<string, string> = {
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   super_admin: ["*"],
-  teacher: ["dashboard", "classes", "attendance", "homework", "assignments", "exams", "results", "notices", "students", "lms"],
-  student: ["dashboard", "courses", "attendance", "homework", "exams", "results", "fees", "notices", "lms"],
+  teacher: [
+    "dashboard",
+    "classes",
+    "attendance",
+    "homework",
+    "assignments",
+    "exams",
+    "results",
+    "notices",
+    "students",
+    "lms",
+  ],
+  student: [
+    "dashboard",
+    "courses",
+    "attendance",
+    "homework",
+    "exams",
+    "results",
+    "fees",
+    "notices",
+    "lms",
+  ],
   parent: ["dashboard", "attendance", "results", "fees", "notices"],
   accountant: ["dashboard", "fees", "income", "expenses", "reports", "payments"],
 };
@@ -72,7 +93,9 @@ export function useUserRole() {
               return;
             }
           }
-        } catch { /* ignore parse errors */ }
+        } catch {
+          /* ignore parse errors */
+        }
         if (active) setState({ userId: null, role: null });
         return;
       }

@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Send, CheckCircle2, XCircle, Wallet } from "lucide-react";
 
 export function SMSPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="sms_campaigns"
       title="SMS Campaigns"
       subtitle="Send bulk SMS messages and track delivery"
       stats={[

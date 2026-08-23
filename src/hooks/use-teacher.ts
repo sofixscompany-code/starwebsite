@@ -1,7 +1,15 @@
 ﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp, where,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
@@ -69,7 +77,10 @@ export function useTeacherClasses(teacherId?: string) {
 
   const addClass = useMutation({
     mutationFn: async (cls: Omit<TeacherClass, "id">) => {
-      const docRef = await addDoc(collection(db, "teacher_classes"), { ...cls, createdAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, "teacher_classes"), {
+        ...cls,
+        createdAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher", "classes"] }),
@@ -83,7 +94,9 @@ export function useTeacherClasses(teacherId?: string) {
   });
 
   const deleteClass = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, "teacher_classes", id)); },
+    mutationFn: async (id: string) => {
+      await deleteDoc(doc(db, "teacher_classes", id));
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher", "classes"] }),
   });
 
@@ -135,7 +148,11 @@ export function useTeacherContent(teacherId?: string) {
 
   const addContent = useMutation({
     mutationFn: async (item: Omit<ContentItem, "id">) => {
-      const docRef = await addDoc(collection(db, "teacher_content"), { ...item, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, "teacher_content"), {
+        ...item,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher", "content"] }),
@@ -149,7 +166,9 @@ export function useTeacherContent(teacherId?: string) {
   });
 
   const deleteContent = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, "teacher_content", id)); },
+    mutationFn: async (id: string) => {
+      await deleteDoc(doc(db, "teacher_content", id));
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher", "content"] }),
   });
 
@@ -179,6 +198,3 @@ export function useTeacherStats(teacherId: string) {
     },
   });
 }
-
-
-

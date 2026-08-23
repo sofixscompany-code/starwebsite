@@ -1,23 +1,54 @@
-import { Panel, StatCard } from '@/components/admin/ui';
-import { FileCheck, Wallet, BarChart3 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
+import { Receipt, Wallet, TrendingUp, GraduationCap } from "lucide-react";
 
 export function FeeStructurePage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Fee Structure</h1>
-        <p className="text-sm text-gray-400 mt-1">Manage fee categories and amounts</p>
-      </div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Fee Types" value={8} icon={FileCheck} tone="blue" />
-        <StatCard label="Total Collected" value="₹45.6L" icon={Wallet} tone="green" />
-        <StatCard label="Pending" value="₹2.85L" icon={BarChart3} tone="orange" />
-        <StatCard label="Discounts" value="12%" icon={FileCheck} tone="purple" />
-      </motion.div>
-      <Panel title="Fee Categories" subtitle="Configure fee types and amounts">
-        <div className="text-center py-12 text-gray-400 text-sm">Fee structure management coming soon</div>
-      </Panel>
-    </div>
+    <FirestoreModulePage
+      collectionName="fee_structure"
+      title="Fee Structure"
+      subtitle="Manage fee categories and amounts per program"
+      stats={[
+        { label: "Fee Plans", value: 8, icon: Receipt, tone: "purple" },
+        { label: "Avg. Monthly Fee", value: "₹2,500", icon: Wallet, tone: "info" },
+        { label: "Programs", value: 6, icon: GraduationCap, tone: "success" },
+        { label: "Active Plans", value: 7, icon: TrendingUp, tone: "warning" },
+      ]}
+      columns={[
+        { key: "planName", label: "Plan Name" },
+        { key: "program", label: "Program" },
+        { key: "admissionFee", label: "Admission Fee" },
+        { key: "monthlyFee", label: "Monthly Fee" },
+        { key: "totalAmount", label: "Total Amount" },
+        { key: "status", label: "Status" },
+      ]}
+      fields={[
+        { key: "planName", label: "Plan Name", type: "text", required: true },
+        {
+          key: "program",
+          label: "Program",
+          type: "select",
+          options: [
+            { value: "Police", label: "Police" },
+            { value: "Army", label: "Army" },
+            { value: "Loksewa", label: "Loksewa" },
+            { value: "Medical", label: "Medical" },
+            { value: "Engineering", label: "Engineering" },
+            { value: "Tuition", label: "Tuition" },
+          ],
+        },
+        { key: "admissionFee", label: "Admission Fee (₹)", type: "number", required: true },
+        { key: "monthlyFee", label: "Monthly Fee (₹)", type: "number", required: true },
+        { key: "totalAmount", label: "Total Amount (₹)", type: "number" },
+        {
+          key: "status",
+          label: "Status",
+          type: "select",
+          options: [
+            { value: "Active", label: "Active" },
+            { value: "Inactive", label: "Inactive" },
+          ],
+        },
+      ]}
+    />
   );
 }

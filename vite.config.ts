@@ -6,12 +6,7 @@ import { resolve } from "path";
 import { sitemap } from "./vite-plugins/sitemap";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    tsconfigPaths(),
-    sitemap(),
-  ],
+  plugins: [react(), tailwindcss(), tsconfigPaths(), sitemap()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

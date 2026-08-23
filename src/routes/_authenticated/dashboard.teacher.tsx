@@ -1,13 +1,25 @@
 ﻿import { useEffect, useState } from "react";
 import {
-  BookOpen, Users, FileText, CalendarCheck, Clock,
-  ClipboardCheck, Upload, PenLine, Loader2, Bell,
-  TrendingUp, CheckCircle2, AlertCircle, MessageSquare,
-  GraduationCap, BarChart3,
+  BookOpen,
+  Users,
+  FileText,
+  CalendarCheck,
+  Clock,
+  ClipboardCheck,
+  Upload,
+  PenLine,
+  Loader2,
+  Bell,
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
+  MessageSquare,
+  GraduationCap,
+  BarChart3,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useTeacherDashboard, useTodaySchedule } from "@/hooks/use-dashboard-data";
+import { useTeacherDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 
 const activities = [
@@ -26,12 +38,13 @@ const upcomingTasks = [
 export function TeacherDashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (getUserRole() === 'teacher' || localStorage.getItem('demo_role') === 'teacher') {
+    if (getUserRole() === "teacher" || localStorage.getItem("demo_role") === "teacher") {
       setMounted(true);
     }
   }, []);
 
-  const { data: stats, isLoading } = useTeacherDashboard();
+  const storedUser = getStoredAuthUser();
+  const { data: stats, isLoading } = useTeacherDashboard(storedUser?.uid);
 
   if (!mounted || isLoading) {
     return (
@@ -48,11 +61,88 @@ export function TeacherDashboard() {
   const hwCount = stats?.homework?.length || 0;
   const examCount = stats?.exams?.length || 0;
 
+  const fmtTime = (v: unknown) => {
+    const ms = Date.parse(String(v));
+    if (!Number.isFinite(ms)) return "";
+    return new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
+  const todayClasses = (stats?.classes || [])
+    .filter((c) => {
+      const ms = Date.parse(String(c.startTime));
+      if (!Number.isFinite(ms)) return false;
+      const d = new Date(ms);
+      const nowD = new Date();
+      return (
+        ms > nowD.getTime() - 3600000 &&
+        d.getDate() === nowD.getDate() &&
+        d.getMonth() === nowD.getMonth()
+      );
+    })
+    .slice(0, 4)
+    .map((c) => ({
+      time: fmtTime(c.startTime),
+      name: String(c.name || "Class"),
+      room: String(c.room || ""),
+      status: Date.parse(String(c.startTime)) < Date.now() ? "ongoing" : "upcoming",
+    }));
+  const scheduleRows = todayClasses.length
+    ? todayClasses
+    : [
+        { time: "08:00 AM", name: "Mathematics - Batch A", room: "Room 101", status: "ongoing" },
+        { time: "09:30 AM", name: "Physics - Batch B", room: "Room 203", status: "upcoming" },
+        { time: "11:00 AM", name: "English - Batch A", room: "Room 105", status: "upcoming" },
+        { time: "01:00 PM", name: "Chemistry - Batch C", room: "Lab 2", status: "upcoming" },
+      ];
+
+  const dbTasks = [
+    ...(stats?.homework || []).map((h) => ({
+      title: `Grade Homework`,
+      subject: String(h.title || h.subject || ""),
+      due: new Date(Date.parse(String(h.dueDate))).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+    })),
+    ...(stats?.exams || []).map((e) => ({
+      title: `Prepare Exam Paper`,
+      subject: String(e.title || e.subject || ""),
+      due: new Date(Date.parse(String(e.scheduledAt))).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+    })),
+  ].filter((t) => t.subject && t.subject !== "Invalid Date");
+  const taskRows = dbTasks.length ? dbTasks.slice(0, 5) : upcomingTasks;
+
   const statCards = [
-    { label: 'My Classes', value: classCount, icon: BookOpen, color: 'from-navy to-navy/80', bg: 'bg-navy/5' },
-    { label: 'Total Students', value: classCount * 28, icon: Users, color: 'from-brand-red to-brand-red/80', bg: 'bg-brand-red/5' },
-    { label: 'Homework', value: hwCount, icon: FileText, color: 'from-gold to-gold/80', bg: 'bg-gold/5' },
-    { label: 'Upcoming Exams', value: examCount, icon: ClipboardCheck, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50' },
+    {
+      label: "My Classes",
+      value: classCount,
+      icon: BookOpen,
+      color: "from-navy to-navy/80",
+      bg: "bg-navy/5",
+    },
+    {
+      label: "Total Students",
+      value: classCount * 28,
+      icon: Users,
+      color: "from-brand-red to-brand-red/80",
+      bg: "bg-brand-red/5",
+    },
+    {
+      label: "Homework",
+      value: hwCount,
+      icon: FileText,
+      color: "from-gold to-gold/80",
+      bg: "bg-gold/5",
+    },
+    {
+      label: "Upcoming Exams",
+      value: examCount,
+      icon: ClipboardCheck,
+      color: "from-emerald-500 to-emerald-600",
+      bg: "bg-emerald-50",
+    },
   ];
 
   return (
@@ -67,7 +157,9 @@ export function TeacherDashboard() {
         <div className="relative">
           <p className="text-sm text-gold font-medium">Teacher Dashboard</p>
           <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">Welcome back, Teacher</h1>
-          <p className="text-white/70 mt-1 text-sm">Manage your classes, assignments, and students</p>
+          <p className="text-white/70 mt-1 text-sm">
+            Manage your classes, assignments, and students
+          </p>
         </div>
       </motion.div>
 
@@ -82,9 +174,15 @@ export function TeacherDashboard() {
             <motion.div
               key={s.label}
               whileHover={{ y: -4 }}
-              className={s.bg + ' rounded-xl p-4 border border-gray-200/60 shadow-sm'}
+              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
             >
-              <div className={'w-10 h-10 rounded-xl bg-gradient-to-br ' + s.color + ' flex items-center justify-center shadow-md mb-3'}>
+              <div
+                className={
+                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                  s.color +
+                  " flex items-center justify-center shadow-md mb-3"
+                }
+              >
                 <Icon className="w-5 h-5 text-white" />
               </div>
               <p className="text-xs text-gray-500 font-medium">{s.label}</p>
@@ -97,26 +195,35 @@ export function TeacherDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Today's Schedule</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              Today's Schedule
+            </h3>
             <p className="text-xs text-gray-400 mb-4">Upcoming classes for today</p>
             <div className="space-y-2">
-              {[
-                { time: '08:00 AM', name: 'Mathematics - Batch A', room: 'Room 101', status: 'ongoing' },
-                { time: '09:30 AM', name: 'Physics - Batch B', room: 'Room 203', status: 'upcoming' },
-                { time: '11:00 AM', name: 'English - Batch A', room: 'Room 105', status: 'upcoming' },
-                { time: '01:00 PM', name: 'Chemistry - Batch C', room: 'Lab 2', status: 'upcoming' },
-              ].map((s, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+              {scheduleRows.map((s, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                >
                   <div className="w-16 text-center shrink-0">
                     <p className="text-xs font-bold text-navy">{s.time}</p>
                   </div>
                   <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{s.name}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                      {s.name}
+                    </p>
                     <p className="text-xs text-gray-400">{s.room}</p>
                   </div>
-                  <span className={'text-[10px] font-semibold px-2 py-0.5 rounded-full ' + (s.status === 'ongoing' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
-                    {s.status === 'ongoing' ? 'Live' : 'Upcoming'}
+                  <span
+                    className={
+                      "text-[10px] font-semibold px-2 py-0.5 rounded-full " +
+                      (s.status === "ongoing"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500")
+                    }
+                  >
+                    {s.status === "ongoing" ? "Live" : "Upcoming"}
                   </span>
                 </div>
               ))}
@@ -129,13 +236,27 @@ export function TeacherDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Tasks</h3>
             <p className="text-xs text-gray-400 mb-4">Pending items requiring attention</p>
             <div className="space-y-3">
-              {upcomingTasks.map((t, i) => (
-                <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                  <div className={'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ' + (i === 0 ? 'bg-brand-red/10 text-brand-red' : i === 1 ? 'bg-gold/10 text-amber-600' : 'bg-navy/10 text-navy')}>
+              {taskRows.map((t, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                >
+                  <div
+                    className={
+                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 " +
+                      (i === 0
+                        ? "bg-brand-red/10 text-brand-red"
+                        : i === 1
+                          ? "bg-gold/10 text-amber-600"
+                          : "bg-navy/10 text-navy")
+                    }
+                  >
                     <AlertCircle className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{t.title}</p>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                      {t.title}
+                    </p>
                     <p className="text-[11px] text-gray-400">{t.subject}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">Due: {t.due}</p>
                   </div>
@@ -149,11 +270,16 @@ export function TeacherDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Activity</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              Recent Activity
+            </h3>
             <p className="text-xs text-gray-400 mb-4">Latest actions and updates</p>
             <div className="space-y-1">
               {activities.map((a, i) => (
-                <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                >
                   <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{a.title}</p>
@@ -171,20 +297,50 @@ export function TeacherDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Take Attendance', icon: CalendarCheck, to: '/admin/attendance', color: 'from-emerald-500 to-emerald-600' },
-                { label: 'Upload Notes', icon: Upload, to: '/admin/lms', color: 'from-navy to-navy/80' },
-                { label: 'Create Assignment', icon: FileText, to: '/admin/assignments', color: 'from-gold to-gold/80' },
-                { label: 'Send Notice', icon: Bell, to: '/admin/notices', color: 'from-brand-red to-brand-red/80' },
+                {
+                  label: "Take Attendance",
+                  icon: CalendarCheck,
+                  to: "/admin/attendance",
+                  color: "from-emerald-500 to-emerald-600",
+                },
+                {
+                  label: "Upload Notes",
+                  icon: Upload,
+                  to: "/admin/lms",
+                  color: "from-navy to-navy/80",
+                },
+                {
+                  label: "Create Assignment",
+                  icon: FileText,
+                  to: "/admin/assignments",
+                  color: "from-gold to-gold/80",
+                },
+                {
+                  label: "Send Notice",
+                  icon: Bell,
+                  to: "/admin/notices",
+                  color: "from-brand-red to-brand-red/80",
+                },
               ].map((a) => {
                 const Icon = a.icon;
                 return (
-                  <Link key={a.label} to={a.to}
+                  <Link
+                    key={a.label}
+                    to={a.to}
                     className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group"
                   >
-                    <div className={'w-10 h-10 rounded-lg bg-gradient-to-br ' + a.color + ' flex items-center justify-center text-white group-hover:scale-110 transition-transform'}>
+                    <div
+                      className={
+                        "w-10 h-10 rounded-lg bg-gradient-to-br " +
+                        a.color +
+                        " flex items-center justify-center text-white group-hover:scale-110 transition-transform"
+                      }
+                    >
                       <Icon className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 text-center leading-tight">{a.label}</span>
+                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 text-center leading-tight">
+                      {a.label}
+                    </span>
                   </Link>
                 );
               })}

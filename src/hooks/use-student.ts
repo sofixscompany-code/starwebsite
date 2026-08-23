@@ -1,7 +1,15 @@
 ﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp, where,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
@@ -113,7 +121,16 @@ export function useStudentGrades(studentId?: string) {
 
   const getGPA = () => {
     if (grades.length === 0) return 0;
-    const gradePoints: Record<string, number> = { "A+": 4.0, "A": 3.7, "B+": 3.3, "B": 3.0, "C+": 2.7, "C": 2.0, "D": 1.0, "F": 0 };
+    const gradePoints: Record<string, number> = {
+      "A+": 4.0,
+      A: 3.7,
+      "B+": 3.3,
+      B: 3.0,
+      "C+": 2.7,
+      C: 2.0,
+      D: 1.0,
+      F: 0,
+    };
     const total = grades.reduce((sum, g) => sum + (gradePoints[g.grade] ?? 0), 0);
     return Math.round((total / grades.length) * 100) / 100;
   };
@@ -176,7 +193,8 @@ export function useStudentAssignments(studentId?: string, courseId?: string) {
   });
 
   const getPendingCount = () => assignments.filter((a) => a.status === "pending").length;
-  const getOverdueCount = () => assignments.filter((a) => a.status === "pending" && new Date(a.dueDate) < new Date()).length;
+  const getOverdueCount = () =>
+    assignments.filter((a) => a.status === "pending" && new Date(a.dueDate) < new Date()).length;
 
   return { assignments, isLoading, submitAssignment, getPendingCount, getOverdueCount };
 }
@@ -198,7 +216,10 @@ export function useStudentStats(studentId: string) {
 
       const present = attendance.filter((a) => a.status === "present").length;
       const total = attendance.length || 1;
-      const avgMarks = grades.length > 0 ? grades.reduce((s, g) => s + (g.marks / g.totalMarks) * 100, 0) / grades.length : 0;
+      const avgMarks =
+        grades.length > 0
+          ? grades.reduce((s, g) => s + (g.marks / g.totalMarks) * 100, 0) / grades.length
+          : 0;
 
       return {
         attendanceRate: Math.round((present / total) * 100),
@@ -206,11 +227,10 @@ export function useStudentStats(studentId: string) {
         avgMarks: Math.round(avgMarks),
         totalGrades: grades.length,
         pendingAssignments: assignments.filter((a) => a.status === "pending").length,
-        completedAssignments: assignments.filter((a) => a.status === "submitted" || a.status === "graded").length,
+        completedAssignments: assignments.filter(
+          (a) => a.status === "submitted" || a.status === "graded",
+        ).length,
       };
     },
   });
 }
-
-
-

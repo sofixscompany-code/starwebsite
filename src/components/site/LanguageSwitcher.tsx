@@ -26,7 +26,10 @@ export function LanguageSwitcher() {
             {langs.map((l) => (
               <button
                 key={l}
-                onClick={() => { setLang(l); setOpen(false); }}
+                onClick={() => {
+                  setLang(l);
+                  setOpen(false);
+                }}
                 className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition ${
                   lang === l ? "text-brand-red" : "text-navy"
                 }`}

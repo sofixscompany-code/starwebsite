@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Bed, CheckCircle2, Users, Wallet } from "lucide-react";
 
 export function HostelPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="hostel"
       title="Hostel"
       subtitle="Manage hostel rooms, occupancy and payments"
       stats={[

@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { LifeBuoy, Clock, CheckCircle2, Star } from "lucide-react";
 
 export function SupportPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="support_tickets"
       title="Support"
       subtitle="Manage student and parent support tickets"
       stats={[
@@ -19,10 +20,30 @@ export function SupportPage() {
         { key: "status", label: "Status" },
       ]}
       rows={[
-        { name: "Can't access study material", user: "Aarav Patel", priority: "High", status: "Open" },
-        { name: "Fee receipt not received", user: "Meera Joshi", priority: "Medium", status: "In Progress" },
-        { name: "App crash on Android 14", user: "Rohan Verma", priority: "High", status: "Resolved" },
-        { name: "Query about batch timing", user: "Sunita Devi", priority: "Low", status: "Resolved" },
+        {
+          name: "Can't access study material",
+          user: "Aarav Patel",
+          priority: "High",
+          status: "Open",
+        },
+        {
+          name: "Fee receipt not received",
+          user: "Meera Joshi",
+          priority: "Medium",
+          status: "In Progress",
+        },
+        {
+          name: "App crash on Android 14",
+          user: "Rohan Verma",
+          priority: "High",
+          status: "Resolved",
+        },
+        {
+          name: "Query about batch timing",
+          user: "Sunita Devi",
+          priority: "Low",
+          status: "Resolved",
+        },
       ]}
     />
   );

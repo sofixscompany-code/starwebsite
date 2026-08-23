@@ -1,16 +1,19 @@
-﻿import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { getUserRole } from '@/lib/api-auth';
-import { ROLE_DASHBOARD_ROUTES } from '@/hooks/use-user-role';
-import { Loader2 } from 'lucide-react';
+﻿import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { getUserRole } from "@/lib/api-auth";
+import { ROLE_DASHBOARD_ROUTES } from "@/hooks/use-user-role";
+import { Loader2 } from "lucide-react";
 
 export function DashboardPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const role = getUserRole();
-    const route = role && ROLE_DASHBOARD_ROUTES[role] ? ROLE_DASHBOARD_ROUTES[role] : ROLE_DASHBOARD_ROUTES.super_admin;
+    const route =
+      role && ROLE_DASHBOARD_ROUTES[role]
+        ? ROLE_DASHBOARD_ROUTES[role]
+        : ROLE_DASHBOARD_ROUTES.super_admin;
     navigate(route, { replace: true });
   }, [navigate]);
 

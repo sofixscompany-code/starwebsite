@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { History, Users, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export function AuditLogsPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="audit_logs"
       title="Audit Logs"
       subtitle="Track all user and system actions across the platform"
       stats={[
@@ -20,9 +21,24 @@ export function AuditLogsPage() {
       ]}
       rows={[
         { user: "Rahul Sharma", action: "Login", target: "Admin Panel", date: "2024-01-15 09:12" },
-        { user: "Priya Mehta", action: "Updated Fee", target: "Student #1042", date: "2024-01-15 08:45" },
-        { user: "System", action: "Backup Completed", target: "Database", date: "2024-01-15 06:00" },
-        { user: "Ankit Kumar", action: "Deleted Record", target: "Attendance Log", date: "2024-01-14 17:30" },
+        {
+          user: "Priya Mehta",
+          action: "Updated Fee",
+          target: "Student #1042",
+          date: "2024-01-15 08:45",
+        },
+        {
+          user: "System",
+          action: "Backup Completed",
+          target: "Database",
+          date: "2024-01-15 06:00",
+        },
+        {
+          user: "Ankit Kumar",
+          action: "Deleted Record",
+          target: "Attendance Log",
+          date: "2024-01-14 17:30",
+        },
       ]}
     />
   );

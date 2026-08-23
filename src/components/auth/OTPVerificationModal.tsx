@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
-import { Loader2, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useRef, useEffect } from "react";
+import { Loader2, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface OTPVerificationModalProps {
   open: boolean;
@@ -13,7 +13,7 @@ interface OTPVerificationModalProps {
 }
 
 export function OTPVerificationModal({ open, onClose, email }: OTPVerificationModalProps) {
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -37,7 +37,7 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -48,14 +48,14 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 6);
+    const pastedData = e.clipboardData.getData("text").slice(0, 6);
     if (!/^\d+$/.test(pastedData)) return;
 
     const newOtp = [...otp];
@@ -63,25 +63,25 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
       newOtp[i] = pastedData[i];
     }
     setOtp(newOtp);
-    
+
     const focusIndex = Math.min(pastedData.length, 5);
     inputRefs.current[focusIndex]?.focus();
   };
 
   const handleVerify = async () => {
-    const otpCode = otp.join('');
+    const otpCode = otp.join("");
     if (otpCode.length !== 6) {
-      toast.error('Please enter complete 6-digit OTP');
+      toast.error("Please enter complete 6-digit OTP");
       return;
     }
     setLoading(true);
     try {
       // Simulate OTP verification
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('OTP verified successfully!');
+      toast.success("OTP verified successfully!");
       onClose();
     } catch {
-      toast.error('Invalid OTP. Please try again.');
+      toast.error("Invalid OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -92,10 +92,10 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
     try {
       // Simulate resend OTP
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('OTP resent successfully!');
+      toast.success("OTP resent successfully!");
       setCountdown(60);
     } catch {
-      toast.error('Failed to resend OTP');
+      toast.error("Failed to resend OTP");
     } finally {
       setResendLoading(false);
     }
@@ -120,7 +120,9 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
             {otp.map((digit, index) => (
               <Input
                 key={index}
-                ref={(el) => { inputRefs.current[index] = el; }}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -133,20 +135,24 @@ export function OTPVerificationModal({ open, onClose, email }: OTPVerificationMo
             ))}
           </div>
 
-          <Button onClick={handleVerify} disabled={loading} className="w-full bg-[hsl(var(--ap-blue))] hover:bg-[hsl(var(--ap-blue-light))]">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify OTP'}
+          <Button
+            onClick={handleVerify}
+            disabled={loading}
+            className="w-full bg-[hsl(var(--ap-blue))] hover:bg-[hsl(var(--ap-blue-light))]"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify OTP"}
           </Button>
 
           <div className="text-center text-sm">
             {countdown > 0 ? (
               <span className="text-[hsl(var(--ap-muted))]">Resend OTP in {countdown}s</span>
             ) : (
-              <button 
-                onClick={handleResend} 
+              <button
+                onClick={handleResend}
                 disabled={resendLoading}
                 className="text-[hsl(var(--ap-blue))] hover:underline disabled:opacity-50"
               >
-                {resendLoading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : 'Resend OTP'}
+                {resendLoading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Resend OTP"}
               </button>
             )}
           </div>

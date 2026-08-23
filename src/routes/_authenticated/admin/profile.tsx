@@ -1,6 +1,18 @@
 ﻿import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Camera, Save, Loader2, Shield, Mail, Phone, Building, Calendar, Lock, Eye, EyeOff } from "lucide-react";
+import {
+  Camera,
+  Save,
+  Loader2,
+  Shield,
+  Mail,
+  Phone,
+  Building,
+  Calendar,
+  Lock,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/integrations/firebase/config";
 import { firebaseAuth } from "@/integrations/firebase/auth";
@@ -171,7 +183,8 @@ export function ProfilePage() {
               )}
               {createdAt && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" /> Joined {new Date(createdAt).toLocaleDateString()}
+                  <Calendar className="w-3.5 h-3.5" /> Joined{" "}
+                  {new Date(createdAt).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -180,11 +193,16 @@ export function ProfilePage() {
       </div>
 
       {/* Edit Profile */}
-      <form onSubmit={handleSaveProfile} className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6">
+      <form
+        onSubmit={handleSaveProfile}
+        className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6"
+      >
         <h3 className="text-lg font-bold text-[hsl(var(--ap-ink))] mb-4">Edit Profile</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Full Name
+            </label>
             <input
               type="text"
               value={fullName}
@@ -193,7 +211,9 @@ export function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Email</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Email
+            </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <input
@@ -205,7 +225,9 @@ export function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Phone</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Phone
+            </label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <input
@@ -218,7 +240,9 @@ export function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Branch</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Branch
+            </label>
             <div className="relative">
               <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <select
@@ -258,13 +282,18 @@ export function ProfilePage() {
       </form>
 
       {/* Change Password */}
-      <form onSubmit={handleChangePassword} className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6">
+      <form
+        onSubmit={handleChangePassword}
+        className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6"
+      >
         <h3 className="text-lg font-bold text-[hsl(var(--ap-ink))] mb-4 flex items-center gap-2">
           <Lock className="w-5 h-5" /> Change Password
         </h3>
         <div className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Current Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <input
@@ -284,7 +313,9 @@ export function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">New Password</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              New Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <input
@@ -304,7 +335,9 @@ export function ProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+              Confirm New Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
               <input
@@ -323,7 +356,11 @@ export function ProfilePage() {
             disabled={changingPassword}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[hsl(var(--ap-ink))] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
           >
-            {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+            {changingPassword ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Lock className="w-4 h-4" />
+            )}
             Change Password
           </button>
         </div>
@@ -331,5 +368,3 @@ export function ProfilePage() {
     </div>
   );
 }
-
-

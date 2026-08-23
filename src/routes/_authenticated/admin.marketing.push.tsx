@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Bell, CheckCircle2, MousePointer, Smartphone } from "lucide-react";
 
 export function PushPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="push_notifications"
       title="Push Notifications"
       subtitle="Send and manage push notifications to students and parents"
       stats={[
@@ -19,9 +20,19 @@ export function PushPage() {
         { key: "status", label: "Status" },
       ]}
       rows={[
-        { name: "Exam Timetable Released", audience: "All Students", sent: "Jan 15", status: "Sent" },
+        {
+          name: "Exam Timetable Released",
+          audience: "All Students",
+          sent: "Jan 15",
+          status: "Sent",
+        },
         { name: "Fee Payment Reminder", audience: "Parents", sent: "Jan 14", status: "Sent" },
-        { name: "Holiday Notice – Jan 26", audience: "All Users", sent: "Jan 25", status: "Scheduled" },
+        {
+          name: "Holiday Notice – Jan 26",
+          audience: "All Users",
+          sent: "Jan 25",
+          status: "Scheduled",
+        },
         { name: "New Batch Enrollment Open", audience: "Leads", sent: "—", status: "Draft" },
       ]}
     />

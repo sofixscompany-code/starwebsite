@@ -1,4 +1,4 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { faculty } from "@/lib/site-config";
@@ -49,5 +49,3 @@ export function FacultyPage() {
     </div>
   );
 }
-
-

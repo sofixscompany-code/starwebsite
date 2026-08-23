@@ -1,7 +1,17 @@
 ﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, writeBatch, serverTimestamp, where, limit,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  writeBatch,
+  serverTimestamp,
+  where,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
@@ -104,9 +114,7 @@ export function useCourses() {
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["lms", "courses"],
     queryFn: async () => {
-      const snap = await getDocs(
-        query(collection(db, "lms_courses"), orderBy("order", "asc"))
-      );
+      const snap = await getDocs(query(collection(db, "lms_courses"), orderBy("order", "asc")));
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Course[];
     },
   });
@@ -152,7 +160,11 @@ export function useLessons(courseId?: string) {
     queryFn: async () => {
       let q = query(collection(db, "lms_lessons"), orderBy("order", "asc"));
       if (courseId) {
-        q = query(collection(db, "lms_lessons"), where("courseId", "==", courseId), orderBy("order", "asc"));
+        q = query(
+          collection(db, "lms_lessons"),
+          where("courseId", "==", courseId),
+          orderBy("order", "asc"),
+        );
       }
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Lesson[];
@@ -200,7 +212,11 @@ export function useQuizzes(courseId?: string) {
     queryFn: async () => {
       let q = query(collection(db, "lms_quizzes"), orderBy("createdAt", "desc"));
       if (courseId) {
-        q = query(collection(db, "lms_quizzes"), where("courseId", "==", courseId), orderBy("createdAt", "desc"));
+        q = query(
+          collection(db, "lms_quizzes"),
+          where("courseId", "==", courseId),
+          orderBy("createdAt", "desc"),
+        );
       }
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Quiz[];
@@ -336,11 +352,9 @@ export function useLmsStats() {
         totalLessons: lessonsSnap.size,
         totalQuizzes: quizzesSnap.size,
         activeEnrollments: enrollmentsSnap.docs.filter((d) => d.data().status === "active").length,
-        completedEnrollments: enrollmentsSnap.docs.filter((d) => d.data().status === "completed").length,
+        completedEnrollments: enrollmentsSnap.docs.filter((d) => d.data().status === "completed")
+          .length,
       };
     },
   });
 }
-
-
-

@@ -1,8 +1,28 @@
 ﻿import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Trash2, Upload, Image as ImageIcon, Eye, EyeOff, GripVertical, FileType, AlertCircle } from "lucide-react";
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDocs, serverTimestamp } from "firebase/firestore";
+import {
+  Loader2,
+  Trash2,
+  Upload,
+  Image as ImageIcon,
+  Eye,
+  EyeOff,
+  GripVertical,
+  FileType,
+  AlertCircle,
+} from "lucide-react";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db } from "@/integrations/firebase/config";
 import { PageHeader } from "@/components/admin/AdminShell";
@@ -22,7 +42,13 @@ export function BannersPage() {
     },
   });
 
-  const [form, setForm] = useState({ title: "", subtitle: "", ctaText: "", ctaLink: "", sortOrder: "0" });
+  const [form, setForm] = useState({
+    title: "",
+    subtitle: "",
+    ctaText: "",
+    ctaLink: "",
+    sortOrder: "0",
+  });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -96,7 +122,9 @@ export function BannersPage() {
       qc.invalidateQueries({ queryKey: ["hero-banners"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const toggleActive = async (id: string, isActive: boolean) => {
@@ -111,7 +139,9 @@ export function BannersPage() {
       try {
         const storage = getStorage();
         await deleteObject(ref(storage, storagePath));
-      } catch { /* ignore if not found */ }
+      } catch {
+        /* ignore if not found */
+      }
     }
     await deleteDoc(doc(db, "banners", id));
     qc.invalidateQueries({ queryKey: ["admin-banners"] });
@@ -126,7 +156,10 @@ export function BannersPage() {
 
   return (
     <div>
-      <PageHeader title="Feature Slides / Banners" subtitle="Image slides shown on the homepage hero. Supported: JPEG, PNG, WebP. Max 10MB." />
+      <PageHeader
+        title="Feature Slides / Banners"
+        subtitle="Image slides shown on the homepage hero. Supported: JPEG, PNG, WebP. Max 10MB."
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Panel */}
         <Panel title="Add new slide" className="lg:col-span-1">
@@ -152,10 +185,17 @@ export function BannersPage() {
               />
               {preview ? (
                 <div className="relative group">
-                  <img src={preview} alt="Preview" className="w-full h-36 object-cover rounded-xl" />
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-full h-36 object-cover rounded-xl"
+                  />
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); clearSelection(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearSelection();
+                    }}
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -169,9 +209,7 @@ export function BannersPage() {
                   <p className="text-sm font-semibold text-slate-600">
                     Drop image here or click to browse
                   </p>
-                  <p className="text-xs text-slate-400">
-                    JPEG, PNG, WebP &middot; Max 10MB
-                  </p>
+                  <p className="text-xs text-slate-400">JPEG, PNG, WebP &middot; Max 10MB</p>
                 </div>
               )}
             </div>
@@ -185,7 +223,9 @@ export function BannersPage() {
               ["Sort order", "sortOrder", "number"],
             ].map(([label, k, type]) => (
               <label key={k} className="block">
-                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">{label}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                  {label}
+                </span>
                 <input
                   type={type}
                   value={(form as Record<string, string>)[k]}
@@ -196,11 +236,19 @@ export function BannersPage() {
               </label>
             ))}
 
-            <button onClick={addBanner} disabled={uploading || !file} className="ap-btn w-full justify-center">
+            <button
+              onClick={addBanner}
+              disabled={uploading || !file}
+              className="ap-btn w-full justify-center"
+            >
               {uploading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Uploading&hellip;</>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading&hellip;
+                </>
               ) : (
-                <><Upload className="w-4 h-4" /> Add slide</>
+                <>
+                  <Upload className="w-4 h-4" /> Add slide
+                </>
               )}
             </button>
           </div>
@@ -209,7 +257,9 @@ export function BannersPage() {
         {/* Slides grid */}
         <Panel title={`All slides (${data.length})`} className="lg:col-span-2">
           {isLoading ? (
-            <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-navy/40" /></div>
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-6 h-6 animate-spin text-navy/40" />
+            </div>
           ) : data.length === 0 ? (
             <div className="text-center py-12 text-[hsl(var(--ap-muted))]">
               <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -219,23 +269,40 @@ export function BannersPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
               {data.map((b: any) => (
-                <div key={b.id} className="ap-card overflow-hidden group hover:shadow-lg transition-shadow">
+                <div
+                  key={b.id}
+                  className="ap-card overflow-hidden group hover:shadow-lg transition-shadow"
+                >
                   <div className="relative">
-                    <img src={b.imageUrl} alt={b.title ?? ""} className="w-full h-40 object-cover" />
+                    <img
+                      src={b.imageUrl}
+                      alt={b.title ?? ""}
+                      className="w-full h-40 object-cover"
+                    />
                     <div className="absolute top-2 right-2 flex gap-1.5">
-                      <Badge tone={b.isActive ? "success" : "muted"}>{b.isActive ? "Active" : "Hidden"}</Badge>
+                      <Badge tone={b.isActive ? "success" : "muted"}>
+                        {b.isActive ? "Active" : "Hidden"}
+                      </Badge>
                       {b.imageUrl?.endsWith(".webp") && (
-                        <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded">WebP</span>
+                        <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                          WebP
+                        </span>
                       )}
                     </div>
                   </div>
                   <div className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-bold text-sm text-gray-900 truncate">{b.title || <span className="italic text-gray-400">Untitled</span>}</p>
-                        {b.subtitle && <p className="text-xs text-gray-500 truncate">{b.subtitle}</p>}
+                        <p className="font-bold text-sm text-gray-900 truncate">
+                          {b.title || <span className="italic text-gray-400">Untitled</span>}
+                        </p>
+                        {b.subtitle && (
+                          <p className="text-xs text-gray-500 truncate">{b.subtitle}</p>
+                        )}
                       </div>
-                      <span className="text-[10px] text-gray-400 font-mono shrink-0">#{b.sortOrder ?? "–"}</span>
+                      <span className="text-[10px] text-gray-400 font-mono shrink-0">
+                        #{b.sortOrder ?? "–"}
+                      </span>
                     </div>
                     {b.ctaText && (
                       <div className="flex items-center gap-1.5 text-[11px] text-navy font-medium">
@@ -244,11 +311,21 @@ export function BannersPage() {
                       </div>
                     )}
                     <div className="flex gap-2 pt-1 border-t border-slate-100">
-                      <button onClick={() => toggleActive(b.id, b.isActive)} className="ap-btn-ghost flex-1 justify-center text-xs">
-                        {b.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      <button
+                        onClick={() => toggleActive(b.id, b.isActive)}
+                        className="ap-btn-ghost flex-1 justify-center text-xs"
+                      >
+                        {b.isActive ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
                         {b.isActive ? "Hide" : "Show"}
                       </button>
-                      <button onClick={() => del(b.id, b.storagePath)} className="ap-btn-ghost text-xs">
+                      <button
+                        onClick={() => del(b.id, b.storagePath)}
+                        className="ap-btn-ghost text-xs"
+                      >
                         <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
                         Delete
                       </button>

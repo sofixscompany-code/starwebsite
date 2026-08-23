@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Radio, Calendar, PlayCircle, CheckCircle2 } from "lucide-react";
 
 export function LiveClassesPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="live_classes"
       title="Live Classes"
       subtitle="Schedule and manage live online class sessions"
       stats={[
@@ -19,10 +20,30 @@ export function LiveClassesPage() {
         { key: "status", label: "Status" },
       ]}
       rows={[
-        { name: "JEE Advanced – Thermodynamics", teacher: "Dr. Mehta", date: "2024-01-16 10:00", status: "Upcoming" },
-        { name: "NEET – Human Biology", teacher: "Ms. Kapoor", date: "2024-01-15 14:00", status: "Completed" },
-        { name: "Class 12 – Calculus", teacher: "Mr. Verma", date: "2024-01-15 09:00", status: "Recorded" },
-        { name: "Foundation – Atomic Structure", teacher: "Dr. Mehta", date: "2024-01-14 11:00", status: "Recorded" },
+        {
+          name: "JEE Advanced – Thermodynamics",
+          teacher: "Dr. Mehta",
+          date: "2024-01-16 10:00",
+          status: "Upcoming",
+        },
+        {
+          name: "NEET – Human Biology",
+          teacher: "Ms. Kapoor",
+          date: "2024-01-15 14:00",
+          status: "Completed",
+        },
+        {
+          name: "Class 12 – Calculus",
+          teacher: "Mr. Verma",
+          date: "2024-01-15 09:00",
+          status: "Recorded",
+        },
+        {
+          name: "Foundation – Atomic Structure",
+          teacher: "Dr. Mehta",
+          date: "2024-01-14 11:00",
+          status: "Recorded",
+        },
       ]}
     />
   );

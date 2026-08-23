@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { GitBranch, Building, GraduationCap, Wallet } from "lucide-react";
 
 export function BranchesPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="branches"
       title="Branches"
       subtitle="Manage coaching centre locations and their details"
       stats={[

@@ -24,7 +24,10 @@ async function main() {
   await page.waitForTimeout(3000);
 
   const title = await page.title();
-  const bodyText = await page.locator("body").innerText({ timeout: 5000 }).catch(() => "");
+  const bodyText = await page
+    .locator("body")
+    .innerText({ timeout: 5000 })
+    .catch(() => "");
 
   console.log("\n--- RESULT ---");
   console.log("Title:", title);

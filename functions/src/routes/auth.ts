@@ -1,7 +1,13 @@
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import * as admin from "firebase-admin";
-import { JWT_SECRET, JWT_EXPIRES_IN, DEMO_JWT_EXPIRES_IN, DEMO_USERS, ROLE_DASHBOARD_MAP } from "../config";
+import {
+  JWT_SECRET,
+  JWT_EXPIRES_IN,
+  DEMO_JWT_EXPIRES_IN,
+  DEMO_USERS,
+  ROLE_DASHBOARD_MAP,
+} from "../config";
 import { verifyToken, AuthRequest } from "../middleware/verifyToken";
 import { verifyDashboardAccess } from "../middleware/rbac";
 
@@ -16,7 +22,10 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const userRecord = await admin.auth().getUserByEmail(email).catch(() => null);
+    const userRecord = await admin
+      .auth()
+      .getUserByEmail(email)
+      .catch(() => null);
 
     if (!userRecord) {
       res.status(401).json({ error: "Invalid email or password." });
@@ -38,11 +47,9 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const token = jwt.sign(
-      { uid: userRecord.uid, email, role, name, isDemo: false },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
+    const token = jwt.sign({ uid: userRecord.uid, email, role, name, isDemo: false }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
 
     res.json({
       token,
@@ -80,7 +87,7 @@ router.post("/demo-login", async (req: Request, res: Response) => {
         isDemo: true,
       },
       JWT_SECRET,
-      { expiresIn: DEMO_JWT_EXPIRES_IN }
+      { expiresIn: DEMO_JWT_EXPIRES_IN },
     );
 
     res.json({
@@ -108,13 +115,18 @@ router.get("/verify", verifyToken, (req: AuthRequest, res: Response) => {
   });
 });
 
-router.get("/dashboard-access", verifyToken, verifyDashboardAccess, (req: AuthRequest, res: Response) => {
-  res.json({
-    allowed: true,
-    role: req.user!.role,
-    dashboard: ROLE_DASHBOARD_MAP[req.user!.role],
-  });
-});
+router.get(
+  "/dashboard-access",
+  verifyToken,
+  verifyDashboardAccess,
+  (req: AuthRequest, res: Response) => {
+    res.json({
+      allowed: true,
+      role: req.user!.role,
+      dashboard: ROLE_DASHBOARD_MAP[req.user!.role],
+    });
+  },
+);
 
 router.get("/me", verifyToken, async (req: AuthRequest, res: Response) => {
   try {

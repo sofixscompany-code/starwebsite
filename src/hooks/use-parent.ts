@@ -99,7 +99,14 @@ export function useChildFees(childId?: string) {
       const snap = await getDocs(q);
       return snap.docs.map((d) => {
         const data = d.data() as any;
-        return { id: d.id, invoiceNumber: data.invoiceNumber, amount: data.totalAmount, status: data.status, dueDate: data.dueDate, paidDate: data.paidDate };
+        return {
+          id: d.id,
+          invoiceNumber: data.invoiceNumber,
+          amount: data.totalAmount,
+          status: data.status,
+          dueDate: data.dueDate,
+          paidDate: data.paidDate,
+        };
       }) as ChildFee[];
     },
   });
@@ -116,11 +123,16 @@ export function useChildAssignments(childId?: string) {
       const snap = await getDocs(q);
       return snap.docs.map((d) => {
         const data = d.data() as any;
-        return { id: d.id, title: data.title, courseName: data.courseName, dueDate: data.dueDate, status: data.status, marks: data.marks, totalMarks: data.totalMarks };
+        return {
+          id: d.id,
+          title: data.title,
+          courseName: data.courseName,
+          dueDate: data.dueDate,
+          status: data.status,
+          marks: data.marks,
+          totalMarks: data.totalMarks,
+        };
       }) as ChildAssignment[];
     },
   });
 }
-
-
-

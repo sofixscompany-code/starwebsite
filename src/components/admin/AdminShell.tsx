@@ -1,14 +1,25 @@
-﻿import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { clearToken, getUserRole } from '@/lib/api-auth';
-import { ROLE_LABELS } from '@/hooks/use-user-role';
-import { toast } from 'sonner';
-import { Sidebar } from './Sidebar';
+﻿import { useState, useEffect } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { clearToken, getUserRole } from "@/lib/api-auth";
+import { ROLE_LABELS } from "@/hooks/use-user-role";
+import { toast } from "sonner";
+import { Sidebar } from "./Sidebar";
 import {
-  Bell, Calendar, ChevronRight, Command, Menu, Moon, Search,
-  Sparkles, Send, Sun, X, LogOut, User,
-} from 'lucide-react';
+  Bell,
+  Calendar,
+  ChevronRight,
+  Command,
+  Menu,
+  Moon,
+  Search,
+  Sparkles,
+  Send,
+  Sun,
+  X,
+  LogOut,
+  User,
+} from "lucide-react";
 
 export function AdminShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -22,46 +33,54 @@ export function AdminShell() {
   const role = getUserRole();
 
   useEffect(() => {
-    const saved = localStorage.getItem('admin-theme');
-    if (saved === 'dark') setDark(true);
+    const saved = localStorage.getItem("admin-theme");
+    if (saved === "dark") setDark(true);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('admin-theme', dark ? 'dark' : 'light');
+    localStorage.setItem("admin-theme", dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setCmdOpen(true);
       }
-      if (e.key === 'Escape') setCmdOpen(false);
+      if (e.key === "Escape") setCmdOpen(false);
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const signOut = () => {
     clearToken();
-    navigate('/auth');
+    navigate("/auth");
   };
 
   return (
-    <div className={`admin-shell ${dark ? 'dark' : ''} font-sans`}>
+    <div className={`admin-shell ${dark ? "dark" : ""} font-sans`}>
       {/* Fixed Header */}
       <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between px-6 md:px-8 py-3">
           <div className="flex items-center gap-4">
-            <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
               <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}
+                {new Date().getHours() < 12
+                  ? "Good morning"
+                  : new Date().getHours() < 17
+                    ? "Good afternoon"
+                    : "Good evening"}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                {role ? (ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role) : 'Loading...'} Dashboard
+                {role ? ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role : "Loading..."}{" "}
+                Dashboard
               </p>
             </div>
           </div>
@@ -73,7 +92,9 @@ export function AdminShell() {
             >
               <Search className="w-3.5 h-3.5" />
               <span>Search...</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold text-gray-400">K</kbd>
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold text-gray-400">
+                K
+              </kbd>
             </button>
 
             <button
@@ -113,7 +134,10 @@ export function AdminShell() {
           onToggleCollapse={() => setCollapsed((v) => !v)}
         />
 
-        <main className="flex-1 min-w-0 px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto overflow-y-auto" style={{ height: 'calc(100vh - 57px)' }}>
+        <main
+          className="flex-1 min-w-0 px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto overflow-y-auto"
+          style={{ height: "calc(100vh - 57px)" }}
+        >
           <Breadcrumbs />
           <Outlet />
         </main>
@@ -129,7 +153,10 @@ export function AdminShell() {
             <CommandPalette
               key="cmd"
               onClose={() => setCmdOpen(false)}
-              onNavigate={(to) => { setCmdOpen(false); navigate(to); }}
+              onNavigate={(to) => {
+                setCmdOpen(false);
+                navigate(to);
+              }}
             />
           )}
         </AnimatePresence>
@@ -140,11 +167,11 @@ export function AdminShell() {
 
 function RightPanel({ onClose }: { onClose: () => void }) {
   const notifications = [
-    { title: 'New admission request', desc: 'John Doe applied for Class 10', time: '2m ago' },
-    { title: 'Fee payment received', desc: '₹15,000 from Student #1234', time: '15m ago' },
-    { title: 'Exam schedule updated', desc: 'Mid-term exams moved to next week', time: '1h ago' },
-    { title: 'New inquiry', desc: 'Parent requested campus tour', time: '3h ago' },
-    { title: 'Attendance report', desc: 'Class 12A has 92% attendance', time: '5h ago' },
+    { title: "New admission request", desc: "John Doe applied for Class 10", time: "2m ago" },
+    { title: "Fee payment received", desc: "₹15,000 from Student #1234", time: "15m ago" },
+    { title: "Exam schedule updated", desc: "Mid-term exams moved to next week", time: "1h ago" },
+    { title: "New inquiry", desc: "Parent requested campus tour", time: "3h ago" },
+    { title: "Attendance report", desc: "Class 12A has 92% attendance", time: "5h ago" },
   ];
 
   return (
@@ -152,18 +179,24 @@ function RightPanel({ onClose }: { onClose: () => void }) {
       initial={{ x: 320, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 320, opacity: 0 }}
-      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+      transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="fixed right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-40"
     >
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
         <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
-        <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400">
+        <button
+          onClick={onClose}
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
       <div className="overflow-y-auto h-[calc(100%-60px)]">
         {notifications.map((n, i) => (
-          <div key={i} className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
+          <div
+            key={i}
+            className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+          >
             <p className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{n.desc}</p>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">{n.time}</p>
@@ -176,16 +209,19 @@ function RightPanel({ onClose }: { onClose: () => void }) {
 
 function FloatingAI({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([
-    { role: 'ai', text: 'Hello! I\'m your Star AI assistant. How can I help you today?' },
+    { role: "ai", text: "Hello! I'm your Star AI assistant. How can I help you today?" },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
 
   const handleSend = () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { role: 'user', text: input }]);
-    setInput('');
+    setMessages((prev) => [...prev, { role: "user", text: input }]);
+    setInput("");
     setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'ai', text: 'I\'m processing your request. This is a demo response.' }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", text: "I'm processing your request. This is a demo response." },
+      ]);
     }, 1000);
   };
 
@@ -212,18 +248,26 @@ function FloatingAI({ open, onToggle }: { open: boolean; onToggle: () => void })
                 <Sparkles className="w-4 h-4 text-indigo-600" />
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">Star AI</span>
               </div>
-              <button onClick={onToggle} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400">
+              <button
+                onClick={onToggle}
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="h-64 overflow-y-auto p-4 space-y-3">
               {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-md'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-bl-md'
-                  }`}>
+                <div
+                  key={i}
+                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      m.role === "user"
+                        ? "bg-indigo-600 text-white rounded-br-md"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-bl-md"
+                    }`}
+                  >
                     {m.text}
                   </div>
                 </div>
@@ -233,11 +277,14 @@ function FloatingAI({ open, onToggle }: { open: boolean; onToggle: () => void })
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask me anything..."
                 className="flex-1 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
-              <button onClick={handleSend} className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+              <button
+                onClick={handleSend}
+                className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              >
                 <Send className="w-4 h-4" />
               </button>
             </div>
@@ -248,19 +295,25 @@ function FloatingAI({ open, onToggle }: { open: boolean; onToggle: () => void })
   );
 }
 
-function CommandPalette({ onClose, onNavigate }: { onClose: () => void; onNavigate: (to: string) => void }) {
-  const [query, setQuery] = useState('');
+function CommandPalette({
+  onClose,
+  onNavigate,
+}: {
+  onClose: () => void;
+  onNavigate: (to: string) => void;
+}) {
+  const [query, setQuery] = useState("");
 
   const items = [
-    { title: 'Dashboard', path: '/admin' },
-    { title: 'Students', path: '/admin/students' },
-    { title: 'Teachers', path: '/admin/teachers' },
-    { title: 'Admissions', path: '/admin/admissions' },
-    { title: 'Payments', path: '/admin/payments' },
-    { title: 'Reports', path: '/admin/reports' },
-    { title: 'Settings', path: '/admin/settings' },
-    { title: 'Courses', path: '/admin/courses' },
-    { title: 'Attendance', path: '/admin/attendance' },
+    { title: "Dashboard", path: "/admin" },
+    { title: "Students", path: "/admin/students" },
+    { title: "Teachers", path: "/admin/teachers" },
+    { title: "Admissions", path: "/admin/admissions" },
+    { title: "Payments", path: "/admin/payments" },
+    { title: "Reports", path: "/admin/reports" },
+    { title: "Settings", path: "/admin/settings" },
+    { title: "Courses", path: "/admin/courses" },
+    { title: "Attendance", path: "/admin/attendance" },
   ].filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
 
   return (
@@ -287,7 +340,9 @@ function CommandPalette({ onClose, onNavigate }: { onClose: () => void; onNaviga
             placeholder="Search pages, actions..."
             className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none"
           />
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-400">ESC</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-400">
+            ESC
+          </kbd>
         </div>
         <div className="max-h-64 overflow-y-auto">
           {items.length === 0 ? (
@@ -310,7 +365,15 @@ function CommandPalette({ onClose, onNavigate }: { onClose: () => void; onNaviga
   );
 }
 
-export const PageHeader = ({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: React.ReactNode }) => (
+export const PageHeader = ({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+}) => (
   <div className="flex items-start justify-between mb-6">
     <div>
       <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
@@ -321,42 +384,65 @@ export const PageHeader = ({ title, subtitle, actions }: { title: string; subtit
 );
 
 const BREADCRUMB_LABELS: Record<string, string> = {
-  admin: 'Admin', notices: 'Notices & Events', crm: 'CRM', hr: 'HR',
-  sms: 'SMS', leads: 'Leads', employees: 'Employees',
-  payroll: 'Payroll', leaves: 'Leaves', departments: 'Departments',
-  inquiries: 'Inquiries', visitors: 'Visitors', counselling: 'Counselling',
-  marketing: 'Marketing', email: 'Email', whatsapp: 'WhatsApp', push: 'Push Notifications',
-  support: 'Support', profile: 'Profile',
-  users: 'User Management', roles: 'Roles', branches: 'Branches',
-  settings: 'Settings', audit: 'Audit Logs', ai: 'AI Assistant',
-  courses: 'Courses', lms: 'LMS', live: 'Live Classes',
-  homework: 'Homework', assignments: 'Assignments',
-  attendance: 'Attendance', exams: 'Examinations',
-  results: 'Results', certificates: 'Certificates',
-  'id-cards': 'ID Cards', library: 'Library', hostel: 'Hostel',
-  transport: 'Transport', payments: 'Payments',
-  accounting: 'Accounting', reports: 'Reports',
-  analytics: 'Analytics', students: 'Students',
-  teachers: 'Teachers', parents: 'Parents',
-  admissions: 'Admissions', reception: 'Reception',
+  admin: "Admin",
+  notices: "Notices & Events",
+  sms: "SMS",
+  inquiries: "Inquiries",
+  marketing: "Marketing",
+  email: "Email",
+  whatsapp: "WhatsApp",
+  push: "Push Notifications",
+  support: "Support",
+  profile: "Profile",
+  users: "User Management",
+  roles: "Roles",
+  branches: "Branches",
+  settings: "Settings",
+  audit: "Audit Logs",
+  ai: "AI Assistant",
+  courses: "Courses",
+  lms: "LMS",
+  live: "Live Classes",
+  homework: "Homework",
+  assignments: "Assignments",
+  attendance: "Attendance",
+  exams: "Examinations",
+  results: "Results",
+  certificates: "Certificates",
+  hostel: "Hostel",
+  payments: "Payments",
+  accounting: "Accounting",
+  reports: "Reports",
+  analytics: "Analytics",
+  students: "Students",
+  teachers: "Teachers",
+  parents: "Parents",
+  admissions: "Admissions",
 };
 
 function Breadcrumbs() {
   const location = useLocation();
-  const parts = location.pathname.split('/').filter(Boolean);
+  const parts = location.pathname.split("/").filter(Boolean);
 
   if (parts.length < 2) return null;
 
   return (
     <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-4">
       {parts.map((part, i) => {
-        const label = BREADCRUMB_LABELS[part] || part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ');
-        const href = '/' + parts.slice(0, i + 1).join('/');
+        const label =
+          BREADCRUMB_LABELS[part] ||
+          part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " ");
+        const href = "/" + parts.slice(0, i + 1).join("/");
         return (
           <span key={href} className="flex items-center gap-1.5">
             {i > 0 && <span className="text-gray-300 dark:text-gray-600">/</span>}
             {i < parts.length - 1 ? (
-              <a href={href} className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{label}</a>
+              <a
+                href={href}
+                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                {label}
+              </a>
             ) : (
               <span className="text-gray-600 dark:text-gray-300 font-medium">{label}</span>
             )}
@@ -368,8 +454,28 @@ function Breadcrumbs() {
 }
 
 export const QUICK_ACTIONS = [
-  { title: 'Add Student', icon: 'UserPlus', path: '/admin/students', color: 'bg-indigo-50 text-indigo-600' },
-  { title: 'Collect Fee', icon: 'Wallet', path: '/admin/payments', color: 'bg-green-50 text-green-600' },
-  { title: 'Create Notice', icon: 'Bell', path: '/admin/notices', color: 'bg-amber-50 text-amber-600' },
-  { title: 'Schedule Exam', icon: 'Award', path: '/admin/exams', color: 'bg-purple-50 text-purple-600' },
+  {
+    title: "Add Student",
+    icon: "UserPlus",
+    path: "/admin/students",
+    color: "bg-indigo-50 text-indigo-600",
+  },
+  {
+    title: "Collect Fee",
+    icon: "Wallet",
+    path: "/admin/payments",
+    color: "bg-green-50 text-green-600",
+  },
+  {
+    title: "Create Notice",
+    icon: "Bell",
+    path: "/admin/notices",
+    color: "bg-amber-50 text-amber-600",
+  },
+  {
+    title: "Schedule Exam",
+    icon: "Award",
+    path: "/admin/exams",
+    color: "bg-purple-50 text-purple-600",
+  },
 ];

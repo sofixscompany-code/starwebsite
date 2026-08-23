@@ -1,4 +1,4 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { Camera } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -40,21 +40,15 @@ export function GalleryPage() {
               >
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
                   <Camera className="w-8 h-8 opacity-40 mb-2" />
-                  <p className="text-xs md:text-sm font-bold text-center opacity-80">
-                    {t.title}
-                  </p>
+                  <p className="text-xs md:text-sm font-bold text-center opacity-80">{t.title}</p>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Real photos coming soon.
-          </p>
+          <p className="text-center text-xs text-muted-foreground mt-6">Real photos coming soon.</p>
         </section>
       </main>
       <SiteFooter />
     </div>
   );
 }
-
-

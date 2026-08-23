@@ -55,7 +55,13 @@ export const firebaseAuth = {
     }
   },
 
-  async signInWithPassword({ email, password }: { email: string; password: string }): Promise<{ data: { user: FirebaseUser | null } | null; error: Error | null }> {
+  async signInWithPassword({
+    email,
+    password,
+  }: {
+    email: string;
+    password: string;
+  }): Promise<{ data: { user: FirebaseUser | null } | null; error: Error | null }> {
     return safe(async () => {
       validateConfig();
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -63,7 +69,11 @@ export const firebaseAuth = {
     });
   },
 
-  async signUp({ email, password, options }: {
+  async signUp({
+    email,
+    password,
+    options,
+  }: {
     email: string;
     password: string;
     options?: {

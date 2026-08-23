@@ -11,14 +11,18 @@ export function CoursesPage() {
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses-all"],
     queryFn: async () => {
-      const q = query(collection(db, "courses"), where("isActive", "==", true), orderBy("sortOrder"));
+      const q = query(
+        collection(db, "courses"),
+        where("isActive", "==", true),
+        orderBy("sortOrder"),
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
   });
 
   const grouped = courses.reduce<Record<string, typeof courses>>((acc, c) => {
-    const category = (c as any).category || 'Other';
+    const category = (c as any).category || "Other";
     (acc[category] ||= []).push(c);
     return acc;
   }, {});
@@ -103,5 +107,3 @@ export function CoursesPage() {
     </div>
   );
 }
-
-

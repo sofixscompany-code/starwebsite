@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { isAuthenticated, getUserRole } from '@/lib/api-auth';
-import { ROLE_DASHBOARD_ROUTES } from '@/hooks/use-user-role';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { isAuthenticated, getUserRole } from "@/lib/api-auth";
+import { ROLE_DASHBOARD_ROUTES } from "@/hooks/use-user-role";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
@@ -17,15 +17,15 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   useEffect(() => {
     const checkAuth = async () => {
       if (!isAuthenticated()) {
-        setRedirect('/auth');
+        setRedirect("/auth");
         setChecking(false);
         return;
       }
 
       const userRole = getUserRole();
-      
+
       if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-        setRedirect('/403');
+        setRedirect("/403");
         setChecking(false);
         return;
       }
@@ -34,8 +34,12 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
       if (userRole && ROLE_DASHBOARD_ROUTES[userRole]) {
         const expectedPath = ROLE_DASHBOARD_ROUTES[userRole];
         const currentPath = location.pathname;
-        
-        if (currentPath.startsWith('/dashboard/') && currentPath !== expectedPath && !currentPath.startsWith('/admin')) {
+
+        if (
+          currentPath.startsWith("/dashboard/") &&
+          currentPath !== expectedPath &&
+          !currentPath.startsWith("/admin")
+        ) {
           setRedirect(expectedPath);
           setChecking(false);
           return;

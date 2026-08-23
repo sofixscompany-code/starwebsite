@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Phone, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function InquiriesPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="inquiries"
       title="Inquiries"
       subtitle="Track and respond to prospective student inquiries"
       stats={[
@@ -21,7 +22,12 @@ export function InquiriesPage() {
       rows={[
         { name: "Meera Joshi", course: "JEE Advanced", source: "Website", status: "New" },
         { name: "Arjun Nair", course: "NEET", source: "Referral", status: "Contacted" },
-        { name: "Sakshi Banerjee", course: "Class 11 Foundation", source: "Walk-in", status: "Converted" },
+        {
+          name: "Sakshi Banerjee",
+          course: "Class 11 Foundation",
+          source: "Walk-in",
+          status: "Converted",
+        },
         { name: "Rishi Kapoor", course: "JEE Main", source: "Social Media", status: "Pending" },
       ]}
     />

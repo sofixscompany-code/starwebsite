@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Award, CheckCircle2, ShieldCheck, Download } from "lucide-react";
 
 export function CertificatesPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="certificates"
       title="Certificates"
       subtitle="Generate and manage student achievement certificates"
       stats={[
@@ -21,7 +22,12 @@ export function CertificatesPage() {
       rows={[
         { name: "Aarav Patel", course: "JEE Advanced", type: "Completion", date: "2024-01-15" },
         { name: "Sneha Gupta", course: "NEET Foundation", type: "Merit", date: "2024-01-14" },
-        { name: "Vikram Singh", course: "Class 12 Board Prep", type: "Attendance", date: "2024-01-13" },
+        {
+          name: "Vikram Singh",
+          course: "Class 12 Board Prep",
+          type: "Attendance",
+          date: "2024-01-13",
+        },
         { name: "Priyanka Das", course: "JEE Main", type: "Top Performer", date: "2024-01-12" },
       ]}
     />

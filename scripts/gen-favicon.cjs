@@ -40,10 +40,7 @@ function buildIco(pngs) {
 async function main() {
   for (const size of sizes) {
     const out = path.join(PUBLIC, `favicon-${size}x${size}.png`);
-    await sharp(LOGO, { density: 300 })
-      .resize(size, size, { fit: "contain" })
-      .png()
-      .toFile(out);
+    await sharp(LOGO, { density: 300 }).resize(size, size, { fit: "contain" }).png().toFile(out);
     console.log(`✅ ${path.basename(out)}`);
   }
 

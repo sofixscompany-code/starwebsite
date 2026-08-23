@@ -1,7 +1,26 @@
-﻿import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Wallet, Clock, TrendingUp, TrendingDown, CreditCard, DollarSign, BarChart3, FileText, PieChart } from "lucide-react";
+﻿import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import {
+  Wallet,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  CreditCard,
+  DollarSign,
+  BarChart3,
+  FileText,
+  PieChart,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useAccountantDashboard } from "@/hooks/use-dashboard-data";
 
 const incomeData = [
   { m: "Jan", income: 480000, expense: 280000 },
@@ -31,6 +50,44 @@ const feeBreakdown = [
 ];
 
 export function AccountantDashboard() {
+  const { data: fin } = useAccountantDashboard();
+
+  const fmt = (n: number) =>
+    n >= 100000 ? "Rs " + (n / 100000).toFixed(2) + "L" : "Rs " + n.toLocaleString();
+
+  const statCards = [
+    {
+      label: "Today's Collection",
+      value: fmt(fin?.todayCollection || 42500),
+      icon: Wallet,
+      color: "from-emerald-500 to-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      label: "Pending Dues",
+      value: fmt(fin?.pendingDues || 285000),
+      icon: Clock,
+      color: "from-brand-red to-brand-red/80",
+      bg: "bg-brand-red/5",
+    },
+    {
+      label: "Monthly Rev.",
+      value: fmt(fin?.monthRevenue || 1020000),
+      icon: TrendingUp,
+      color: "from-navy to-navy/80",
+      bg: "bg-navy/5",
+    },
+    {
+      label: "Monthly Exp.",
+      value: fmt(fin?.monthExpense || 415000),
+      icon: TrendingDown,
+      color: "from-gold to-gold/80",
+      bg: "bg-gold/5",
+    },
+  ];
+
+  const txnRows = fin?.recentTxns && fin.recentTxns.length > 0 ? fin.recentTxns : recentTxns;
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -52,20 +109,21 @@ export function AccountantDashboard() {
         animate={{ opacity: 1 }}
         className="grid grid-cols-2 sm:grid-cols-4 gap-4"
       >
-        {[
-          { label: "Today's Collection", value: "Rs 42,500", icon: Wallet, color: "from-emerald-500 to-emerald-600", bg: "bg-emerald-50" },
-          { label: "Pending Dues", value: "Rs 2,85,000", icon: Clock, color: "from-brand-red to-brand-red/80", bg: "bg-brand-red/5" },
-          { label: "Monthly Rev.", value: "Rs 10.20L", icon: TrendingUp, color: "from-navy to-navy/80", bg: "bg-navy/5" },
-          { label: "Monthly Exp.", value: "Rs 4.15L", icon: TrendingDown, color: "from-gold to-gold/80", bg: "bg-gold/5" },
-        ].map((s) => {
+        {statCards.map((s) => {
           const Icon = s.icon;
           return (
             <motion.div
               key={s.label}
               whileHover={{ y: -4 }}
-              className={s.bg + ' rounded-xl p-4 border border-gray-200/60 shadow-sm'}
+              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
             >
-              <div className={'w-10 h-10 rounded-xl bg-gradient-to-br ' + s.color + ' flex items-center justify-center shadow-md mb-3'}>
+              <div
+                className={
+                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                  s.color +
+                  " flex items-center justify-center shadow-md mb-3"
+                }
+              >
                 <Icon className="w-5 h-5 text-white" />
               </div>
               <p className="text-xs text-gray-500 font-medium">{s.label}</p>
@@ -80,7 +138,9 @@ export function AccountantDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Income vs Expense</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Income vs Expense
+                </h3>
                 <p className="text-xs text-gray-400 mt-0.5">Monthly comparison</p>
               </div>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -103,9 +163,23 @@ export function AccountantDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="m" stroke="#9ca3af" fontSize={11} />
                   <YAxis stroke="#9ca3af" fontSize={11} />
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e5e7eb' }} />
-                  <Area type="monotone" dataKey="income" stroke="#10b981" fill="url(#inG)" strokeWidth={2} name="Income" />
-                  <Area type="monotone" dataKey="expense" stroke="#EF4444" fill="url(#exG)" strokeWidth={2} name="Expense" />
+                  <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e5e7eb" }} />
+                  <Area
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#10b981"
+                    fill="url(#inG)"
+                    strokeWidth={2}
+                    name="Income"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="#EF4444"
+                    fill="url(#exG)"
+                    strokeWidth={2}
+                    name="Expense"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -114,11 +188,16 @@ export function AccountantDashboard() {
 
         <div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Transactions</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              Recent Transactions
+            </h3>
             <p className="text-xs text-gray-400 mb-4">Latest financial activities</p>
             <div className="space-y-1">
-              {recentTxns.map((t, i) => (
-                <div key={i} className="flex items-start gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+              {txnRows.map((t, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                >
                   <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-900 dark:text-white">{t.title}</p>
@@ -135,23 +214,31 @@ export function AccountantDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
         <div className="xl:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Fee Collection Status</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">
+              Fee Collection Status
+            </h3>
             <div className="space-y-4">
               {feeBreakdown.map((f) => {
                 const percent = Math.round((f.collected / f.target) * 100);
                 return (
                   <div key={f.label}>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{f.label}</p>
-                      <p className="text-xs text-gray-400">{f.collected}/{f.target} paid</p>
+                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                        {f.label}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {f.collected}/{f.target} paid
+                      </p>
                     </div>
                     <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-navy to-navy/80"
-                        style={{ width: percent + '%' }}
+                        style={{ width: percent + "%" }}
                       />
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1">Rs {f.amount.toLocaleString()} target</p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Rs {f.amount.toLocaleString()} target
+                    </p>
                   </div>
                 );
               })}
@@ -164,20 +251,24 @@ export function AccountantDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Record Payment', icon: CreditCard, to: '/admin/payments' },
-                { label: 'Invoice', icon: FileText, to: '/admin/accounting' },
-                { label: 'Add Expense', icon: DollarSign, to: '/admin/accounting' },
-                { label: 'Reports', icon: BarChart3, to: '/admin/reports' },
+                { label: "Record Payment", icon: CreditCard, to: "/admin/payments" },
+                { label: "Invoice", icon: FileText, to: "/admin/accounting" },
+                { label: "Add Expense", icon: DollarSign, to: "/admin/accounting" },
+                { label: "Reports", icon: BarChart3, to: "/admin/reports" },
               ].map((a) => {
                 const Icon = a.icon;
                 return (
-                  <Link key={a.label} to={a.to}
+                  <Link
+                    key={a.label}
+                    to={a.to}
                     className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group"
                   >
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-navy to-navy/80 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 text-center">{a.label}</span>
+                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 text-center">
+                      {a.label}
+                    </span>
                   </Link>
                 );
               })}

@@ -1,9 +1,10 @@
-﻿import { ModulePage } from "@/components/admin/ModulePage";
+import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { PlugZap, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
 
 export function IntegrationsPage() {
   return (
-    <ModulePage
+    <FirestoreModulePage
+      collectionName="integrations"
       title="Integrations"
       subtitle="Manage third-party service connections and API integrations"
       stats={[
@@ -19,7 +20,12 @@ export function IntegrationsPage() {
         { key: "lastSync", label: "Last Sync" },
       ]}
       rows={[
-        { name: "Firebase Auth", type: "Authentication", status: "Connected", lastSync: "Real-time" },
+        {
+          name: "Firebase Auth",
+          type: "Authentication",
+          status: "Connected",
+          lastSync: "Real-time",
+        },
         { name: "Razorpay", type: "Payments", status: "Connected", lastSync: "2024-01-15" },
         { name: "Twilio SMS", type: "Messaging", status: "Connected", lastSync: "2024-01-15" },
         { name: "Google Calendar", type: "Calendar", status: "Error", lastSync: "2024-01-10" },

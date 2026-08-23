@@ -10,7 +10,8 @@ export function AccessDeniedPage() {
         </div>
         <h1 className="text-3xl font-bold text-[hsl(var(--ap-ink))] mb-2">Access Denied</h1>
         <p className="text-[hsl(var(--ap-muted))] mb-6">
-          You don't have permission to access this page. Contact your administrator if you believe this is a mistake.
+          You don't have permission to access this page. Contact your administrator if you believe
+          this is a mistake.
         </p>
         <Link
           to="/dashboard/super-admin"
@@ -22,5 +23,3 @@ export function AccessDeniedPage() {
     </div>
   );
 }
-
-

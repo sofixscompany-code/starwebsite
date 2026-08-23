@@ -32,7 +32,7 @@ function generateSitemapXml(): string {
     <lastmod>${today}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority}</priority>
-  </url>`
+  </url>`,
   ).join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>

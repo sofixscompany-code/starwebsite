@@ -1,7 +1,15 @@
 ﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp, where,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
@@ -79,7 +87,11 @@ export function useInvoices(studentId?: string) {
 
   const addInvoice = useMutation({
     mutationFn: async (invoice: Omit<Invoice, "id">) => {
-      const docRef = await addDoc(collection(db, "fee_invoices"), { ...invoice, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, "fee_invoices"), {
+        ...invoice,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fees", "invoices"] }),
@@ -93,14 +105,28 @@ export function useInvoices(studentId?: string) {
   });
 
   const deleteInvoice = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, "fee_invoices", id)); },
+    mutationFn: async (id: string) => {
+      await deleteDoc(doc(db, "fee_invoices", id));
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fees", "invoices"] }),
   });
 
-  const getTotalPending = () => invoices.filter((i) => i.status === "pending" || i.status === "overdue").reduce((s, i) => s + i.totalAmount, 0);
-  const getTotalPaid = () => invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.totalAmount, 0);
+  const getTotalPending = () =>
+    invoices
+      .filter((i) => i.status === "pending" || i.status === "overdue")
+      .reduce((s, i) => s + i.totalAmount, 0);
+  const getTotalPaid = () =>
+    invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.totalAmount, 0);
 
-  return { invoices, isLoading, addInvoice, updateInvoice, deleteInvoice, getTotalPending, getTotalPaid };
+  return {
+    invoices,
+    isLoading,
+    addInvoice,
+    updateInvoice,
+    deleteInvoice,
+    getTotalPending,
+    getTotalPaid,
+  };
 }
 
 /* -------------------- PAYMENTS HOOK -------------------- */
@@ -123,7 +149,10 @@ export function usePayments(invoiceId?: string) {
 
   const addPayment = useMutation({
     mutationFn: async (payment: Omit<Payment, "id">) => {
-      const docRef = await addDoc(collection(db, "fee_payments"), { ...payment, createdAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, "fee_payments"), {
+        ...payment,
+        createdAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fees", "payments"] }),
@@ -149,7 +178,10 @@ export function useFeeStructure() {
 
   const addFee = useMutation({
     mutationFn: async (fee: Omit<FeeStructure, "id">) => {
-      const docRef = await addDoc(collection(db, "fee_structure"), { ...fee, createdAt: serverTimestamp() });
+      const docRef = await addDoc(collection(db, "fee_structure"), {
+        ...fee,
+        createdAt: serverTimestamp(),
+      });
       return docRef.id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fees", "structure"] }),
@@ -163,7 +195,9 @@ export function useFeeStructure() {
   });
 
   const deleteFee = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, "fee_structure", id)); },
+    mutationFn: async (id: string) => {
+      await deleteDoc(doc(db, "fee_structure", id));
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fees", "structure"] }),
   });
 
@@ -185,7 +219,9 @@ export function useFeeStats() {
 
       const totalRevenue = invoices.reduce((s, i) => s + (i.totalAmount || 0), 0);
       const totalCollected = payments.reduce((s, p) => s + (p.amount || 0), 0);
-      const pendingAmount = invoices.filter((i) => i.status === "pending" || i.status === "overdue").reduce((s, i) => s + (i.totalAmount || 0), 0);
+      const pendingAmount = invoices
+        .filter((i) => i.status === "pending" || i.status === "overdue")
+        .reduce((s, i) => s + (i.totalAmount || 0), 0);
       const overdueCount = invoices.filter((i) => i.status === "overdue").length;
 
       return {
@@ -200,6 +236,3 @@ export function useFeeStats() {
     },
   });
 }
-
-
-

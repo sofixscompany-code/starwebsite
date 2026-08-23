@@ -72,10 +72,36 @@ export function isAuthenticated(): boolean {
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  // Check Super Admin hardcoded credentials
   const cleanEmail = email.trim().toLowerCase();
   const cleanPassword = password.trim();
 
+  // Primary path: Firebase Auth + Firestore role lookup (all roles live in the database)
+  try {
+    const { data, error } = await firebaseAuth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword,
+    });
+    if (!error && data?.user) {
+      const role = await fetchUserRole(data.user.uid);
+      if (!role) throw new Error("No role assigned. Contact administrator.");
+
+      const user: AuthUser = {
+        uid: data.user.uid,
+        email: data.user.email || email,
+        role,
+        name: data.user.displayName || ROLE_LABELS[role] || email.split("@")[0],
+        dashboard: ROLE_DASHBOARD_ROUTES[role] || "/auth",
+      };
+      setToken("firebase-session");
+      setStoredUser(user);
+      return { token: "firebase-session", user };
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("No role assigned")) throw err;
+    // Fall through to offline fallback below
+  }
+
+  // Fallback: Super Admin hardcoded credentials (offline / DB unavailable)
   if (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() && cleanPassword === SUPER_ADMIN_PASSWORD) {
     const user: AuthUser = {
       uid: "super-admin-hardcoded",
@@ -89,47 +115,75 @@ export async function login(email: string, password: string): Promise<AuthRespon
     return { token: "super-admin-token", user };
   }
 
-  // Try Firebase Auth as fallback for other users
+  throw new Error("Invalid email or password");
+}
+
+const DEMO_PASSWORD = "Demo@2026!";
+
+async function ensureDemoFirebaseUser(
+  role: string,
+): Promise<{ uid: string; email: string } | null> {
+  const email = `${role}@demo.starcoaching.edu.np`;
   try {
-    const { data, error } = await firebaseAuth.signInWithPassword({ email: cleanEmail, password: cleanPassword });
-    if (error) throw error;
-    if (!data?.user) throw new Error("Invalid email or password");
-
-    const role = await fetchUserRole(data.user.uid);
-    if (!role) throw new Error("No role assigned. Contact administrator.");
-
-    const user: AuthUser = {
-      uid: data.user.uid,
-      email: data.user.email || email,
-      role,
-      name: data.user.displayName || email.split("@")[0],
-      dashboard: ROLE_DASHBOARD_ROUTES[role] || "/auth",
-    };
-    setToken("firebase-session");
-    setStoredUser(user);
-    return { token: "firebase-session", user };
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("Invalid email or password")) {
-      throw new Error("Invalid email or password");
-    }
-    throw new Error("Invalid email or password");
+    const { data, error } = await firebaseAuth.signInWithPassword({
+      email,
+      password: DEMO_PASSWORD,
+    });
+    if (!error && data?.user) return { uid: data.user.uid, email: data.user.email || email };
+    // User doesn't exist yet — create it in Firebase Auth + Firestore
+    const created = await firebaseAuth.signUp({
+      email,
+      password: DEMO_PASSWORD,
+      options: {
+        data: {
+          full_name: ROLE_LABELS[role] || role,
+          role,
+          branch: "Main Branch",
+          status: "active",
+        },
+      },
+    });
+    if (created.error) throw created.error;
+    if (!created.data?.user) throw new Error("Demo user creation failed");
+    return { uid: created.data.user.uid, email: created.data.user.email || email };
+  } catch {
+    return null;
   }
 }
 
 export async function demoLogin(role: string): Promise<AuthResponse> {
   if (!ROLE_DASHBOARD_ROUTES[role]) throw new Error("Invalid demo role");
 
-  const user: AuthUser = {
-    uid: `demo-${role}`,
-    email: `demo_${role}@sofixs.com`,
-    role,
-    name: ROLE_LABELS[role] || role,
-    dashboard: ROLE_DASHBOARD_ROUTES[role],
-  };
-  setToken("demo-token");
-  setStoredUser(user);
+  // Connect the role to Firebase Auth + Firestore (real session when possible)
+  const fbUser = await ensureDemoFirebaseUser(role);
+
+  if (fbUser) {
+    const user: AuthUser = {
+      uid: fbUser.uid,
+      email: fbUser.email,
+      role,
+      name: ROLE_LABELS[role] || role,
+      dashboard: ROLE_DASHBOARD_ROUTES[role],
+    };
+    setToken("firebase-session");
+    setStoredUser(user);
+  } else {
+    // Offline / Firebase unavailable fallback — keep local-only session
+    const user: AuthUser = {
+      uid: `demo-${role}`,
+      email: `${role}@demo.starcoaching.edu.np`,
+      role,
+      name: ROLE_LABELS[role] || role,
+      dashboard: ROLE_DASHBOARD_ROUTES[role],
+    };
+    setToken("demo-token");
+    setStoredUser(user);
+  }
   localStorage.setItem("demo_role", role);
-  return { token: "demo-token", user };
+  return {
+    token: localStorage.getItem("auth_token") || "demo-token",
+    user: JSON.parse(localStorage.getItem("auth_user")!),
+  };
 }
 
 export async function verifyToken(): Promise<VerifyResponse> {
@@ -140,7 +194,12 @@ export async function verifyToken(): Promise<VerifyResponse> {
   if (demoRole && storedUser) {
     return {
       valid: true,
-      user: { uid: storedUser.uid, email: storedUser.email, role: storedUser.role, name: storedUser.name },
+      user: {
+        uid: storedUser.uid,
+        email: storedUser.email,
+        role: storedUser.role,
+        name: storedUser.name,
+      },
       dashboard: storedUser.dashboard,
     };
   }
@@ -149,7 +208,12 @@ export async function verifyToken(): Promise<VerifyResponse> {
   if (storedUser?.uid === "super-admin-hardcoded") {
     return {
       valid: true,
-      user: { uid: storedUser.uid, email: storedUser.email, role: storedUser.role, name: storedUser.name },
+      user: {
+        uid: storedUser.uid,
+        email: storedUser.email,
+        role: storedUser.role,
+        name: storedUser.name,
+      },
       dashboard: storedUser.dashboard,
     };
   }
@@ -162,11 +226,11 @@ export async function verifyToken(): Promise<VerifyResponse> {
       if (role) {
         return {
           valid: true,
-          user: { 
-            uid: fbUser.data.user.uid, 
-            email: fbUser.data.user.email || '', 
-            role, 
-            name: fbUser.data.user.displayName || '' 
+          user: {
+            uid: fbUser.data.user.uid,
+            email: fbUser.data.user.email || "",
+            role,
+            name: fbUser.data.user.displayName || "",
           },
           dashboard: ROLE_DASHBOARD_ROUTES[role] || "/auth",
         };
@@ -176,7 +240,7 @@ export async function verifyToken(): Promise<VerifyResponse> {
     // Ignore Firebase errors
   }
 
-  return { valid: false, user: { uid: '', email: '', role: '', name: '' }, dashboard: '/auth' };
+  return { valid: false, user: { uid: "", email: "", role: "", name: "" }, dashboard: "/auth" };
 }
 
 export function getStoredRole(): string | null {

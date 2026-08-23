@@ -1,13 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, ChevronLeft, ChevronRight, LogOut, X,
-  Search as SearchIcon, ChevronDown,
-} from 'lucide-react';
-import { StarLogo } from '@/components/site/StarLogo';
-import { getUserRole, clearAuthData } from '@/lib/api-auth';
-import { getNavSectionsForRole, type NavItem, type NavSection } from './nav';
+  LayoutDashboard,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  X,
+  Search as SearchIcon,
+  ChevronDown,
+} from "lucide-react";
+import { StarLogo } from "@/components/site/StarLogo";
+import { getUserRole, clearAuthData } from "@/lib/api-auth";
+import { getNavSectionsForRole, type NavItem, type NavSection } from "./nav";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -16,11 +21,16 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = false, onCloseMobile }: SidebarProps) {
+export function Sidebar({
+  collapsed = false,
+  onToggleCollapse,
+  mobileOpen = false,
+  onCloseMobile,
+}: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = getUserRole() as string | null;
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const navSections = useMemo(() => {
@@ -42,7 +52,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
   useEffect(() => {
     const newExpanded: Record<string, boolean> = {};
     filteredSections.forEach((section) => {
-      const hasActive = section.items.some((item) => isActive(item.to || ''));
+      const hasActive = section.items.some((item) => isActive(item.to || ""));
       if (hasActive) {
         newExpanded[section.header] = true;
       }
@@ -52,11 +62,11 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
 
   const handleSignOut = () => {
     clearAuthData();
-    navigate('/auth', { replace: true });
+    navigate("/auth", { replace: true });
   };
 
   const isActive = (path: string) => {
-    if (path === '/admin' || path === '/') {
+    if (path === "/admin" || path === "/") {
       return location.pathname === path;
     }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -68,24 +78,31 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
 
   const renderItem = (item: NavItem) => {
     const Icon = item.icon || LayoutDashboard;
-    const active = isActive(item.to || '');
+    const active = isActive(item.to || "");
     return (
       <Link
         key={item.to || item.label}
-        to={item.to || '#'}
-        onClick={() => { onCloseMobile?.(); setSearchQuery(''); }}
+        to={item.to || "#"}
+        onClick={() => {
+          onCloseMobile?.();
+          setSearchQuery("");
+        }}
         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
           active
-            ? 'bg-navy text-white shadow-sm'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+            ? "bg-navy text-white shadow-sm"
+            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
         }`}
       >
-        <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : ''}`} />
+        <Icon className={`w-4 h-4 shrink-0 ${active ? "text-white" : ""}`} />
         <span className="flex-1 truncate">{item.label}</span>
         {item.badge && (
-          <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-            active ? 'bg-white/20 text-white' : 'bg-navy/10 dark:bg-navy/30 text-navy dark:text-indigo-400'
-          }`}>
+          <span
+            className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap ${
+              active
+                ? "bg-white/20 text-white"
+                : "bg-navy/10 dark:bg-navy/30 text-navy dark:text-indigo-400"
+            }`}
+          >
             {item.badge}
           </span>
         )}
@@ -94,7 +111,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
   };
 
   const renderSection = (section: NavSection) => {
-    const isExpanded = expandedSections[section.header] ?? (section.items.length <= 5);
+    const isExpanded = expandedSections[section.header] ?? section.items.length <= 5;
 
     return (
       <div key={section.header} className="mb-1">
@@ -102,21 +119,21 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
           onClick={() => toggleSection(section.header)}
           className="flex items-center gap-2 w-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
         >
-          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+          <ChevronDown
+            className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
+          />
           {!collapsed && <span>{section.header}</span>}
         </button>
         <AnimatePresence initial={false}>
           {isExpanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="space-y-0.5 py-1">
-                {section.items.map(renderItem)}
-              </div>
+              <div className="space-y-0.5 py-1">{section.items.map(renderItem)}</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -140,9 +157,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
 
       <motion.aside
         className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${
-          collapsed ? 'w-[72px]' : 'w-64'
-        } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-        style={{ height: '100vh' }}
+          collapsed ? "w-[72px]" : "w-64"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        style={{ height: "100vh" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
@@ -154,7 +171,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
           ) : (
             <StarLogo size="sm" />
           )}
-          <button onClick={onCloseMobile} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -175,27 +195,34 @@ export function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = fals
         )}
 
         {/* Navigation - Scrollable */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 min-h-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <nav
+          className="flex-1 overflow-y-auto py-2 px-2 min-h-0"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <style>{`nav::-webkit-scrollbar { display: none; }`}</style>
           {collapsed ? (
             <div className="flex flex-col items-center gap-1 px-1">
-              {navSections.flatMap((s) => s.items).map((item) => {
-                const Icon = item.icon || LayoutDashboard;
-                const active = isActive(item.to || '');
-                return (
-                  <Link
-                    key={item.to || item.label}
-                    to={item.to || '#'}
-                    onClick={() => onCloseMobile?.()}
-                    className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all ${
-                      active ? 'bg-navy text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                    title={item.label}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </Link>
-                );
-              })}
+              {navSections
+                .flatMap((s) => s.items)
+                .map((item) => {
+                  const Icon = item.icon || LayoutDashboard;
+                  const active = isActive(item.to || "");
+                  return (
+                    <Link
+                      key={item.to || item.label}
+                      to={item.to || "#"}
+                      onClick={() => onCloseMobile?.()}
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all ${
+                        active
+                          ? "bg-navy text-white shadow-sm"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                      title={item.label}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </Link>
+                  );
+                })}
             </div>
           ) : (
             <div>

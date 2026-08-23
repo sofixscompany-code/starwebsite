@@ -1,4 +1,4 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { MapPin, Phone, Mail, MessageCircle, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -21,11 +21,7 @@ export function ContactPage() {
 
         <section className="py-14">
           <div className="max-w-4xl mx-auto px-4 grid gap-4 md:grid-cols-2">
-            <ContactCard
-              icon={MapPin}
-              title="Campus Address"
-              value={site.location}
-            />
+            <ContactCard icon={MapPin} title="Campus Address" value={site.location} />
             <ContactCard icon={Clock} title="Office Hours" value="Sun–Fri · 6 AM – 7 PM" />
             <ContactCard
               icon={Phone}
@@ -70,14 +66,10 @@ export function ContactCard({
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
-          {title}
-        </p>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{title}</p>
         <p className="text-sm font-semibold text-navy mt-1">{value}</p>
       </div>
     </div>
   );
   return href ? <a href={href}>{inner}</a> : inner;
 }
-
-

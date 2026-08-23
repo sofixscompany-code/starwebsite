@@ -32,12 +32,54 @@ function safeRemoveItem(key: string) {
   }
 }
 
-export const DEMO_ROLES: { icon: ComponentType<{ className?: string }>; label: string; desc: string; to: string; role: DemoRole; color: string }[] = [
-  { icon: Shield, label: "Super Admin", desc: "Full system access", to: "/dashboard/super-admin", role: "super_admin", color: "from-purple-600 to-purple-800" },
-  { icon: Users, label: "Teacher", desc: "LMS & homework", to: "/dashboard/teacher", role: "teacher", color: "from-orange-500 to-orange-700" },
-  { icon: LayoutDashboard, label: "Student", desc: "Dashboard & courses", to: "/dashboard/student", role: "student", color: "from-blue-500 to-blue-700" },
-  { icon: Wallet, label: "Accountant", desc: "Fees & ledger", to: "/dashboard/accountant", role: "accountant", color: "from-indigo-500 to-indigo-700" },
-  { icon: Eye, label: "Parent", desc: "Child progress", to: "/dashboard/parent", role: "parent", color: "from-green-500 to-green-700" },
+export const DEMO_ROLES: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  desc: string;
+  to: string;
+  role: DemoRole;
+  color: string;
+}[] = [
+  {
+    icon: Shield,
+    label: "Super Admin",
+    desc: "Full system access",
+    to: "/dashboard/super-admin",
+    role: "super_admin",
+    color: "from-purple-600 to-purple-800",
+  },
+  {
+    icon: Users,
+    label: "Teacher",
+    desc: "LMS & homework",
+    to: "/dashboard/teacher",
+    role: "teacher",
+    color: "from-orange-500 to-orange-700",
+  },
+  {
+    icon: LayoutDashboard,
+    label: "Student",
+    desc: "Dashboard & courses",
+    to: "/dashboard/student",
+    role: "student",
+    color: "from-blue-500 to-blue-700",
+  },
+  {
+    icon: Wallet,
+    label: "Accountant",
+    desc: "Fees & ledger",
+    to: "/dashboard/accountant",
+    role: "accountant",
+    color: "from-indigo-500 to-indigo-700",
+  },
+  {
+    icon: Eye,
+    label: "Parent",
+    desc: "Child progress",
+    to: "/dashboard/parent",
+    role: "parent",
+    color: "from-green-500 to-green-700",
+  },
 ];
 
 export function setDemoMode(role: DemoRole, redirectTo: string) {

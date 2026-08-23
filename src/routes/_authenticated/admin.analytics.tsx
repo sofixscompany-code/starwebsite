@@ -1,13 +1,39 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { useState } from "react";
 import {
-  PieChart as PieChartIcon, BarChart3, TrendingUp, Users, GraduationCap,
-  Wallet, Target, Eye, Download, Search, Filter,
+  PieChart as PieChartIcon,
+  BarChart3,
+  TrendingUp,
+  Users,
+  GraduationCap,
+  Wallet,
+  Target,
+  Eye,
+  Download,
+  Search,
+  Filter,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  AreaChart, Area, PieChart, Pie, Cell, LineChart, Line, RadarChart,
-  Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Legend,
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { StatCard, Panel, Badge, Tabs, ProgressBar } from "@/components/admin/ui";
@@ -25,10 +51,14 @@ const growthData = [
 ];
 
 const retentionData = [
-  { month: "Jan", retention: 94 }, { month: "Feb", retention: 92 },
-  { month: "Mar", retention: 95 }, { month: "Apr", retention: 93 },
-  { month: "May", retention: 96 }, { month: "Jun", retention: 94 },
-  { month: "Jul", retention: 97 }, { month: "Aug", retention: 95 },
+  { month: "Jan", retention: 94 },
+  { month: "Feb", retention: 92 },
+  { month: "Mar", retention: 95 },
+  { month: "Apr", retention: 93 },
+  { month: "May", retention: 96 },
+  { month: "Jun", retention: 94 },
+  { month: "Jul", retention: 97 },
+  { month: "Aug", retention: 95 },
   { month: "Sep", retention: 96 },
 ];
 
@@ -59,8 +89,12 @@ export function AnalyticsPage() {
         subtitle="Interactive charts, growth metrics, and predictive insights."
         actions={
           <>
-            <button className="ap-btn-ghost"><Download className="w-4 h-4" /> Export</button>
-            <button className="ap-btn"><Eye className="w-4 h-4" /> Live Dashboard</button>
+            <button className="ap-btn-ghost">
+              <Download className="w-4 h-4" /> Export
+            </button>
+            <button className="ap-btn">
+              <Eye className="w-4 h-4" /> Live Dashboard
+            </button>
           </>
         }
       />
@@ -82,9 +116,28 @@ export function AnalyticsPage() {
         {activeTab === "overview" && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <StatCard label="Total Students" value={1284} delta={12} icon={GraduationCap} tone="purple" />
-              <StatCard label="Monthly Revenue" prefix="₹" value={1020000} delta={18} icon={Wallet} tone="success" />
-              <StatCard label="Retention Rate" value="96%" delta={2} icon={TrendingUp} tone="success" />
+              <StatCard
+                label="Total Students"
+                value={1284}
+                delta={12}
+                icon={GraduationCap}
+                tone="purple"
+              />
+              <StatCard
+                label="Monthly Revenue"
+                prefix="₹"
+                value={1020000}
+                delta={18}
+                icon={Wallet}
+                tone="success"
+              />
+              <StatCard
+                label="Retention Rate"
+                value="96%"
+                delta={2}
+                icon={TrendingUp}
+                tone="success"
+              />
               <StatCard label="Conversion Rate" value="34%" delta={5} icon={Target} tone="orange" />
             </div>
 
@@ -102,8 +155,20 @@ export function AnalyticsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                       <XAxis dataKey="m" stroke="hsl(var(--ap-muted))" fontSize={11} />
                       <YAxis stroke="hsl(var(--ap-muted))" fontSize={11} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                      <Area type="monotone" dataKey="students" stroke="hsl(262 83% 58%)" fill="url(#stud)" strokeWidth={2} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="students"
+                        stroke="hsl(262 83% 58%)"
+                        fill="url(#stud)"
+                        strokeWidth={2}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -115,8 +180,20 @@ export function AnalyticsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                       <XAxis dataKey="m" stroke="hsl(var(--ap-muted))" fontSize={11} />
                       <YAxis stroke="hsl(var(--ap-muted))" fontSize={11} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                      <Line type="monotone" dataKey="revenue" stroke="hsl(24 95% 58%)" strokeWidth={3} dot={{ r: 4 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="hsl(24 95% 58%)"
+                        strokeWidth={3}
+                        dot={{ r: 4 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -131,8 +208,20 @@ export function AnalyticsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                       <XAxis dataKey="month" stroke="hsl(var(--ap-muted))" fontSize={11} />
                       <YAxis domain={[85, 100]} stroke="hsl(var(--ap-muted))" fontSize={11} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                      <Line type="monotone" dataKey="retention" stroke="hsl(152 60% 42%)" strokeWidth={3} dot={{ r: 4 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="retention"
+                        stroke="hsl(152 60% 42%)"
+                        strokeWidth={3}
+                        dot={{ r: 4 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -144,8 +233,20 @@ export function AnalyticsPage() {
                       <PolarGrid stroke="hsl(var(--ap-border))" />
                       <PolarAngleAxis dataKey="name" tick={{ fontSize: 9 }} />
                       <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                      <Radar name="Score" dataKey="score" stroke="hsl(262 83% 58%)" fill="hsl(262 83% 58%)" fillOpacity={0.3} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
+                      <Radar
+                        name="Score"
+                        dataKey="score"
+                        stroke="hsl(262 83% 58%)"
+                        fill="hsl(262 83% 58%)"
+                        fillOpacity={0.3}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
@@ -167,10 +268,36 @@ export function AnalyticsPage() {
         {activeTab === "revenue" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Revenue" prefix="₹" value={6580000} delta={18} icon={Wallet} tone="success" />
-              <StatCard label="Avg per Student" prefix="₹" value={5125} delta={8} icon={GraduationCap} tone="purple" />
-              <StatCard label="Growth Rate" value="23%" delta={5} icon={TrendingUp} tone="success" />
-              <StatCard label="Profit Margin" value="63%" delta={3} icon={BarChart3} tone="orange" />
+              <StatCard
+                label="Total Revenue"
+                prefix="₹"
+                value={6580000}
+                delta={18}
+                icon={Wallet}
+                tone="success"
+              />
+              <StatCard
+                label="Avg per Student"
+                prefix="₹"
+                value={5125}
+                delta={8}
+                icon={GraduationCap}
+                tone="purple"
+              />
+              <StatCard
+                label="Growth Rate"
+                value="23%"
+                delta={5}
+                icon={TrendingUp}
+                tone="success"
+              />
+              <StatCard
+                label="Profit Margin"
+                value="63%"
+                delta={3}
+                icon={BarChart3}
+                tone="orange"
+              />
             </div>
             <Panel title="Revenue Trend" subtitle="9-month revenue analysis">
               <div className="h-72">
@@ -185,8 +312,20 @@ export function AnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                     <XAxis dataKey="m" stroke="hsl(var(--ap-muted))" fontSize={11} />
                     <YAxis stroke="hsl(var(--ap-muted))" fontSize={11} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                    <Area type="monotone" dataKey="revenue" stroke="hsl(262 83% 58%)" fill="url(#rev3)" strokeWidth={2} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--ap-panel))",
+                        border: "1px solid hsl(var(--ap-border))",
+                        borderRadius: 12,
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="hsl(262 83% 58%)"
+                      fill="url(#rev3)"
+                      strokeWidth={2}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -210,7 +349,11 @@ export function AnalyticsPage() {
                       <span className="font-semibold">{s.stage}</span>
                       <span className="font-bold">{s.count.toLocaleString()}</span>
                     </div>
-                    <ProgressBar value={s.pct} tone={s.pct > 50 ? "success" : s.pct > 20 ? "warning" : "danger"} label={`${s.pct}%`} />
+                    <ProgressBar
+                      value={s.pct}
+                      tone={s.pct > 50 ? "success" : s.pct > 20 ? "warning" : "danger"}
+                      label={`${s.pct}%`}
+                    />
                   </div>
                 ))}
               </div>
@@ -218,22 +361,36 @@ export function AnalyticsPage() {
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={[
-                        { name: "Website", value: 38, color: "hsl(262 83% 58%)" },
-                        { name: "Walk-in", value: 28, color: "hsl(24 95% 58%)" },
-                        { name: "Facebook", value: 18, color: "hsl(210 92% 55%)" },
-                        { name: "Referral", value: 12, color: "hsl(152 60% 42%)" },
-                        { name: "Google", value: 4, color: "hsl(355 82% 58%)" },
-                      ]} innerRadius={50} outerRadius={85} dataKey="value" paddingAngle={4}>
+                      <Pie
+                        data={[
+                          { name: "Website", value: 38, color: "hsl(262 83% 58%)" },
+                          { name: "Walk-in", value: 28, color: "hsl(24 95% 58%)" },
+                          { name: "Facebook", value: 18, color: "hsl(210 92% 55%)" },
+                          { name: "Referral", value: 12, color: "hsl(152 60% 42%)" },
+                          { name: "Google", value: 4, color: "hsl(355 82% 58%)" },
+                        ]}
+                        innerRadius={50}
+                        outerRadius={85}
+                        dataKey="value"
+                        paddingAngle={4}
+                      >
                         {[
                           { name: "Website", value: 38, color: "hsl(262 83% 58%)" },
                           { name: "Walk-in", value: 28, color: "hsl(24 95% 58%)" },
                           { name: "Facebook", value: 18, color: "hsl(210 92% 55%)" },
                           { name: "Referral", value: 12, color: "hsl(152 60% 42%)" },
                           { name: "Google", value: 4, color: "hsl(355 82% 58%)" },
-                        ].map((c) => <Cell key={c.name} fill={c.color} />)}
+                        ].map((c) => (
+                          <Cell key={c.name} fill={c.color} />
+                        ))}
                       </Pie>
-                      <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -256,8 +413,20 @@ export function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                   <XAxis dataKey="month" stroke="hsl(var(--ap-muted))" fontSize={11} />
                   <YAxis domain={[85, 100]} stroke="hsl(var(--ap-muted))" fontSize={11} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
-                  <Area type="monotone" dataKey="retention" stroke="hsl(152 60% 42%)" fill="url(#ret)" strokeWidth={2} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--ap-panel))",
+                      border: "1px solid hsl(var(--ap-border))",
+                      borderRadius: 12,
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="retention"
+                    stroke="hsl(152 60% 42%)"
+                    fill="url(#ret)"
+                    strokeWidth={2}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -273,8 +442,20 @@ export function AnalyticsPage() {
                     <PolarGrid stroke="hsl(var(--ap-border))" />
                     <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <Radar name="Score" dataKey="score" stroke="hsl(262 83% 58%)" fill="hsl(262 83% 58%)" fillOpacity={0.3} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--ap-panel))", border: "1px solid hsl(var(--ap-border))", borderRadius: 12 }} />
+                    <Radar
+                      name="Score"
+                      dataKey="score"
+                      stroke="hsl(262 83% 58%)"
+                      fill="hsl(262 83% 58%)"
+                      fillOpacity={0.3}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--ap-panel))",
+                        border: "1px solid hsl(var(--ap-border))",
+                        borderRadius: 12,
+                      }}
+                    />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -282,7 +463,12 @@ export function AnalyticsPage() {
             <Panel title="Teacher Metrics">
               <div className="space-y-3">
                 {teacherAnalytics.map((t) => (
-                  <ProgressBar key={t.name} value={t.score} tone={t.score > 90 ? "success" : t.score > 80 ? "purple" : "warning"} label={`${t.name} · ${t.score}%`} />
+                  <ProgressBar
+                    key={t.name}
+                    value={t.score}
+                    tone={t.score > 90 ? "success" : t.score > 80 ? "purple" : "warning"}
+                    label={`${t.name} · ${t.score}%`}
+                  />
                 ))}
               </div>
             </Panel>
@@ -294,26 +480,39 @@ export function AnalyticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 {parentEngagement.map((p) => (
-                  <ProgressBar key={p.metric} value={p.value} tone={p.value > 80 ? "success" : p.value > 60 ? "warning" : "danger"} label={`${p.metric} · ${p.value}%`} />
+                  <ProgressBar
+                    key={p.metric}
+                    value={p.value}
+                    tone={p.value > 80 ? "success" : p.value > 60 ? "warning" : "danger"}
+                    label={`${p.metric} · ${p.value}%`}
+                  />
                 ))}
               </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="ap-card p-4 text-center">
                     <p className="text-3xl font-black text-[hsl(var(--ap-purple))]">83%</p>
-                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">Portal Active</p>
+                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">
+                      Portal Active
+                    </p>
                   </div>
                   <div className="ap-card p-4 text-center">
                     <p className="text-3xl font-black text-[hsl(var(--ap-success))]">95%</p>
-                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">Complaints Resolved</p>
+                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">
+                      Complaints Resolved
+                    </p>
                   </div>
                   <div className="ap-card p-4 text-center">
                     <p className="text-3xl font-black text-[hsl(var(--ap-orange))]">68%</p>
-                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">Meeting Attendance</p>
+                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">
+                      Meeting Attendance
+                    </p>
                   </div>
                   <div className="ap-card p-4 text-center">
                     <p className="text-3xl font-black text-[hsl(var(--ap-info))]">78%</p>
-                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">Fee On-time</p>
+                    <p className="text-xs text-[hsl(var(--ap-muted))] uppercase font-bold">
+                      Fee On-time
+                    </p>
                   </div>
                 </div>
               </div>
@@ -324,5 +523,3 @@ export function AnalyticsPage() {
     </div>
   );
 }
-
-

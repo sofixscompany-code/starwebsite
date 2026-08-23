@@ -1,6 +1,20 @@
 ﻿import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Phone, X, LogOut, LayoutDashboard, Shield, User, Bell, Search, Sun, Moon, Maximize, Minimize } from "lucide-react";
+import {
+  Menu,
+  Phone,
+  X,
+  LogOut,
+  LayoutDashboard,
+  Shield,
+  User,
+  Bell,
+  Search,
+  Sun,
+  Moon,
+  Maximize,
+  Minimize,
+} from "lucide-react";
 import { StarLogo, StarWordmark } from "./StarLogo";
 import { Button } from "@/components/ui/button";
 import { site } from "@/lib/site-config";
@@ -34,7 +48,11 @@ export function SiteHeader() {
   const role = getUserRole();
   const isAdminRole = role === "super_admin";
   const homeTarget = role ? ROLE_DASHBOARD_ROUTES[role] || "/auth" : "/auth";
-  const userName = signedIn ? (role ? role.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User") : "";
+  const userName = signedIn
+    ? role
+      ? role.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "User"
+    : "";
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -61,12 +79,18 @@ export function SiteHeader() {
       <div className="bg-navy text-navy-foreground text-xs">
         <div className="max-w-6xl mx-auto px-4 py-2 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <a href={`tel:${site.phones[0]}`} className="flex items-center gap-1.5 hover:text-gold transition">
+            <a
+              href={`tel:${site.phones[0]}`}
+              className="flex items-center gap-1.5 hover:text-gold transition"
+            >
               <Phone className="w-3 h-3 text-brand-red" />
               <span className="font-semibold">{site.phones[0]}</span>
             </a>
             <span className="hidden sm:inline text-white/40">|</span>
-            <a href={`tel:${site.phones[1]}`} className="hidden sm:inline hover:text-gold transition">
+            <a
+              href={`tel:${site.phones[1]}`}
+              className="hidden sm:inline hover:text-gold transition"
+            >
               {site.phones[1]}
             </a>
           </div>
@@ -75,14 +99,24 @@ export function SiteHeader() {
             <span className="hidden md:inline text-white/60">{site.location}</span>
             {signedIn ? (
               <div className="flex items-center gap-2">
-                <Link to={homeTarget} className="flex items-center gap-1 font-semibold hover:text-gold transition">
+                <Link
+                  to={homeTarget}
+                  className="flex items-center gap-1 font-semibold hover:text-gold transition"
+                >
                   {isAdminRole ? (
-                    <><Shield className="w-3 h-3" /> {t("Dashboard")}</>
+                    <>
+                      <Shield className="w-3 h-3" /> {t("Dashboard")}
+                    </>
                   ) : (
-                    <><LayoutDashboard className="w-3 h-3" /> {t("Dashboard")}</>
+                    <>
+                      <LayoutDashboard className="w-3 h-3" /> {t("Dashboard")}
+                    </>
                   )}
                 </Link>
-                <button onClick={() => handleSignOut(navigate)} className="flex items-center gap-1 font-semibold hover:text-gold transition">
+                <button
+                  onClick={() => handleSignOut(navigate)}
+                  className="flex items-center gap-1 font-semibold hover:text-gold transition"
+                >
                   <LogOut className="w-3 h-3" /> {t("Sign out")}
                 </button>
               </div>
@@ -126,16 +160,32 @@ export function SiteHeader() {
                     <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
                     <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]">
                       <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                        <p className="text-xs font-bold text-navy dark:text-slate-200">{userName}</p>
+                        <p className="text-xs font-bold text-navy dark:text-slate-200">
+                          {userName}
+                        </p>
                         <p className="text-[10px] text-slate-400">{role}</p>
                       </div>
-                      <Link to="/profile" onClick={() => setProfileOpen(false)} className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                      <Link
+                        to="/profile"
+                        onClick={() => setProfileOpen(false)}
+                        className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
                         My Profile
                       </Link>
-                      <Link to={homeTarget} onClick={() => setProfileOpen(false)} className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                      <Link
+                        to={homeTarget}
+                        onClick={() => setProfileOpen(false)}
+                        className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
                         Dashboard
                       </Link>
-                      <button onClick={() => { setProfileOpen(false); handleSignOut(navigate); }} className="w-full text-left px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-slate-50 dark:hover:bg-slate-700">
+                      <button
+                        onClick={() => {
+                          setProfileOpen(false);
+                          handleSignOut(navigate);
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-slate-50 dark:hover:bg-slate-700"
+                      >
                         Sign Out
                       </button>
                     </div>
@@ -193,7 +243,11 @@ export function SiteHeader() {
               )}
             </button>
 
-            <Button asChild variant="outline" className="border-navy text-navy font-bold dark:border-slate-400 dark:text-slate-300">
+            <Button
+              asChild
+              variant="outline"
+              className="border-navy text-navy font-bold dark:border-slate-400 dark:text-slate-300"
+            >
               <Link to="/admission">{t("Apply Now")}</Link>
             </Button>
           </div>
@@ -242,7 +296,11 @@ export function SiteHeader() {
                   onClick={toggleFullscreen}
                   className="flex-1 py-2.5 px-3 rounded-lg font-semibold text-navy dark:text-slate-300 border border-border dark:border-slate-700 flex items-center justify-center gap-2"
                 >
-                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                  {isFullscreen ? (
+                    <Minimize className="w-4 h-4" />
+                  ) : (
+                    <Maximize className="w-4 h-4" />
+                  )}
                   {isFullscreen ? "Exit Full" : "Fullscreen"}
                 </button>
               </div>
@@ -275,9 +333,33 @@ export function SiteHeader() {
               </div>
               <div className="mt-3 flex gap-2 text-xs text-slate-400">
                 <span>Popular:</span>
-                <button className="hover:text-navy dark:hover:text-white" onClick={() => { navigate("/courses"); setSearchOpen(false); }}>Courses</button>
-                <button className="hover:text-navy dark:hover:text-white" onClick={() => { navigate("/admission"); setSearchOpen(false); }}>Admission</button>
-                <button className="hover:text-navy dark:hover:text-white" onClick={() => { navigate("/results"); setSearchOpen(false); }}>Results</button>
+                <button
+                  className="hover:text-navy dark:hover:text-white"
+                  onClick={() => {
+                    navigate("/courses");
+                    setSearchOpen(false);
+                  }}
+                >
+                  Courses
+                </button>
+                <button
+                  className="hover:text-navy dark:hover:text-white"
+                  onClick={() => {
+                    navigate("/admission");
+                    setSearchOpen(false);
+                  }}
+                >
+                  Admission
+                </button>
+                <button
+                  className="hover:text-navy dark:hover:text-white"
+                  onClick={() => {
+                    navigate("/results");
+                    setSearchOpen(false);
+                  }}
+                >
+                  Results
+                </button>
               </div>
             </div>
           </div>

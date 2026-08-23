@@ -18,7 +18,12 @@ export function FeatureSlider() {
   const { data: slides = [] } = useQuery({
     queryKey: ["hero-banners"],
     queryFn: async () => {
-      const q = query(collection(db, "banners"), where("isActive", "==", true), orderBy("sortOrder"), orderBy("createdAt"));
+      const q = query(
+        collection(db, "banners"),
+        where("isActive", "==", true),
+        orderBy("sortOrder"),
+        orderBy("createdAt"),
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Slide[];
     },
@@ -30,9 +35,12 @@ export function FeatureSlider() {
   const touchEnd = useRef(0);
   const count = slides.length;
 
-  const go = useCallback((n: number) => {
-    setIdx(((n % count) + count) % count);
-  }, [count]);
+  const go = useCallback(
+    (n: number) => {
+      setIdx(((n % count) + count) % count);
+    },
+    [count],
+  );
 
   useEffect(() => {
     if (count < 2 || paused) return;
@@ -53,7 +61,11 @@ export function FeatureSlider() {
   const handleTouchEnd = () => {
     const diff = touchStart.current - touchEnd.current;
     if (Math.abs(diff) > 50) {
-      diff > 0 ? go(idx + 1) : go(idx - 1);
+      if (diff > 0) {
+        go(idx + 1);
+      } else {
+        go(idx - 1);
+      }
     }
   };
 

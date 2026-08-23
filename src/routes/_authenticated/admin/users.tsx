@@ -1,6 +1,17 @@
-﻿import {  } from "react-router-dom";
+﻿import {} from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, Mail, Phone, Loader2, X } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Shield,
+  Mail,
+  Phone,
+  Loader2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/integrations/firebase/config";
 import { firebaseAuth } from "@/integrations/firebase/auth";
@@ -83,7 +94,7 @@ export function UserManagementPage() {
           status: d.data().status || "active",
           photoURL: d.data().photoURL || "",
           createdAt: d.data().createdAt || "",
-        }))
+        })),
       );
     } catch {
       toast.error("Failed to load users");
@@ -238,7 +249,9 @@ export function UserManagementPage() {
         >
           <option value="all">All Roles</option>
           {Object.entries(ROLE_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k}>
+              {v}
+            </option>
           ))}
         </select>
       </div>
@@ -250,24 +263,43 @@ export function UserManagementPage() {
             <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--ap-blue))]" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-[hsl(var(--ap-muted))] text-sm">No users found</div>
+          <div className="text-center py-16 text-[hsl(var(--ap-muted))] text-sm">
+            No users found
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[hsl(var(--ap-border))] bg-[hsl(var(--ap-surface))]">
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Name</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Email</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Phone</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Role</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Branch</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Status</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">Actions</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Name
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Email
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Phone
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Role
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Branch
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-[hsl(var(--ap-ink))]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((u) => (
-                  <tr key={u.id} className="border-b border-[hsl(var(--ap-border))] last:border-0 hover:bg-[hsl(var(--ap-surface))] transition">
+                  <tr
+                    key={u.id}
+                    className="border-b border-[hsl(var(--ap-border))] last:border-0 hover:bg-[hsl(var(--ap-surface))] transition"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[hsl(var(--ap-blue)/0.1)] flex items-center justify-center text-xs font-bold text-[hsl(var(--ap-blue))]">
@@ -279,22 +311,32 @@ export function UserManagementPage() {
                     <td className="px-4 py-3 text-[hsl(var(--ap-muted))]">{u.email}</td>
                     <td className="px-4 py-3 text-[hsl(var(--ap-muted))]">{u.phone || "—"}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${(u.role && roleColors[u.role]) || ""}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${(u.role && roleColors[u.role]) || ""}`}
+                      >
                         {ROLE_LABELS[u.role as string] || u.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[hsl(var(--ap-muted))]">{u.branch}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${u.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${u.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}
+                      >
                         {u.status}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(u)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-surface))] transition">
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-surface))] transition"
+                        >
                           <Edit className="w-4 h-4 text-[hsl(var(--ap-muted))]" />
                         </button>
-                        <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)] transition">
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)] transition"
+                        >
                           <Trash2 className="w-4 h-4 text-[hsl(var(--ap-danger))]" />
                         </button>
                       </div>
@@ -310,20 +352,34 @@ export function UserManagementPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { setShowModal(false); setEditingId(null); }} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              setShowModal(false);
+              setEditingId(null);
+            }}
+          />
           <div className="relative bg-white rounded-2xl border border-[hsl(var(--ap-border))] shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--ap-border))]">
               <h2 className="text-lg font-bold text-[hsl(var(--ap-ink))]">
                 {editingId ? "Edit User" : "Add New User"}
               </h2>
-              <button onClick={() => { setShowModal(false); setEditingId(null); }} className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-surface))]">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingId(null);
+                }}
+                className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-surface))]"
+              >
                 <X className="w-5 h-5 text-[hsl(var(--ap-muted))]" />
               </button>
             </div>
             <form onSubmit={handleSave} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Full Name *</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Full Name *
+                  </label>
                   <input
                     type="text"
                     required
@@ -334,7 +390,9 @@ export function UserManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Email *</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Email *
+                  </label>
                   <input
                     type="email"
                     required
@@ -345,7 +403,9 @@ export function UserManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Phone
+                  </label>
                   <input
                     type="tel"
                     value={form.phone}
@@ -368,34 +428,46 @@ export function UserManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Role *</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Role *
+                  </label>
                   <select
                     value={form.role || "student"}
                     onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
                     className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none"
                   >
                     {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Branch</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Branch
+                  </label>
                   <select
                     value={form.branch}
                     onChange={(e) => setForm({ ...form, branch: e.target.value })}
                     className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none"
                   >
                     {BRANCHES.map((b) => (
-                      <option key={b} value={b}>{b}</option>
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">Status</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                    Status
+                  </label>
                   <select
                     value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "inactive" })}
+                    onChange={(e) =>
+                      setForm({ ...form, status: e.target.value as "active" | "inactive" })
+                    }
                     className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none"
                   >
                     <option value="active">Active</option>
@@ -406,7 +478,10 @@ export function UserManagementPage() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); setEditingId(null); }}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingId(null);
+                  }}
                   className="px-4 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm font-medium text-[hsl(var(--ap-muted))] hover:bg-[hsl(var(--ap-surface))]"
                 >
                   Cancel
@@ -427,5 +502,3 @@ export function UserManagementPage() {
     </div>
   );
 }
-
-
