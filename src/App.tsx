@@ -132,6 +132,9 @@ const ProfilePage2 = lazy(() =>
 const BannersPage = lazy(() =>
   import("./routes/_authenticated/admin.banners").then((m) => ({ default: m.BannersPage })),
 );
+const SelectionsPage = lazy(() =>
+  import("./routes/_authenticated/admin.selections").then((m) => ({ default: m.SelectionsPage })),
+);
 const FeeStructurePage = lazy(() =>
   import("./routes/_authenticated/admin.fee-structure").then((m) => ({
     default: m.FeeStructurePage,
@@ -265,6 +268,7 @@ export default function App() {
               <Route path="support" element={<LazyPage Component={SupportPage} />} />
               <Route path="profile" element={<LazyPage Component={ProfilePage2} />} />
               <Route path="banners" element={<LazyPage Component={BannersPage} />} />
+              <Route path="selections" element={<LazyPage Component={SelectionsPage} />} />
               <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
               <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
               <Route path="api-keys" element={<LazyPage Component={ApiKeysPage} />} />

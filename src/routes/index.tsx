@@ -22,10 +22,11 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { FeatureSlider } from "@/components/site/FeatureSlider";
 import { Button } from "@/components/ui/button";
 import { StarLogo } from "@/components/site/StarLogo";
-import { site, stats, toppers, testimonials } from "@/lib/site-config";
+import { site, stats, testimonials } from "@/lib/site-config";
 import { firebaseAuth } from "@/integrations/firebase/auth";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, getDocs, limit, query } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
+import { useSelections } from "@/hooks/use-selections";
 
 const categories = [
   {
@@ -67,17 +68,35 @@ const categories = [
 ] as const;
 
 export function Index() {
+  const { rows: selections } = useSelections(12);
+
+  // Index-free query: fetch latest, filter + sort client-side so no
+  // composite index is required in Firestore.
   const { data: notices = [] } = useQuery({
     queryKey: ["home-notices"],
     queryFn: async () => {
-      const q = query(
-        collection(db, "notices"),
-        where("isPublished", "==", true),
-        orderBy("publishedAt", "desc"),
-        limit(4),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const snap = await getDocs(query(collection(db, "notices"), limit(25)));
+      const rows = snap.docs.map((d) => ({
+        id: d.id,
+        title: d.data().title as string,
+        category: d.data().category as string,
+        isPublished: d.data().isPublished as boolean | undefined,
+        publishedAt: (d.data().publishedAt as { toMillis?: () => number } | string | null) ?? null,
+      }));
+      const visible = rows
+        .filter((n) => n.isPublished !== false)
+        .sort((a, b) => {
+          const ta =
+            a.publishedAt && typeof a.publishedAt === "object" && a.publishedAt.toMillis
+              ? a.publishedAt.toMillis()
+              : Date.parse(String(a.publishedAt));
+          const tb =
+            b.publishedAt && typeof b.publishedAt === "object" && b.publishedAt.toMillis
+              ? b.publishedAt.toMillis()
+              : Date.parse(String(b.publishedAt));
+          return tb - ta;
+        });
+      return visible.slice(0, 4);
     },
   });
 
@@ -323,9 +342,9 @@ export function Index() {
             subtitle="Real students, real posts. A snapshot of our recent selections across Nepal."
           />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {toppers.slice(0, 12).map((t) => (
+            {selections.map((t) => (
               <div
-                key={t.name}
+                key={t.id}
                 className="bg-white rounded-xl border border-border overflow-hidden text-center hover:border-brand-red/40 transition"
               >
                 <div className="aspect-square bg-gradient-to-br from-navy/90 to-navy/70 flex items-center justify-center text-navy-foreground font-display font-black text-3xl">

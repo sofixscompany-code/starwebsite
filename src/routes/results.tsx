@@ -2,9 +2,11 @@
 import { Award } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { toppers } from "@/lib/site-config";
+import { useSelections } from "@/hooks/use-selections";
 
 export function ResultsPage() {
+  const { rows: toppers } = useSelections();
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -27,7 +29,7 @@ export function ResultsPage() {
           <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {toppers.map((t) => (
               <div
-                key={t.name}
+                key={t.id}
                 className="bg-white rounded-xl border border-border overflow-hidden text-center hover:border-brand-red/40 transition"
               >
                 <div className="aspect-square bg-gradient-to-br from-navy/90 to-navy/70 flex items-center justify-center text-navy-foreground font-display font-black text-3xl relative">

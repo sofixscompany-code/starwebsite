@@ -276,6 +276,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Bell,
         roles: ["super_admin"],
       },
+      {
+        label: "Top Selections",
+        to: "/admin/selections",
+        icon: Trophy,
+        roles: ["super_admin"],
+      },
       { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["super_admin"] },
     ],
   },
