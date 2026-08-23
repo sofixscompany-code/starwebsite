@@ -1,5 +1,4 @@
 ﻿import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import {
   ShieldCheck,
   Stethoscope,
@@ -24,9 +23,8 @@ import { Button } from "@/components/ui/button";
 import { StarLogo } from "@/components/site/StarLogo";
 import { site, stats, testimonials } from "@/lib/site-config";
 import { firebaseAuth } from "@/integrations/firebase/auth";
-import { collection, getDocs, limit, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
 import { useSelections } from "@/hooks/use-selections";
+import { isNewNotice, noticeTimeAgo, useLiveNotices } from "@/hooks/use-live-notices";
 
 const categories = [
   {
@@ -67,38 +65,18 @@ const categories = [
   },
 ] as const;
 
+const CATEGORY_STYLES: Record<string, string> = {
+  Exam: "bg-red-50 text-red-600 border-red-200/60",
+  Admission: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+  Scholarship: "bg-gold/15 text-amber-700 border-amber-200/60",
+  Fees: "bg-indigo-50 text-indigo-700 border-indigo-200/60",
+  Event: "bg-purple-50 text-purple-700 border-purple-200/60",
+  General: "bg-blue-50 text-blue-700 border-blue-200/60",
+};
+
 export function Index() {
   const { rows: selections } = useSelections(12);
-
-  // Index-free query: fetch latest, filter + sort client-side so no
-  // composite index is required in Firestore.
-  const { data: notices = [] } = useQuery({
-    queryKey: ["home-notices"],
-    queryFn: async () => {
-      const snap = await getDocs(query(collection(db, "notices"), limit(25)));
-      const rows = snap.docs.map((d) => ({
-        id: d.id,
-        title: d.data().title as string,
-        category: d.data().category as string,
-        isPublished: d.data().isPublished as boolean | undefined,
-        publishedAt: (d.data().publishedAt as { toMillis?: () => number } | string | null) ?? null,
-      }));
-      const visible = rows
-        .filter((n) => n.isPublished !== false)
-        .sort((a, b) => {
-          const ta =
-            a.publishedAt && typeof a.publishedAt === "object" && a.publishedAt.toMillis
-              ? a.publishedAt.toMillis()
-              : Date.parse(String(a.publishedAt));
-          const tb =
-            b.publishedAt && typeof b.publishedAt === "object" && b.publishedAt.toMillis
-              ? b.publishedAt.toMillis()
-              : Date.parse(String(b.publishedAt));
-          return tb - ta;
-        });
-      return visible.slice(0, 4);
-    },
-  });
+  const notices = useLiveNotices(4);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -273,39 +251,90 @@ export function Index() {
       {/* NOTICES + WHY US */}
       <section className="py-6">
         <div className="max-w-6xl mx-auto px-4 grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell className="w-5 h-5 text-brand-red" />
-              <h3 className="font-display font-black text-lg text-navy">Latest Notices</h3>
+          <div className="lg:col-span-2 bg-white border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            {/* Header with LIVE badge */}
+            <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-border bg-gradient-to-r from-brand-red/8 via-transparent to-transparent">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-brand-red/10 border border-brand-red/15 flex items-center justify-center shrink-0">
+                  <Bell className="w-5 h-5 text-brand-red" />
+                </span>
+                <div>
+                  <h3 className="font-display font-black text-lg text-navy leading-tight">
+                    Latest Notices
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Updates automatically — no refresh needed
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/70 text-[10px] font-black uppercase tracking-wider text-emerald-700 shrink-0">
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
+                </span>
+                Live
+              </span>
             </div>
-            <ul className="divide-y divide-border">
-              {notices.length === 0 && (
-                <li className="py-3 text-sm text-muted-foreground">No notices yet.</li>
-              )}
-              {notices.map((n: any) => (
-                <li key={n.id} className="py-3 flex items-start gap-3">
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-brand-red/10 text-brand-red mt-0.5">
-                    {n.category}
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-foreground leading-snug">{n.title}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {n.publishedAt
-                        ? new Date(n.publishedAt.toDate?.() ?? n.publishedAt).toLocaleDateString(
-                            "en-GB",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            },
-                          )
-                        : "—"}
-                    </p>
+
+            {/* Notice list */}
+            <ul className="divide-y divide-border flex-1">
+              {notices.length === 0 &&
+                [0, 1, 2].map((i) => (
+                  <li key={`sk-${i}`} className="px-5 md:px-6 py-4 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-5 rounded-md bg-muted" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 rounded bg-muted w-3/4" />
+                        <div className="h-3 rounded bg-muted w-1/4" />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              {notices.map((n) => (
+                <li
+                  key={n.id}
+                  className="group px-5 md:px-6 py-4 hover:bg-secondary/60 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 shrink-0 inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                        CATEGORY_STYLES[n.category] ?? CATEGORY_STYLES.General
+                      }`}
+                    >
+                      {n.category}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground leading-snug group-hover:text-brand-red transition-colors">
+                        {n.title}
+                      </p>
+                      {n.body && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{n.body}</p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" />
+                        {noticeTimeAgo(n)}
+                        {isNewNotice(n) && (
+                          <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-red text-white text-[9px] font-black uppercase tracking-wide">
+                            <span className="w-1 h-1 rounded-full bg-white animate-pulse" /> New
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-border group-hover:text-brand-red group-hover:translate-x-1 transition-all shrink-0 mt-1" />
                   </div>
                 </li>
               ))}
             </ul>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-border bg-secondary/30 text-center">
+              <Link
+                to="/admission"
+                className="text-xs font-bold text-navy hover:text-brand-red transition-colors inline-flex items-center gap-1"
+              >
+                Join our batches for 2083/84 <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
           <div className="bg-navy text-navy-foreground rounded-2xl p-6">

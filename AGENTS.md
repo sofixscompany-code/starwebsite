@@ -68,6 +68,7 @@ Sidebar features:
 - `src/components/auth/AuthGuard.tsx` — Route guard
 - `src/hooks/use-user-role.ts` — Role constants and helpers
 - `src/hooks/use-selections.ts` — public "Top Selections" hook (Firestore `selections` collection, static fallback); used by homepage + `/results`; managed in admin at `/admin/selections`
+- `src/hooks/use-live-notices.ts` — real-time homepage notices (`onSnapshot`, no refresh needed); auto-infers category from title when missing; exports `noticeTimeAgo` / `isNewNotice`
 - `src/lib/permissions.ts` — Flat menu items with role access (legacy, kept for compatibility)
 - `firestore.rules` — public read for site content (incl. `selections`); auth-only for everything else
 

@@ -370,24 +370,28 @@ async function main() {
     {
       title: "Scholarship deadline extended",
       body: "Merit scholarship applications now close on Jan 31.",
+      category: "Scholarship",
       isPublished: true,
       publishedAt: iso(-30 * 60000),
     },
     {
       title: "NP Mock Test #15 schedule",
       body: "Mock test will be held this Saturday at 8 AM, Hall A.",
+      category: "Exam",
       isPublished: true,
       publishedAt: iso(-2 * H),
     },
     {
       title: "New IOE batch starting",
       body: "Evening IOE preparation batch starts next Monday.",
+      category: "Admission",
       isPublished: true,
       publishedAt: iso(-1 * D),
     },
     {
       title: "Fee payment reminder",
       body: "Monthly tuition fees are due by the 10th of each month.",
+      category: "Fees",
       isPublished: true,
       publishedAt: iso(-3 * D),
     },
