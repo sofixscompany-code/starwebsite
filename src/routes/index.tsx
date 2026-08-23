@@ -114,7 +114,7 @@ export function Index() {
             <div className="inline-flex items-center gap-2 px-6 py-2.5 md:rounded-full text-center bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-600/30 animate-pulse ring-2 ring-emerald-400/50">
               <span className="w-2 h-2 rounded-full bg-white animate-ping" />
               <p className="font-display font-black text-sm md:text-lg tracking-widest text-white drop-shadow-sm">
-                &#9733; ADMISSION OPEN — 2081/82 &#9733;
+                &#9733; ADMISSION OPEN — 2083/84 BS &#9733;
               </p>
               <span className="w-2 h-2 rounded-full bg-white animate-ping" />
             </div>

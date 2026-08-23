@@ -271,7 +271,7 @@ export function AdmissionPage() {
         <section className="bg-navy text-navy-foreground py-10 md:py-14">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <p className="text-xs uppercase tracking-widest text-gold font-bold">
-              Admission Open 2082/83
+              Admission Open 2083/84 BS
             </p>
             <h1 className="font-display font-black text-3xl md:text-4xl mt-2">Online Admission</h1>
             <p className="mt-3 text-white/70">

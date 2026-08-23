@@ -117,10 +117,11 @@ export function SettingsPage() {
                   <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
                     Current Academic Year
                   </span>
-                  <select className="ap-input mt-1" defaultValue="2082">
+                  <select className="ap-input mt-1" defaultValue="2083">
                     <option value="2081">2081 BS</option>
                     <option value="2082">2082 BS</option>
                     <option value="2083">2083 BS</option>
+                    <option value="2084">2084 BS</option>
                   </select>
                 </label>
                 <label className="block">

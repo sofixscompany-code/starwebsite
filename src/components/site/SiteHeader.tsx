@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Shield,
   User,
-  Bell,
   Search,
   Sun,
   Moon,
@@ -40,7 +39,6 @@ export function SiteHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("site-theme") === "dark");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [notifCount] = useState(3);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -193,20 +191,6 @@ export function SiteHeader() {
                 )}
               </div>
             )}
-
-            {/* Notification Bell */}
-            <button
-              onClick={() => navigate("/notifications")}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition relative"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4 text-navy dark:text-slate-300" />
-              {notifCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-brand-red rounded-full shadow-sm">
-                  {notifCount}
-                </span>
-              )}
-            </button>
 
             {/* Search */}
             <button
