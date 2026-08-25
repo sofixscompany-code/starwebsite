@@ -23,6 +23,7 @@ import { isNewNotice, noticeTimeAgo, useLiveNotices } from "@/hooks/use-live-not
 import { useHomepageStats } from "@/hooks/use-homepage-stats";
 import { getIcon, useHomepageCategories } from "@/hooks/use-homepage-categories";
 import { useHomepageTestimonials } from "@/hooks/use-homepage-testimonials";
+import { useMdMessage, useWhyChooseUs } from "@/hooks/use-homepage-settings";
 
 const CATEGORY_STYLES: Record<string, string> = {
   Exam: "bg-red-50 text-red-600 border-red-200/60",
@@ -39,6 +40,8 @@ export function Index() {
   const stats = useHomepageStats();
   const categories = useHomepageCategories();
   const testimonials = useHomepageTestimonials();
+  const whyChooseUs = useWhyChooseUs();
+  const mdMessage = useMdMessage();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -310,16 +313,10 @@ export function Index() {
               Result-focused. Locally rooted. Nationally trusted.
             </h3>
             <ul className="mt-5 space-y-3 text-sm">
-              {[
-                "Experienced faculty from real service backgrounds",
-                "Daily physical + written training",
-                "Regular mock tests & OMR-based practice",
-                "Hostel for both boys and girls",
-                "Super 40 Scholarship — up to 40% off",
-              ].map((x) => (
-                <li key={x} className="flex items-start gap-2">
+              {whyChooseUs.map((w) => (
+                <li key={w.id} className="flex items-start gap-2">
                   <Star className="w-4 h-4 text-gold mt-0.5 shrink-0" />
-                  <span>{x}</span>
+                  <span>{w.text}</span>
                 </li>
               ))}
             </ul>
@@ -374,22 +371,16 @@ export function Index() {
             <Quote className="absolute top-4 left-4 w-12 h-12 text-brand-red/10" />
             <div className="flex flex-col md:flex-row items-start gap-6">
               <div className="w-20 h-20 rounded-full bg-navy text-navy-foreground flex items-center justify-center font-display font-black text-3xl shrink-0">
-                BY
+                {mdMessage.initials}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-widest text-brand-red font-bold">
                   Message from the Managing Director
                 </p>
                 <h3 className="font-display font-black text-2xl text-navy mt-1">
-                  {site.managingDirector}
+                  {mdMessage.name}
                 </h3>
-                <p className="mt-4 text-foreground leading-relaxed">
-                  "Dear students and parents, as the Managing Director of Star Coaching Institute, I
-                  want to say that education is not just about academics — it's a journey of
-                  personal growth, skill development, and pursuit of dreams. Our dedicated team is
-                  committed to your success. Stay focused, work hard, and never hesitate to reach
-                  out. We are here for you."
-                </p>
+                <p className="mt-4 text-foreground leading-relaxed">"{mdMessage.message}"</p>
               </div>
             </div>
           </div>

@@ -69,6 +69,9 @@ Sidebar features:
 - `src/hooks/use-user-role.ts` — Role constants and helpers
 - `src/hooks/use-selections.ts` — public "Top Selections" hook (Firestore `selections` collection, static fallback); used by homepage + `/results`; managed in admin at `/admin/selections`
 - `src/hooks/use-live-notices.ts` — real-time homepage notices (`onSnapshot`, no refresh needed); auto-infers category from title when missing; exports `noticeTimeAgo` / `isNewNotice`
+- `src/hooks/use-homepage-stats.ts` — homepage stats bar numbers (Firestore `homepage_stats`, static fallback); managed in admin at `/admin/homepage-stats`
+- `src/hooks/use-homepage-categories.ts` — homepage course categories with icon mapping (Firestore `homepage_categories`, static fallback); managed in admin at `/admin/homepage-categories`
+- `src/hooks/use-homepage-testimonials.ts` — homepage testimonials (Firestore `homepage_testimonials`, static fallback); managed in admin at `/admin/homepage-testimonials`
 - `src/lib/permissions.ts` — Flat menu items with role access (legacy, kept for compatibility)
 - `firestore.rules` — public read for site content (incl. `selections`); auth-only for everything else
 

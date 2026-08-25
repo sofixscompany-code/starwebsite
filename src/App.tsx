@@ -150,6 +150,16 @@ const HomepageTestimonialsPage = lazy(() =>
     default: m.HomepageTestimonialsPage,
   })),
 );
+const WhyChooseUsPage = lazy(() =>
+  import("./routes/_authenticated/admin.why-choose-us").then((m) => ({
+    default: m.WhyChooseUsPage,
+  })),
+);
+const MdMessagePage = lazy(() =>
+  import("./routes/_authenticated/admin.md-message").then((m) => ({
+    default: m.MdMessagePage,
+  })),
+);
 const FeeStructurePage = lazy(() =>
   import("./routes/_authenticated/admin.fee-structure").then((m) => ({
     default: m.FeeStructurePage,
@@ -293,6 +303,8 @@ export default function App() {
                 path="homepage-testimonials"
                 element={<LazyPage Component={HomepageTestimonialsPage} />}
               />
+              <Route path="why-choose-us" element={<LazyPage Component={WhyChooseUsPage} />} />
+              <Route path="md-message" element={<LazyPage Component={MdMessagePage} />} />
               <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
               <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
               <Route path="api-keys" element={<LazyPage Component={ApiKeysPage} />} />
