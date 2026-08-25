@@ -1,11 +1,5 @@
 ﻿import { Link } from "react-router-dom";
 import {
-  ShieldCheck,
-  Stethoscope,
-  Wrench,
-  Monitor,
-  GraduationCap,
-  BookOpen,
   Phone,
   MessageCircle,
   ArrowRight,
@@ -15,55 +9,20 @@ import {
   Quote,
   Calendar,
   Bell,
+  GraduationCap,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FeatureSlider } from "@/components/site/FeatureSlider";
 import { Button } from "@/components/ui/button";
 import { StarLogo } from "@/components/site/StarLogo";
-import { site, stats, testimonials } from "@/lib/site-config";
+import { site } from "@/lib/site-config";
 import { firebaseAuth } from "@/integrations/firebase/auth";
 import { useSelections } from "@/hooks/use-selections";
 import { isNewNotice, noticeTimeAgo, useLiveNotices } from "@/hooks/use-live-notices";
-
-const categories = [
-  {
-    icon: ShieldCheck,
-    title: "Security Forces",
-    desc: "Nepal Police · Army · Armed Police",
-    color: "bg-blue-50 text-navy",
-  },
-  {
-    icon: Award,
-    title: "Loksewa Aayog",
-    desc: "Kharidar · Na.Su. · Officer",
-    color: "bg-red-50 text-brand-red",
-  },
-  {
-    icon: Stethoscope,
-    title: "Medical & Nursing",
-    desc: "Staff Nurse · HA · CMA / ANM",
-    color: "bg-emerald-50 text-emerald-700",
-  },
-  {
-    icon: Wrench,
-    title: "Engineering Diploma",
-    desc: "Civil · Mechanical · IT · Electrical",
-    color: "bg-amber-50 text-amber-700",
-  },
-  {
-    icon: Monitor,
-    title: "Computer Training",
-    desc: "Office · AutoCAD · C++",
-    color: "bg-indigo-50 text-indigo-700",
-  },
-  {
-    icon: BookOpen,
-    title: "SEE Preparation",
-    desc: "Class 8-10 All Subjects",
-    color: "bg-purple-50 text-purple-700",
-  },
-] as const;
+import { useHomepageStats } from "@/hooks/use-homepage-stats";
+import { getIcon, useHomepageCategories } from "@/hooks/use-homepage-categories";
+import { useHomepageTestimonials } from "@/hooks/use-homepage-testimonials";
 
 const CATEGORY_STYLES: Record<string, string> = {
   Exam: "bg-red-50 text-red-600 border-red-200/60",
@@ -77,6 +36,9 @@ const CATEGORY_STYLES: Record<string, string> = {
 export function Index() {
   const { rows: selections } = useSelections(12);
   const notices = useLiveNotices(4);
+  const stats = useHomepageStats();
+  const categories = useHomepageCategories();
+  const testimonials = useHomepageTestimonials();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -224,26 +186,29 @@ export function Index() {
             subtitle="From uniform services to medical, technical and school tuition — all under one roof."
           />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            {categories.map((c) => (
-              <Link
-                key={c.title}
-                to="/courses"
-                className="group bg-white border border-border rounded-2xl p-4 md:p-5 hover:border-navy/30 hover:shadow-md transition"
-              >
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${c.color}`}
+            {categories.map((c) => {
+              const Icon = getIcon(c.icon);
+              return (
+                <Link
+                  key={c.id}
+                  to="/courses"
+                  className="group bg-white border border-border rounded-2xl p-4 md:p-5 hover:border-navy/30 hover:shadow-md transition"
                 >
-                  <c.icon className="w-5 h-5" />
-                </div>
-                <h3 className="font-display font-bold text-sm md:text-base text-foreground leading-tight">
-                  {c.title}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">{c.desc}</p>
-                <p className="mt-3 text-xs font-bold text-brand-red flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                  View <ArrowRight className="w-3 h-3" />
-                </p>
-              </Link>
-            ))}
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${c.color}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-display font-bold text-sm md:text-base text-foreground leading-tight">
+                    {c.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">{c.desc}</p>
+                  <p className="mt-3 text-xs font-bold text-brand-red flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                    View <ArrowRight className="w-3 h-3" />
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -135,6 +135,21 @@ const BannersPage = lazy(() =>
 const SelectionsPage = lazy(() =>
   import("./routes/_authenticated/admin.selections").then((m) => ({ default: m.SelectionsPage })),
 );
+const HomepageStatsPage = lazy(() =>
+  import("./routes/_authenticated/admin.homepage-stats").then((m) => ({
+    default: m.HomepageStatsPage,
+  })),
+);
+const HomepageCategoriesPage = lazy(() =>
+  import("./routes/_authenticated/admin.homepage-categories").then((m) => ({
+    default: m.HomepageCategoriesPage,
+  })),
+);
+const HomepageTestimonialsPage = lazy(() =>
+  import("./routes/_authenticated/admin.homepage-testimonials").then((m) => ({
+    default: m.HomepageTestimonialsPage,
+  })),
+);
 const FeeStructurePage = lazy(() =>
   import("./routes/_authenticated/admin.fee-structure").then((m) => ({
     default: m.FeeStructurePage,
@@ -269,6 +284,15 @@ export default function App() {
               <Route path="profile" element={<LazyPage Component={ProfilePage2} />} />
               <Route path="banners" element={<LazyPage Component={BannersPage} />} />
               <Route path="selections" element={<LazyPage Component={SelectionsPage} />} />
+              <Route path="homepage-stats" element={<LazyPage Component={HomepageStatsPage} />} />
+              <Route
+                path="homepage-categories"
+                element={<LazyPage Component={HomepageCategoriesPage} />}
+              />
+              <Route
+                path="homepage-testimonials"
+                element={<LazyPage Component={HomepageTestimonialsPage} />}
+              />
               <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
               <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
               <Route path="api-keys" element={<LazyPage Component={ApiKeysPage} />} />
