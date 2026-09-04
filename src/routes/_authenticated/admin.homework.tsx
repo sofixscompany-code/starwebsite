@@ -14,16 +14,56 @@ export function HomeworkPage() {
         { label: "Overdue", value: 18, icon: AlertCircle, tone: "warning" },
       ]}
       columns={[
-        { key: "name", label: "Assignment" },
-        { key: "class", label: "Class" },
+        { key: "title", label: "Assignment" },
+        { key: "batch", label: "Batch" },
         { key: "subject", label: "Subject" },
+        { key: "dueDate", label: "Due Date" },
         { key: "status", label: "Status" },
       ]}
+      fields={[
+        { key: "title", label: "Assignment", type: "text", required: true },
+        { key: "batch", label: "Batch", type: "text" },
+        { key: "subject", label: "Subject", type: "text" },
+        {
+          key: "status",
+          label: "Status",
+          type: "select",
+          options: [
+            { value: "pending", label: "Pending" },
+            { value: "submitted", label: "Submitted" },
+            { value: "graded", label: "Graded" },
+          ],
+        },
+      ]}
       rows={[
-        { name: "Ch. 5 Exercises", class: "12-A", subject: "Mathematics", status: "Completed" },
-        { name: "Lab Report – Optics", class: "12-B", subject: "Physics", status: "Pending" },
-        { name: "Worksheet – Organic", class: "11-A", subject: "Chemistry", status: "Overdue" },
-        { name: "Essay Draft", class: "11-B", subject: "English", status: "Completed" },
+        {
+          title: "Ch. 5 Exercises",
+          batch: "12-A",
+          subject: "Mathematics",
+          dueDate: "2026-09-10",
+          status: "pending",
+        },
+        {
+          title: "Lab Report – Optics",
+          batch: "12-B",
+          subject: "Physics",
+          dueDate: "2026-09-12",
+          status: "submitted",
+        },
+        {
+          title: "Worksheet – Organic",
+          batch: "11-A",
+          subject: "Chemistry",
+          dueDate: "2026-09-08",
+          status: "pending",
+        },
+        {
+          title: "Essay Draft",
+          batch: "11-B",
+          subject: "English",
+          dueDate: "2026-09-14",
+          status: "graded",
+        },
       ]}
     />
   );

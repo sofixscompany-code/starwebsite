@@ -1,7 +1,5 @@
-﻿import {} from "react-router-dom";
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
-  FileBadge,
   Radio,
   Database,
   Sparkles,
@@ -9,17 +7,9 @@ import {
   Search,
   Filter,
   Plus,
-  Eye,
   Edit,
   Trash2,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Play,
   Calendar,
-  MoreVertical,
-  Award,
-  TrendingUp,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,113 +25,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs } from "@/components/admin/ui";
-
-const EXAMS = [
-  {
-    id: "1",
-    name: "IOE Mock #14",
-    course: "Nepal Police",
-    date: "2024-10-10",
-    questions: 100,
-    marks: 100,
-    duration: "2 hrs",
-    attempts: 42,
-    type: "MCQ",
-    status: "Scheduled",
-    negative: true,
-  },
-  {
-    id: "2",
-    name: "Loksewa Prelim",
-    course: "Loksewa",
-    date: "2024-10-12",
-    questions: 150,
-    marks: 150,
-    duration: "3 hrs",
-    attempts: 28,
-    type: "MCQ",
-    status: "Scheduled",
-    negative: true,
-  },
-  {
-    id: "3",
-    name: "Bank Reasoning",
-    course: "Bank PO",
-    date: "2024-10-08",
-    questions: 60,
-    marks: 60,
-    duration: "1 hr",
-    attempts: 30,
-    type: "MCQ",
-    status: "Completed",
-    negative: false,
-  },
-  {
-    id: "4",
-    name: "APF Fitness Theory",
-    course: "APF",
-    date: "2024-10-15",
-    questions: 80,
-    marks: 80,
-    duration: "1.5 hrs",
-    attempts: 0,
-    type: "Mixed",
-    status: "Scheduled",
-    negative: false,
-  },
-  {
-    id: "5",
-    name: "Army Written Test",
-    course: "Nepal Army",
-    date: "2024-10-05",
-    questions: 120,
-    marks: 120,
-    duration: "2.5 hrs",
-    attempts: 35,
-    type: "MCQ",
-    status: "Completed",
-    negative: true,
-  },
-  {
-    id: "6",
-    name: "English Grammar",
-    course: "Loksewa SO",
-    date: "2024-10-18",
-    questions: 50,
-    marks: 50,
-    duration: "45 min",
-    attempts: 0,
-    type: "MCQ",
-    status: "Draft",
-    negative: false,
-  },
-  {
-    id: "7",
-    name: "Quantitative Aptitude",
-    course: "Bank PO",
-    date: "2024-10-20",
-    questions: 40,
-    marks: 80,
-    duration: "1 hr",
-    attempts: 0,
-    type: "Mixed",
-    status: "Draft",
-    negative: true,
-  },
-  {
-    id: "8",
-    name: "General Science",
-    course: "Nepal Police",
-    date: "2024-10-03",
-    questions: 75,
-    marks: 75,
-    duration: "1.5 hrs",
-    attempts: 44,
-    type: "MCQ",
-    status: "Completed",
-    negative: false,
-  },
-];
+import { useModuleData } from "@/hooks/use-module-data";
 
 const questionBank = [
   { category: "General Knowledge", count: 2450 },
@@ -163,13 +47,16 @@ const resultDistribution = [
 export function ExamsPage() {
   const [q, setQ] = useState("");
   const [activeTab, setActiveTab] = useState("exams");
+  const { rows, remove } = useModuleData("exams");
 
-  const filtered = EXAMS.filter(
+  const filtered = rows.filter(
     (e) =>
       !q ||
-      e.name.toLowerCase().includes(q.toLowerCase()) ||
-      e.course.toLowerCase().includes(q.toLowerCase()),
+      (e.title as string)?.toLowerCase().includes(q.toLowerCase()) ||
+      (e.subject as string)?.toLowerCase().includes(q.toLowerCase()),
   );
+
+  const upcoming = rows.filter((e) => new Date(e.scheduledAt as string) > new Date()).length;
 
   return (
     <div>
@@ -188,8 +75,8 @@ export function ExamsPage() {
         }
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Upcoming" value={4} icon={Calendar} tone="purple" />
-        <StatCard label="Live Now" value={1} icon={Radio} tone="warning" />
+        <StatCard label="Upcoming" value={upcoming} icon={Calendar} tone="purple" />
+        <StatCard label="Total Exams" value={rows.length} icon={Radio} tone="warning" />
         <StatCard label="Question Bank" value={8241} icon={Database} tone="info" />
         <StatCard label="Auto-Graded" value="94%" icon={Sparkles} tone="success" />
       </div>
@@ -221,66 +108,39 @@ export function ExamsPage() {
               <button className="ap-btn-ghost">
                 <Filter className="w-4 h-4" /> Filters
               </button>
-              <select className="ap-input max-w-[160px]">
-                <option>All types</option>
-                <option>MCQ</option>
-                <option>Theory</option>
-                <option>Mixed</option>
-                <option>OMR</option>
-              </select>
-              <select className="ap-input max-w-[160px]">
-                <option>All status</option>
-                <option>Draft</option>
-                <option>Scheduled</option>
-                <option>Live</option>
-                <option>Completed</option>
-              </select>
             </Toolbar>
 
             <DataTable
               rows={filtered}
               columns={[
                 {
-                  key: "name",
+                  key: "title",
                   label: "Exam",
-                  render: (r) => <span className="font-bold">{r.name}</span>,
+                  render: (r) => <span className="font-bold">{r.title as string}</span>,
                 },
-                { key: "course", label: "Course" },
-                { key: "date", label: "Date" },
-                { key: "questions", label: "Qs" },
-                { key: "marks", label: "Marks" },
-                { key: "duration", label: "Duration" },
-                { key: "type", label: "Type", render: (r) => <Badge tone="muted">{r.type}</Badge> },
-                { key: "attempts", label: "Attempts" },
+                { key: "subject", label: "Subject" },
                 {
-                  key: "status",
-                  label: "Status",
+                  key: "scheduledAt",
+                  label: "Scheduled",
                   render: (r) => (
-                    <Badge
-                      tone={
-                        r.status === "Completed"
-                          ? "success"
-                          : r.status === "Scheduled"
-                            ? "info"
-                            : r.status === "Live"
-                              ? "warning"
-                              : "muted"
-                      }
-                    >
-                      {r.status}
-                    </Badge>
+                    <span>
+                      {r.scheduledAt ? new Date(r.scheduledAt as string).toLocaleDateString() : "—"}
+                    </span>
                   ),
                 },
+                {
+                  key: "durationMin",
+                  label: "Duration",
+                  render: (r) => <span>{r.durationMin as number} min</span>,
+                },
+                { key: "totalMarks", label: "Marks" },
               ]}
-              actions={() => (
+              actions={(r) => (
                 <div className="flex gap-1">
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]">
+                  <button
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
+                    onClick={() => remove(r.id)}
+                  >
                     <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
                   </button>
                 </div>
@@ -424,7 +284,7 @@ export function ExamsPage() {
                 Scheduled exams will appear here when they start
               </p>
               <button className="ap-btn mt-4">
-                <Play className="w-4 h-4" /> Start Exam
+                <Radio className="w-4 h-4" /> Start Exam
               </button>
             </div>
           </Panel>

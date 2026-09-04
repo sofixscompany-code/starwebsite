@@ -1,5 +1,4 @@
-﻿import {} from "react-router-dom";
-import { useState } from "react";
+﻿import { useState, useMemo } from "react";
 import {
   Trophy,
   TrendingUp,
@@ -9,26 +8,19 @@ import {
   Search,
   Filter,
   Eye,
-  Edit,
   Printer,
   Share2,
   FileText,
-  BarChart3,
-  Star,
-  MoreVertical,
-  ChevronRight,
   Medal,
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  LineChart,
-  Line,
   RadarChart,
   Radar,
   PolarGrid,
@@ -36,88 +28,8 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs, Modal } from "@/components/admin/ui";
-
-const RESULTS = [
-  {
-    id: "1",
-    exam: "IOE Mock #13",
-    course: "Nepal Police",
-    date: "2024-09-25",
-    appeared: 45,
-    passed: 38,
-    avgScore: 78,
-    topper: "Aarav S.",
-    topperScore: 96,
-    status: "Published",
-    merit: true,
-  },
-  {
-    id: "2",
-    exam: "Bank Reasoning",
-    course: "Bank PO",
-    date: "2024-10-08",
-    appeared: 30,
-    passed: 28,
-    avgScore: 82,
-    topper: "Sita R.",
-    topperScore: 91,
-    status: "Published",
-    merit: true,
-  },
-  {
-    id: "3",
-    exam: "Loksewa Prelim",
-    course: "Loksewa",
-    date: "2024-09-28",
-    appeared: 32,
-    passed: 24,
-    avgScore: 72,
-    topper: "Anisha M.",
-    topperScore: 89,
-    status: "Published",
-    merit: true,
-  },
-  {
-    id: "4",
-    exam: "APF Fitness",
-    course: "APF",
-    date: "2024-10-05",
-    appeared: 35,
-    passed: 30,
-    avgScore: 75,
-    topper: "Krishna A.",
-    topperScore: 88,
-    status: "Published",
-    merit: false,
-  },
-  {
-    id: "5",
-    exam: "IOE Mock #14",
-    course: "Nepal Police",
-    date: "2024-10-10",
-    appeared: 42,
-    passed: 0,
-    avgScore: 0,
-    topper: "—",
-    topperScore: 0,
-    status: "Pending",
-    merit: false,
-  },
-  {
-    id: "6",
-    exam: "Army Written",
-    course: "Nepal Army",
-    date: "2024-10-12",
-    appeared: 0,
-    passed: 0,
-    avgScore: 0,
-    topper: "—",
-    topperScore: 0,
-    status: "Scheduled",
-    merit: false,
-  },
-];
+import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs } from "@/components/admin/ui";
+import { useModuleData } from "@/hooks/use-module-data";
 
 const scoreTrend = [
   { exam: "Mock #10", avg: 68, pass: 72 },
@@ -126,24 +38,43 @@ const scoreTrend = [
   { exam: "Mock #13", avg: 78, pass: 84 },
 ];
 
-const subjectPerformance = [
-  { subject: "GK", score: 82 },
-  { subject: "Math", score: 75 },
-  { subject: "English", score: 88 },
-  { subject: "Science", score: 70 },
-  { subject: "Reasoning", score: 79 },
-];
-
 export function ResultsPage() {
   const [q, setQ] = useState("");
   const [activeTab, setActiveTab] = useState("results");
-  const [meritOpen, setMeritOpen] = useState(false);
+  const { rows, remove } = useModuleData("results");
 
-  const filtered = RESULTS.filter(
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const avgScore =
+      total > 0 ? Math.round(rows.reduce((s, r) => s + ((r.score as number) || 0), 0) / total) : 0;
+    const toppers = rows.filter(
+      (r) => ((r.score as number) || 0) / ((r.total as number) || 1) >= 0.9,
+    ).length;
+    return { total, avgScore, toppers };
+  }, [rows]);
+
+  const subjectPerformance = useMemo(() => {
+    const map = new Map<string, { total: number; count: number }>();
+    rows.forEach((r) => {
+      const subj = (r.subject as string) || "Unknown";
+      const existing = map.get(subj) || { total: 0, count: 0 };
+      const pct = (((r.score as number) || 0) / ((r.total as number) || 1)) * 100;
+      existing.total += pct;
+      existing.count += 1;
+      map.set(subj, existing);
+    });
+    return Array.from(map.entries()).map(([subject, v]) => ({
+      subject,
+      score: Math.round(v.total / (v.count || 1)),
+    }));
+  }, [rows]);
+
+  const filtered = rows.filter(
     (r) =>
       !q ||
-      r.exam.toLowerCase().includes(q.toLowerCase()) ||
-      r.course.toLowerCase().includes(q.toLowerCase()),
+      (r.exam as string)?.toLowerCase().includes(q.toLowerCase()) ||
+      (r.subject as string)?.toLowerCase().includes(q.toLowerCase()) ||
+      (r.studentId as string)?.toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
@@ -163,10 +94,10 @@ export function ResultsPage() {
         }
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Published" value={24} icon={Trophy} tone="purple" />
-        <StatCard label="Avg Score" value="72%" icon={TrendingUp} tone="success" />
-        <StatCard label="Toppers" value={18} icon={Medal} tone="orange" />
-        <StatCard label="Pending" value={6} icon={Clock} tone="warning" />
+        <StatCard label="Total Results" value={stats.total} icon={Trophy} tone="purple" />
+        <StatCard label="Avg Score" value={`${stats.avgScore}%`} icon={TrendingUp} tone="success" />
+        <StatCard label="Toppers" value={stats.toppers} icon={Medal} tone="orange" />
+        <StatCard label="Subjects" value={subjectPerformance.length} icon={Award} tone="info" />
       </div>
 
       <Tabs
@@ -196,100 +127,49 @@ export function ResultsPage() {
               <button className="ap-btn-ghost">
                 <Filter className="w-4 h-4" /> Filters
               </button>
-              <select className="ap-input max-w-[160px]">
-                <option>All courses</option>
-                <option>Nepal Police</option>
-                <option>Loksewa</option>
-                <option>Bank PO</option>
-              </select>
-              <select className="ap-input max-w-[160px]">
-                <option>All status</option>
-                <option>Published</option>
-                <option>Pending</option>
-                <option>Scheduled</option>
-              </select>
             </Toolbar>
 
             <DataTable
               rows={filtered}
               columns={[
                 {
+                  key: "studentId",
+                  label: "Student ID",
+                  render: (r) => <span className="font-bold">{r.studentId as string}</span>,
+                },
+                { key: "subject", label: "Subject" },
+                {
                   key: "exam",
                   label: "Exam",
-                  render: (r) => <span className="font-bold">{r.exam}</span>,
-                },
-                { key: "course", label: "Course" },
-                { key: "date", label: "Date" },
-                { key: "appeared", label: "Appeared" },
-                {
-                  key: "passed",
-                  label: "Passed",
-                  render: (r) =>
-                    r.passed > 0 ? (
-                      <span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span>
-                    ) : (
-                      "—"
-                    ),
+                  render: (r) => <span className="font-semibold">{r.exam as string}</span>,
                 },
                 {
-                  key: "avgScore",
-                  label: "Avg Score",
-                  render: (r) =>
-                    r.avgScore > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-[hsl(var(--ap-border))]">
-                          <div
-                            className="h-1.5 rounded-full ap-grad"
-                            style={{ width: `${r.avgScore}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold">{r.avgScore}%</span>
-                      </div>
-                    ) : (
-                      "—"
-                    ),
-                },
-                {
-                  key: "topper",
-                  label: "Topper",
-                  render: (r) =>
-                    r.topper !== "—" ? (
-                      <div>
-                        <p className="font-semibold">{r.topper}</p>
-                        <p className="text-xs text-[hsl(var(--ap-success))]">{r.topperScore}/100</p>
-                      </div>
-                    ) : (
-                      "—"
-                    ),
-                },
-                {
-                  key: "status",
-                  label: "Status",
+                  key: "score",
+                  label: "Score",
                   render: (r) => (
-                    <Badge
-                      tone={
-                        r.status === "Published"
-                          ? "success"
-                          : r.status === "Pending"
-                            ? "warning"
-                            : "muted"
-                      }
-                    >
-                      {r.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 rounded-full bg-[hsl(var(--ap-border))]">
+                        <div
+                          className="h-1.5 rounded-full ap-grad"
+                          style={{
+                            width: `${(((r.score as number) || 0) / ((r.total as number) || 1)) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold">
+                        {r.score as number}/{r.total as number}
+                      </span>
+                    </div>
                   ),
                 },
               ]}
-              actions={() => (
+              actions={(r) => (
                 <div className="flex gap-1">
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                    <Printer className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                    <Share2 className="w-3.5 h-3.5" />
+                  <button
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
+                    onClick={() => remove(r.id)}
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
                   </button>
                 </div>
               )}
@@ -298,108 +178,36 @@ export function ResultsPage() {
         )}
 
         {activeTab === "merit" && (
-          <>
-            <Panel
-              title="Merit List — IOE Mock #13"
-              subtitle="Nepal Police · 45 appeared · 38 passed"
-            >
-              <div className="space-y-2">
-                {[
-                  {
-                    rank: 1,
-                    name: "Aarav Sharma",
-                    score: 96,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 2,
-                    name: "Anisha Magar",
-                    score: 94,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 3,
-                    name: "Krishna Adhikari",
-                    score: 91,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 4,
-                    name: "Priya Karki",
-                    score: 88,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 5,
-                    name: "Nisha Basnet",
-                    score: 85,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 6,
-                    name: "Rohan Thapa",
-                    score: 82,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 7,
-                    name: "Bikash Gurung",
-                    score: 79,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 8,
-                    name: "Manisha Shrestha",
-                    score: 76,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 9,
-                    name: "Suman Poudel",
-                    score: 73,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                  {
-                    rank: 10,
-                    name: "Rajesh Hamal",
-                    score: 70,
-                    course: "Nepal Police",
-                    batch: "B-12",
-                  },
-                ].map((m) => (
+          <Panel title="Merit List" subtitle="Students ranked by score across all exams">
+            <div className="space-y-2">
+              {rows
+                .filter((r) => (r.score as number) > 0)
+                .sort((a, b) => ((b.score as number) || 0) - ((a.score as number) || 0))
+                .slice(0, 10)
+                .map((m, i) => (
                   <div
-                    key={m.rank}
+                    key={m.id}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-[hsl(var(--ap-border)/0.3)] transition"
                   >
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black ${m.rank === 1 ? "ap-grad" : m.rank === 2 ? "bg-[hsl(var(--ap-orange))]" : m.rank === 3 ? "bg-[hsl(var(--ap-info))]" : "bg-[hsl(var(--ap-border))] text-[hsl(var(--ap-muted))]"}`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black ${i === 0 ? "ap-grad" : i === 1 ? "bg-[hsl(var(--ap-orange))]" : i === 2 ? "bg-[hsl(var(--ap-info))]" : "bg-[hsl(var(--ap-border))] text-[hsl(var(--ap-muted))]"}`}
                     >
-                      {m.rank <= 3 ? <Medal className="w-4 h-4" /> : m.rank}
+                      {i < 3 ? <Medal className="w-4 h-4" /> : i + 1}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold">{m.name}</p>
-                      <p className="text-xs text-[hsl(var(--ap-muted))]">{m.batch}</p>
+                      <p className="font-semibold">{m.studentId as string}</p>
+                      <p className="text-xs text-[hsl(var(--ap-muted))]">{m.exam as string}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-black text-[hsl(var(--ap-success))]">
-                        {m.score}/100
+                        {m.score as number}/{m.total as number}
                       </p>
-                      <p className="text-xs text-[hsl(var(--ap-muted))]">{m.course}</p>
+                      <p className="text-xs text-[hsl(var(--ap-muted))]">{m.subject as string}</p>
                     </div>
                   </div>
                 ))}
-              </div>
-            </Panel>
-          </>
+            </div>
+          </Panel>
         )}
 
         {activeTab === "analytics" && (
@@ -470,30 +278,22 @@ export function ResultsPage() {
         {activeTab === "certificates" && (
           <Panel title="Result Certificates" subtitle="Generated certificates for completed exams">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {RESULTS.filter((r) => r.status === "Published").map((r) => (
+              {[...new Map(rows.map((r) => [r.exam as string, r])).values()].map((r) => (
                 <div key={r.id} className="ap-card p-4 hover:shadow-lg transition">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl ap-grad flex items-center justify-center text-white">
                       <Award className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-bold text-sm">{r.exam}</p>
-                      <p className="text-xs text-[hsl(var(--ap-muted))]">{r.course}</p>
+                      <p className="font-bold text-sm">{r.exam as string}</p>
+                      <p className="text-xs text-[hsl(var(--ap-muted))]">{r.subject as string}</p>
                     </div>
                   </div>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-[hsl(var(--ap-muted))]">Appeared</span>
-                      <span className="font-bold">{r.appeared}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--ap-muted))]">Passed</span>
-                      <span className="font-bold text-[hsl(var(--ap-success))]">{r.passed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--ap-muted))]">Topper</span>
+                      <span className="text-[hsl(var(--ap-muted))]">Score</span>
                       <span className="font-bold">
-                        {r.topper} ({r.topperScore})
+                        {r.score as number}/{r.total as number}
                       </span>
                     </div>
                   </div>

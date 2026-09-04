@@ -61,7 +61,33 @@ import {
   type Payment,
 } from "@/hooks/use-fees";
 import { useCourses } from "@/hooks/use-lms";
+import { useModuleData } from "@/hooks/use-module-data";
 import { toast } from "sonner";
+
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const EXPENSE_COLORS: Record<string, string> = {
+  Salaries: "hsl(262 83% 58%)",
+  Rent: "hsl(24 95% 58%)",
+  Utilities: "hsl(210 92% 55%)",
+  Marketing: "hsl(152 60% 42%)",
+  Supplies: "hsl(355 82% 58%)",
+  Maintenance: "hsl(45 93% 47%)",
+  Other: "hsl(200 20% 60%)",
+};
 
 export function AccountingPage() {
   const [q, setQ] = useState("");
@@ -70,6 +96,52 @@ export function AccountingPage() {
   const { data: stats, isLoading: statsLoading } = useFeeStats();
   const { invoices, isLoading: invoicesLoading } = useInvoices();
   const { payments, isLoading: paymentsLoading } = usePayments();
+  const { rows: expenses } = useModuleData("expenses");
+
+  const monthlyData = useMemo(() => {
+    const map: Record<string, { income: number; expense: number }> = {};
+    MONTH_NAMES.forEach((m) => {
+      map[m] = { income: 0, expense: 0 };
+    });
+    invoices.forEach((inv) => {
+      if (inv.createdAt) {
+        const d = new Date(inv.createdAt);
+        const m = MONTH_NAMES[d.getMonth()];
+        map[m].income += inv.totalAmount || 0;
+      }
+    });
+    payments.forEach((p) => {
+      if (p.createdAt) {
+        const d = new Date(p.createdAt);
+        const m = MONTH_NAMES[d.getMonth()];
+        map[m].income += p.amount || 0;
+      }
+    });
+    expenses.forEach((e: any) => {
+      if (e.createdAt) {
+        const d = new Date(e.createdAt);
+        const m = MONTH_NAMES[d.getMonth()];
+        map[m].expense += e.amount || 0;
+      }
+    });
+    return MONTH_NAMES.map((m) => ({ m, ...map[m] }));
+  }, [invoices, payments, expenses]);
+
+  const categorySplit = useMemo(() => {
+    const map: Record<string, number> = {};
+    expenses.forEach((e: any) => {
+      const cat = e.category || "Other";
+      map[cat] = (map[cat] || 0) + (e.amount || 0);
+    });
+    const total = Object.values(map).reduce((s, v) => s + v, 0) || 1;
+    return Object.entries(map)
+      .map(([name, value]) => ({
+        name,
+        value: Math.round((value / total) * 100),
+        color: EXPENSE_COLORS[name] || EXPENSE_COLORS.Other,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [expenses]);
 
   const allTransactions = useMemo(() => {
     const inv = invoices.map((i) => ({
@@ -114,26 +186,6 @@ export function AccountingPage() {
       return matchQ && matchType;
     });
   }, [allTransactions, q, typeFilter]);
-
-  const revenueData = [
-    { m: "Jan", income: 480000, expense: 180000 },
-    { m: "Feb", income: 520000, expense: 195000 },
-    { m: "Mar", income: 610000, expense: 210000 },
-    { m: "Apr", income: 590000, expense: 205000 },
-    { m: "May", income: 720000, expense: 240000 },
-    { m: "Jun", income: 810000, expense: 265000 },
-    { m: "Jul", income: 890000, expense: 280000 },
-    { m: "Aug", income: 950000, expense: 310000 },
-    { m: "Sep", income: 1020000, expense: 340000 },
-  ];
-
-  const categorySplit = [
-    { name: "Tuition Fees", value: 62, color: "hsl(262 83% 58%)" },
-    { name: "Admission", value: 15, color: "hsl(24 95% 58%)" },
-    { name: "Hostel", value: 10, color: "hsl(210 92% 55%)" },
-    { name: "Books", value: 8, color: "hsl(152 60% 42%)" },
-    { name: "Other", value: 5, color: "hsl(355 82% 58%)" },
-  ];
 
   return (
     <div>
@@ -203,7 +255,7 @@ export function AccountingPage() {
         >
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData}>
+              <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
                 <XAxis dataKey="m" stroke="hsl(var(--ap-muted))" fontSize={11} />
                 <YAxis stroke="hsl(var(--ap-muted))" fontSize={11} />
@@ -213,6 +265,7 @@ export function AccountingPage() {
                     border: "1px solid hsl(var(--ap-border))",
                     borderRadius: 12,
                   }}
+                  formatter={(v: number) => `₹${v.toLocaleString()}`}
                 />
                 <Legend />
                 <Bar dataKey="income" name="Income" radius={[6, 6, 0, 0]} fill="hsl(262 83% 58%)" />
@@ -226,40 +279,49 @@ export function AccountingPage() {
             </ResponsiveContainer>
           </div>
         </Panel>
-        <Panel title="Revenue by Category" subtitle="Income distribution">
+        <Panel title="Revenue by Category" subtitle="Expense distribution">
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categorySplit}
-                  innerRadius={45}
-                  outerRadius={75}
-                  dataKey="value"
-                  paddingAngle={4}
-                >
-                  {categorySplit.map((c) => (
-                    <Cell key={c.name} fill={c.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--ap-panel))",
-                    border: "1px solid hsl(var(--ap-border))",
-                    borderRadius: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-1 mt-2">
-            {categorySplit.map((c) => (
-              <div key={c.name} className="flex items-center gap-2 text-xs">
-                <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
-                <span className="text-[hsl(var(--ap-muted))] truncate">{c.name}</span>
-                <span className="ml-auto font-bold">{c.value}%</span>
+            {categorySplit.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categorySplit}
+                    innerRadius={45}
+                    outerRadius={75}
+                    dataKey="value"
+                    paddingAngle={4}
+                  >
+                    {categorySplit.map((c) => (
+                      <Cell key={c.name} fill={c.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--ap-panel))",
+                      border: "1px solid hsl(var(--ap-border))",
+                      borderRadius: 12,
+                    }}
+                    formatter={(v: number) => `${v}%`}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-[hsl(var(--ap-muted))] text-sm">
+                No expense data yet
               </div>
-            ))}
+            )}
           </div>
+          {categorySplit.length > 0 && (
+            <div className="grid grid-cols-2 gap-1 mt-2">
+              {categorySplit.map((c) => (
+                <div key={c.name} className="flex items-center gap-2 text-xs">
+                  <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
+                  <span className="text-[hsl(var(--ap-muted))] truncate">{c.name}</span>
+                  <span className="ml-auto font-bold">{c.value}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Panel>
       </div>
 
@@ -268,6 +330,7 @@ export function AccountingPage() {
           { label: "Transactions", value: "transactions", badge: String(allTransactions.length) },
           { label: "Invoices", value: "invoices", badge: String(invoices.length) },
           { label: "Payments", value: "payments" },
+          { label: "Expenses", value: "expenses", badge: String(expenses.length) },
           { label: "Fee Structure", value: "structure" },
           { label: "Reports", value: "reports" },
         ]}
@@ -376,6 +439,7 @@ export function AccountingPage() {
 
         {activeTab === "invoices" && <InvoicesTab />}
         {activeTab === "payments" && <PaymentsTab />}
+        {activeTab === "expenses" && <ExpensesTab />}
         {activeTab === "structure" && <FeeStructureTab />}
         {activeTab === "reports" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -863,6 +927,216 @@ export function PaymentsTab() {
           <button onClick={handleSave} disabled={saving} className="ap-btn">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{" "}
             Record Payment
+          </button>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+/* ================================================================ */
+/*  EXPENSES TAB                                                    */
+/* ================================================================ */
+export function ExpensesTab() {
+  const { rows: expenses, loading: isLoading, create, update, remove } = useModuleData("expenses");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+
+  const openAdd = () => {
+    setEditing({
+      title: "",
+      category: "Other",
+      amount: 0,
+    });
+    setModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!editing?.title) {
+      toast.error("Title is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editing.id) {
+        await update(editing.id, {
+          title: editing.title,
+          category: editing.category,
+          amount: Number(editing.amount) || 0,
+        });
+        toast.success("Expense updated");
+      } else {
+        await create({
+          title: editing.title,
+          category: editing.category,
+          amount: Number(editing.amount) || 0,
+        });
+        toast.success("Expense created");
+      }
+      setModalOpen(false);
+      setEditing(null);
+    } catch {
+      toast.error("Failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this expense?")) return;
+    await remove(id);
+    toast.success("Expense deleted");
+  };
+
+  const totalExpenses = useMemo(
+    () => expenses.reduce((s, e: any) => s + (e.amount || 0), 0),
+    [expenses],
+  );
+
+  return (
+    <>
+      <Toolbar>
+        <div className="ml-auto">
+          <StatCard
+            label="Total Expenses"
+            prefix="₹"
+            value={totalExpenses}
+            icon={TrendingDown}
+            tone="danger"
+          />
+        </div>
+        <button onClick={openAdd} className="ap-btn">
+          <Plus className="w-4 h-4" /> Add Expense
+        </button>
+      </Toolbar>
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-14" />
+          ))}
+        </div>
+      ) : expenses.length === 0 ? (
+        <Panel title="No expenses yet" subtitle="Add your first expense entry">
+          <div className="text-center py-8">
+            <TrendingDown className="w-12 h-12 mx-auto text-[hsl(var(--ap-muted))] mb-3" />
+          </div>
+        </Panel>
+      ) : (
+        <DataTable
+          rows={expenses}
+          columns={[
+            {
+              key: "title",
+              label: "Title",
+              render: (r) => <span className="font-semibold">{String((r as any).title)}</span>,
+            },
+            {
+              key: "category",
+              label: "Category",
+              render: (r) => <Badge tone="purple">{String((r as any).category || "Other")}</Badge>,
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              render: (r) => (
+                <span className="font-bold text-[hsl(var(--ap-danger))]">
+                  ₹{Number((r as any).amount || 0).toLocaleString()}
+                </span>
+              ),
+            },
+            {
+              key: "createdAt",
+              label: "Date",
+              render: (r) => {
+                const d = (r as any).createdAt;
+                return d ? new Date(d).toLocaleDateString() : "—";
+              },
+            },
+          ]}
+          actions={(r: any) => (
+            <div className="flex gap-1">
+              <button
+                onClick={() => {
+                  setEditing(r);
+                  setModalOpen(true);
+                }}
+                className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
+              >
+                <Eye className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleDelete(r.id)}
+                className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
+              >
+                <X className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
+              </button>
+            </div>
+          )}
+        />
+      )}
+
+      <Modal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        size="md"
+      >
+        <h2 className="text-lg font-bold mb-4">{editing?.id ? "Edit Expense" : "Add Expense"}</h2>
+        {editing && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Title</label>
+              <input
+                value={editing.title || ""}
+                onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Category</label>
+                <select
+                  value={editing.category || "Other"}
+                  onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
+                >
+                  <option>Salaries</option>
+                  <option>Rent</option>
+                  <option>Utilities</option>
+                  <option>Marketing</option>
+                  <option>Supplies</option>
+                  <option>Maintenance</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
+                <input
+                  type="number"
+                  value={editing.amount || 0}
+                  onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => {
+              setModalOpen(false);
+              setEditing(null);
+            }}
+            className="ap-btn-ghost"
+          >
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving} className="ap-btn">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {editing?.id ? "Update" : "Create"} Expense
           </button>
         </div>
       </Modal>

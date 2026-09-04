@@ -1,37 +1,46 @@
-﻿import {} from "react-router-dom";
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import {
   Bell,
   Plus,
   Pencil,
   Trash2,
   Calendar,
-  Megaphone,
   Newspaper,
-  Search,
-  Save,
   Loader2,
   Eye,
-  Clock,
-  Users,
-  AlertCircle,
   CheckCircle,
-  X,
-  Image,
+  Save,
   Send,
-  Filter,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel, Badge, Tabs, Modal, Skeleton } from "@/components/admin/ui";
-import {
-  useCmsNotices,
-  useCmsEvents,
-  useCmsBlogs,
-  type CmsItem,
-} from "@/hooks/use-notices-events-blogs";
-import { ImageUpload } from "@/components/admin/image-upload";
+import { useModuleData, type ModuleRecord } from "@/hooks/use-module-data";
 import { toast } from "sonner";
+
+interface NoticeRecord extends ModuleRecord {
+  title: string;
+  body?: string;
+  category?: string;
+  isPublished?: boolean;
+  publishedAt?: string;
+}
+
+interface EventRecord extends ModuleRecord {
+  title: string;
+  date?: string;
+  startTime?: string;
+  location?: string;
+  description?: string;
+  isPublished?: boolean;
+}
+
+interface BlogRecord extends ModuleRecord {
+  title: string;
+  body?: string;
+  author?: string;
+  date?: string;
+}
 
 export function NoticesEventsPage() {
   const [activeTab, setActiveTab] = useState("notices");
@@ -63,20 +72,12 @@ export function NoticesEventsPage() {
   );
 }
 
-/* ================================================================ */
-/*  NOTICES TAB                                                     */
-/* ================================================================ */
+const CATEGORY_OPTIONS = ["Exam", "Admission", "Scholarship", "Fees", "Event", "General"];
+
 export function NoticesTab() {
-  const {
-    items: notices,
-    isLoading,
-    addItem,
-    updateItem,
-    deleteItem,
-    toggleItem,
-  } = useCmsNotices();
+  const { rows: notices, loading, create, update, remove } = useModuleData("notices");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<CmsItem> | null>(null);
+  const [editing, setEditing] = useState<Partial<NoticeRecord> | null>(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all");
 
@@ -88,18 +89,14 @@ export function NoticesTab() {
   const openAdd = () => {
     setEditing({
       title: "",
-      description: "",
-      imageUrl: "",
-      link: "",
-      order: notices.length,
-      isActive: true,
+      body: "",
+      category: "General",
       isPublished: true,
-      category: "general",
     });
     setModalOpen(true);
   };
 
-  const openEdit = (item: CmsItem) => {
+  const openEdit = (item: NoticeRecord) => {
     setEditing({ ...item });
     setModalOpen(true);
   };
@@ -112,10 +109,22 @@ export function NoticesTab() {
     setSaving(true);
     try {
       if (editing.id) {
-        await updateItem.mutateAsync(editing as CmsItem);
+        const { id, ...data } = editing;
+        await update(id, {
+          title: data.title ?? "",
+          body: data.body ?? "",
+          category: data.category ?? "General",
+          isPublished: data.isPublished ?? true,
+        });
         toast.success("Notice updated");
       } else {
-        await addItem.mutateAsync(editing as Omit<CmsItem, "id">);
+        await create({
+          title: editing.title,
+          body: editing.body ?? "",
+          category: editing.category ?? "General",
+          isPublished: editing.isPublished ?? true,
+          publishedAt: new Date().toISOString(),
+        });
         toast.success("Notice created");
       }
       setModalOpen(false);
@@ -129,16 +138,31 @@ export function NoticesTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this notice?")) return;
-    await deleteItem.mutateAsync(id);
+    await remove(id);
     toast.success("Notice deleted");
   };
 
-  const priorityColor = (p?: string) => {
-    switch (p) {
-      case "urgent":
+  const handleTogglePublish = async (notice: NoticeRecord) => {
+    try {
+      await update(notice.id, { isPublished: !notice.isPublished });
+      toast.success(notice.isPublished ? "Notice unpublished" : "Notice published");
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  const categoryBadge = (cat?: string) => {
+    switch (cat) {
+      case "Exam":
         return "danger";
-      case "important":
+      case "Admission":
         return "warning";
+      case "Scholarship":
+        return "success";
+      case "Fees":
+        return "info";
+      case "Event":
+        return "purple";
       default:
         return "info";
     }
@@ -163,7 +187,7 @@ export function NoticesTab() {
         </button>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-20" />
@@ -177,7 +201,7 @@ export function NoticesTab() {
         </Panel>
       ) : (
         <div className="space-y-3">
-          {filtered.map((notice) => (
+          {(filtered as NoticeRecord[]).map((notice) => (
             <motion.div
               key={notice.id}
               whileHover={{ x: 4 }}
@@ -193,31 +217,23 @@ export function NoticesTab() {
                     {notice.isPublished ? "Published" : "Draft"}
                   </Badge>
                   {notice.category && (
-                    <Badge tone={priorityColor(notice.category) as any}>{notice.category}</Badge>
+                    <Badge tone={categoryBadge(notice.category) as any}>{notice.category}</Badge>
                   )}
                 </div>
-                {notice.description && (
+                {notice.body && (
                   <p className="text-sm text-[hsl(var(--ap-muted))] mt-1 line-clamp-2">
-                    {notice.description}
+                    {notice.body}
                   </p>
                 )}
-                {notice.createdAt && (
+                {notice.publishedAt && (
                   <p className="text-xs text-[hsl(var(--ap-muted))] mt-2">
-                    {notice.createdAt?.toDate?.()
-                      ? new Date(notice.createdAt.toDate()).toLocaleDateString()
-                      : "—"}
+                    {new Date(notice.publishedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <button
-                  onClick={() =>
-                    toggleItem.mutate({
-                      id: notice.id,
-                      field: "isPublished",
-                      value: !notice.isPublished,
-                    })
-                  }
+                  onClick={() => handleTogglePublish(notice)}
                   className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
                   title={notice.isPublished ? "Unpublish" : "Publish"}
                 >
@@ -270,8 +286,8 @@ export function NoticeModal({
 }: {
   open: boolean;
   onClose: () => void;
-  editing: Partial<CmsItem> | null;
-  setEditing: (c: Partial<CmsItem> | null) => void;
+  editing: Partial<NoticeRecord> | null;
+  setEditing: (c: Partial<NoticeRecord> | null) => void;
   onSave: () => void;
   saving: boolean;
 }) {
@@ -290,37 +306,27 @@ export function NoticeModal({
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-1 block">Description</label>
+          <label className="text-sm font-medium mb-1 block">Body</label>
           <textarea
-            value={editing.description || ""}
-            onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+            value={editing.body || ""}
+            onChange={(e) => setEditing({ ...editing, body: e.target.value })}
             className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm h-24 resize-none"
             placeholder="Notice details..."
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Category</label>
-            <select
-              value={editing.category || "general"}
-              onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
-            >
-              <option value="general">General</option>
-              <option value="important">Important</option>
-              <option value="urgent">Urgent</option>
-              <option value="academic">Academic</option>
-              <option value="administrative">Administrative</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">Image</label>
-            <ImageUpload
-              value={editing.imageUrl || ""}
-              onChange={(url) => setEditing({ ...editing, imageUrl: url })}
-              folder="notices"
-            />
-          </div>
+        <div>
+          <label className="text-sm font-medium mb-1 block">Category</label>
+          <select
+            value={editing.category || "General"}
+            onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
+          >
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm">
@@ -331,15 +337,6 @@ export function NoticeModal({
               className="rounded"
             />
             Published
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={editing.isActive ?? true}
-              onChange={(e) => setEditing({ ...editing, isActive: e.target.checked })}
-              className="rounded"
-            />
-            Active
           </label>
         </div>
       </div>
@@ -356,32 +353,25 @@ export function NoticeModal({
   );
 }
 
-/* ================================================================ */
-/*  EVENTS TAB                                                      */
-/* ================================================================ */
 export function EventsTab() {
-  const { items: events, isLoading, addItem, updateItem, deleteItem, toggleItem } = useCmsEvents();
+  const { rows: events, loading, create, update, remove } = useModuleData("events");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<CmsItem> | null>(null);
+  const [editing, setEditing] = useState<Partial<EventRecord> | null>(null);
   const [saving, setSaving] = useState(false);
 
   const openAdd = () => {
     setEditing({
       title: "",
       description: "",
-      imageUrl: "",
-      link: "",
-      order: events.length,
-      isActive: true,
-      isPublished: true,
-      eventDate: "",
-      eventTime: "",
+      date: "",
+      startTime: "",
       location: "",
+      isPublished: true,
     });
     setModalOpen(true);
   };
 
-  const openEdit = (item: CmsItem) => {
+  const openEdit = (item: EventRecord) => {
     setEditing({ ...item });
     setModalOpen(true);
   };
@@ -394,10 +384,25 @@ export function EventsTab() {
     setSaving(true);
     try {
       if (editing.id) {
-        await updateItem.mutateAsync(editing as CmsItem);
+        const { id, ...data } = editing;
+        await update(id, {
+          title: data.title ?? "",
+          description: data.description ?? "",
+          date: data.date ?? "",
+          startTime: data.startTime ?? "",
+          location: data.location ?? "",
+          isPublished: data.isPublished ?? true,
+        });
         toast.success("Event updated");
       } else {
-        await addItem.mutateAsync(editing as Omit<CmsItem, "id">);
+        await create({
+          title: editing.title,
+          description: editing.description ?? "",
+          date: editing.date ?? "",
+          startTime: editing.startTime ?? "",
+          location: editing.location ?? "",
+          isPublished: editing.isPublished ?? true,
+        });
         toast.success("Event created");
       }
       setModalOpen(false);
@@ -411,8 +416,17 @@ export function EventsTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this event?")) return;
-    await deleteItem.mutateAsync(id);
+    await remove(id);
     toast.success("Event deleted");
+  };
+
+  const handleTogglePublish = async (event: EventRecord) => {
+    try {
+      await update(event.id, { isPublished: !event.isPublished });
+      toast.success(event.isPublished ? "Event unpublished" : "Event published");
+    } catch {
+      toast.error("Failed to update");
+    }
   };
 
   return (
@@ -424,7 +438,7 @@ export function EventsTab() {
         </button>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <Skeleton key={i} className="h-20" />
@@ -438,19 +452,14 @@ export function EventsTab() {
         </Panel>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {events.map((event) => (
+          {(events as EventRecord[]).map((event) => (
             <motion.div key={event.id} whileHover={{ y: -4 }} className="ap-card overflow-hidden">
-              {event.imageUrl && (
-                <div className="h-32 bg-gradient-to-br from-[hsl(var(--ap-blue)/0.2)] to-[hsl(var(--ap-orange)/0.2)]">
-                  <img src={event.imageUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge tone={event.isPublished ? "success" : "muted"}>
                     {event.isPublished ? "Published" : "Draft"}
                   </Badge>
-                  {event.eventDate && <Badge tone="purple">{event.eventDate}</Badge>}
+                  {event.date && <Badge tone="purple">{event.date}</Badge>}
                 </div>
                 <h3 className="font-bold mt-2">{event.title}</h3>
                 {event.description && (
@@ -459,17 +468,11 @@ export function EventsTab() {
                   </p>
                 )}
                 {event.location && (
-                  <p className="text-xs text-[hsl(var(--ap-muted))] mt-2"> {event.location}</p>
+                  <p className="text-xs text-[hsl(var(--ap-muted))] mt-2">{event.location}</p>
                 )}
                 <div className="flex gap-1 mt-3">
                   <button
-                    onClick={() =>
-                      toggleItem.mutate({
-                        id: event.id,
-                        field: "isPublished",
-                        value: !event.isPublished,
-                      })
-                    }
+                    onClick={() => handleTogglePublish(event)}
                     className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -522,20 +525,20 @@ export function EventsTab() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">Event Date</label>
+                <label className="text-sm font-medium mb-1 block">Date</label>
                 <input
                   type="date"
-                  value={editing.eventDate || ""}
-                  onChange={(e) => setEditing({ ...editing, eventDate: e.target.value })}
+                  value={editing.date || ""}
+                  onChange={(e) => setEditing({ ...editing, date: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Event Time</label>
+                <label className="text-sm font-medium mb-1 block">Start Time</label>
                 <input
                   type="time"
-                  value={editing.eventTime || ""}
-                  onChange={(e) => setEditing({ ...editing, eventTime: e.target.value })}
+                  value={editing.startTime || ""}
+                  onChange={(e) => setEditing({ ...editing, startTime: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
                 />
               </div>
@@ -547,14 +550,6 @@ export function EventsTab() {
                   className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
                 />
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Image</label>
-              <ImageUpload
-                value={editing.imageUrl || ""}
-                onChange={(url) => setEditing({ ...editing, imageUrl: url })}
-                folder="events"
-              />
             </div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm">
@@ -589,31 +584,23 @@ export function EventsTab() {
   );
 }
 
-/* ================================================================ */
-/*  BLOGS TAB                                                       */
-/* ================================================================ */
 export function BlogsTab() {
-  const { items: blogs, isLoading, addItem, updateItem, deleteItem, toggleItem } = useCmsBlogs();
+  const { rows: blogs, loading, create, update, remove } = useModuleData("blogs");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<CmsItem> | null>(null);
+  const [editing, setEditing] = useState<Partial<BlogRecord> | null>(null);
   const [saving, setSaving] = useState(false);
 
   const openAdd = () => {
     setEditing({
       title: "",
-      description: "",
-      imageUrl: "",
-      link: "",
-      order: blogs.length,
-      isActive: true,
-      isPublished: true,
+      body: "",
       author: "",
-      tags: [],
+      date: new Date().toISOString().split("T")[0],
     });
     setModalOpen(true);
   };
 
-  const openEdit = (item: CmsItem) => {
+  const openEdit = (item: BlogRecord) => {
     setEditing({ ...item });
     setModalOpen(true);
   };
@@ -626,10 +613,21 @@ export function BlogsTab() {
     setSaving(true);
     try {
       if (editing.id) {
-        await updateItem.mutateAsync(editing as CmsItem);
+        const { id, ...data } = editing;
+        await update(id, {
+          title: data.title ?? "",
+          body: data.body ?? "",
+          author: data.author ?? "",
+          date: data.date ?? "",
+        });
         toast.success("Blog updated");
       } else {
-        await addItem.mutateAsync(editing as Omit<CmsItem, "id">);
+        await create({
+          title: editing.title,
+          body: editing.body ?? "",
+          author: editing.author ?? "",
+          date: editing.date ?? new Date().toISOString().split("T")[0],
+        });
         toast.success("Blog created");
       }
       setModalOpen(false);
@@ -643,7 +641,7 @@ export function BlogsTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this blog?")) return;
-    await deleteItem.mutateAsync(id);
+    await remove(id);
     toast.success("Blog deleted");
   };
 
@@ -656,7 +654,7 @@ export function BlogsTab() {
         </button>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <Skeleton key={i} className="h-24" />
@@ -670,48 +668,29 @@ export function BlogsTab() {
         </Panel>
       ) : (
         <div className="space-y-3">
-          {blogs.map((blog) => (
+          {(blogs as BlogRecord[]).map((blog) => (
             <motion.div
               key={blog.id}
               whileHover={{ x: 4 }}
               className="ap-card p-4 flex items-start gap-4"
             >
-              {blog.imageUrl && (
-                <img
-                  src={blog.imageUrl}
-                  alt=""
-                  className="w-20 h-14 object-cover rounded-lg border border-[hsl(var(--ap-border))]"
-                />
-              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold truncate">{blog.title}</h3>
-                  <Badge tone={blog.isPublished ? "success" : "muted"}>
-                    {blog.isPublished ? "Published" : "Draft"}
-                  </Badge>
                 </div>
-                {blog.description && (
+                {blog.body && (
                   <p className="text-sm text-[hsl(var(--ap-muted))] mt-1 line-clamp-1">
-                    {blog.description}
+                    {blog.body}
                   </p>
                 )}
-                {blog.author && (
-                  <p className="text-xs text-[hsl(var(--ap-muted))] mt-1">By {blog.author}</p>
-                )}
+                <div className="flex items-center gap-3 mt-1">
+                  {blog.author && (
+                    <p className="text-xs text-[hsl(var(--ap-muted))]">By {blog.author}</p>
+                  )}
+                  {blog.date && <p className="text-xs text-[hsl(var(--ap-muted))]">{blog.date}</p>}
+                </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button
-                  onClick={() =>
-                    toggleItem.mutate({
-                      id: blog.id,
-                      field: "isPublished",
-                      value: !blog.isPublished,
-                    })
-                  }
-                  className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
                 <button
                   onClick={() => openEdit(blog)}
                   className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
@@ -750,10 +729,10 @@ export function BlogsTab() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Description</label>
+              <label className="text-sm font-medium mb-1 block">Body</label>
               <textarea
-                value={editing.description || ""}
-                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                value={editing.body || ""}
+                onChange={(e) => setEditing({ ...editing, body: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm h-24 resize-none"
               />
             </div>
@@ -767,24 +746,14 @@ export function BlogsTab() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Image</label>
-                <ImageUpload
-                  value={editing.imageUrl || ""}
-                  onChange={(url) => setEditing({ ...editing, imageUrl: url })}
-                  folder="blogs"
+                <label className="text-sm font-medium mb-1 block">Date</label>
+                <input
+                  type="date"
+                  value={editing.date || ""}
+                  onChange={(e) => setEditing({ ...editing, date: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
                 />
               </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editing.isPublished ?? true}
-                  onChange={(e) => setEditing({ ...editing, isPublished: e.target.checked })}
-                  className="rounded"
-                />
-                Published
-              </label>
             </div>
           </div>
         )}
