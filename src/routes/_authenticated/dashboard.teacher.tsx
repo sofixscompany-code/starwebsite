@@ -60,6 +60,9 @@ export function TeacherDashboard() {
   const classCount = stats?.classes?.length || 0;
   const hwCount = stats?.homework?.length || 0;
   const examCount = stats?.exams?.length || 0;
+  const activityRows =
+    stats?.activities && stats.activities.length > 0 ? stats.activities : activities;
+  const totalStudents = stats?.totalStudents || classCount * 28;
 
   const fmtTime = (v: unknown) => {
     const ms = Date.parse(String(v));
@@ -124,7 +127,7 @@ export function TeacherDashboard() {
     },
     {
       label: "Total Students",
-      value: classCount * 28,
+      value: totalStudents,
       icon: Users,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
@@ -275,7 +278,7 @@ export function TeacherDashboard() {
             </h3>
             <p className="text-xs text-gray-400 mb-4">Latest actions and updates</p>
             <div className="space-y-1">
-              {activities.map((a, i) => (
+              {activityRows.map((a, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"

@@ -72,6 +72,7 @@ Sidebar features:
 - `src/hooks/use-homepage-stats.ts` — homepage stats bar numbers (Firestore `homepage_stats`, static fallback); managed in admin at `/admin/homepage-stats`
 - `src/hooks/use-homepage-categories.ts` — homepage course categories with icon mapping (Firestore `homepage_categories`, static fallback); managed in admin at `/admin/homepage-categories`
 - `src/hooks/use-homepage-testimonials.ts` — homepage testimonials (Firestore `homepage_testimonials`, static fallback); managed in admin at `/admin/homepage-testimonials`
+- `src/hooks/use-homepage-settings.ts` — exports `useWhyChooseUs()` (Firestore `why_choose_us` collection) and `useMdMessage()` (single doc `homepage_settings/md_message`); managed in admin at `/admin/why-choose-us` and `/admin/md-message`
 - `src/lib/permissions.ts` — Flat menu items with role access (legacy, kept for compatibility)
 - `firestore.rules` — public read for site content (incl. `selections`); auth-only for everything else
 

@@ -30,6 +30,8 @@ import {
 } from "recharts";
 import { useSuperAdminStats } from "@/hooks/use-dashboard-data";
 
+const PIE_COLORS = ["#FBBF24", "#EF4444", "#10b981", "#1E3A8A", "#8b5cf6", "#f97316"];
+
 const revenueMonths = [
   { m: "Jan", rev: 320000, fee: 220000, other: 100000 },
   { m: "Feb", rev: 380000, fee: 260000, other: 120000 },
@@ -194,6 +196,25 @@ export function SuperAdminDashboard() {
         }))
       : pendingApprovals;
 
+  const revMonths =
+    live?.revenueByMonth && live.revenueByMonth.length
+      ? live.revenueByMonth.map((r) => ({
+          m: String(r.month),
+          rev: r.amount,
+          fee: Math.round(r.amount * 0.8),
+          other: Math.round(r.amount * 0.2),
+        }))
+      : revenueMonths;
+
+  const incomeDist =
+    live?.incomeBreakdown && live.incomeBreakdown.length
+      ? live.incomeBreakdown.map((b, i) => ({
+          name: String(b.name),
+          value: live.revenue ? Math.round(((b.value as number) / live.revenue) * 100) : 0,
+          color: PIE_COLORS[i % PIE_COLORS.length],
+        }))
+      : incomeDistribution;
+
   const statCards = [
     {
       label: "Total Students",
@@ -337,7 +358,7 @@ export function SuperAdminDashboard() {
             </div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueMonths}>
+                <AreaChart data={revMonths}>
                   <defs>
                     <linearGradient id="revG" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.3} />
@@ -389,13 +410,13 @@ export function SuperAdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={incomeDistribution}
+                    data={incomeDist}
                     innerRadius={50}
                     outerRadius={80}
                     dataKey="value"
                     paddingAngle={3}
                   >
-                    {incomeDistribution.map((e) => (
+                    {incomeDist.map((e) => (
                       <Cell key={e.name} fill={e.color} />
                     ))}
                   </Pie>
@@ -411,7 +432,7 @@ export function SuperAdminDashboard() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              {incomeDistribution.map((item) => (
+              {incomeDist.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-xs">
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -543,11 +564,17 @@ export function SuperAdminDashboard() {
       >
         {[
           { label: "Institution Rating", value: "4.8/5", sub: "96%", trend: "+12%", color: "gold" },
-          { label: "Pass Percentage", value: "87.3%", sub: "87.3%", trend: "+5%", color: "navy" },
+          {
+            label: "Pass Percentage",
+            value: `${live?.passRate ?? 87}%`,
+            sub: `${live?.passRate ?? 87}%`,
+            trend: "+5%",
+            color: "navy",
+          },
           {
             label: "Student Retention",
-            value: "94.2%",
-            sub: "94.2%",
+            value: `${live?.retention ?? 94}%`,
+            sub: `${live?.retention ?? 94}%`,
             trend: "+2%",
             color: "brand-red",
           },

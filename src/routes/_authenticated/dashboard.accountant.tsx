@@ -87,6 +87,23 @@ export function AccountantDashboard() {
   ];
 
   const txnRows = fin?.recentTxns && fin.recentTxns.length > 0 ? fin.recentTxns : recentTxns;
+  const chartRows =
+    fin?.incomeByMonth && fin.incomeByMonth.length > 0
+      ? fin.incomeByMonth.map((row, i) => ({
+          m: row.month,
+          income: row.amount,
+          expense: fin.expenseByMonth?.[i]?.amount ?? 0,
+        }))
+      : incomeData;
+  const feeRows =
+    fin?.feeBreakdown && fin.feeBreakdown.length > 0
+      ? fin.feeBreakdown.map((f) => ({
+          label: f.label,
+          collected: f.collected,
+          target: f.total,
+          amount: f.total,
+        }))
+      : feeBreakdown;
 
   return (
     <div className="space-y-6">
@@ -149,7 +166,7 @@ export function AccountantDashboard() {
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={incomeData}>
+                <AreaChart data={chartRows}>
                   <defs>
                     <linearGradient id="inG" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
@@ -218,7 +235,7 @@ export function AccountantDashboard() {
               Fee Collection Status
             </h3>
             <div className="space-y-4">
-              {feeBreakdown.map((f) => {
+              {feeRows.map((f) => {
                 const percent = Math.round((f.collected / f.target) * 100);
                 return (
                   <div key={f.label}>

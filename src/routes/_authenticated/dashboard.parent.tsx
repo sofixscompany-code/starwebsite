@@ -73,8 +73,9 @@ export function ParentDashboard() {
     : childrenData;
   const attPercent = stats?.avgAttendance || 92;
   const avgScore = stats?.avgScore || 86;
-  const pendingHw =
-    (stats?.notices?.length ?? 5) > 0 ? Math.max(1, Math.min(3, childRows.length)) : 3;
+  const pendingHw = stats?.pendingHw ?? Math.max(1, Math.min(3, childRows.length));
+  const activityRows =
+    stats?.activities && stats.activities.length > 0 ? stats.activities : recentUpdates;
 
   return (
     <div className="space-y-6">
@@ -116,7 +117,7 @@ export function ParentDashboard() {
           },
           {
             label: "Homework Pend.",
-            value: String(childRows.length),
+            value: String(pendingHw),
             icon: FileText,
             color: "from-gold to-gold/80",
             bg: "bg-gold/5",
@@ -220,7 +221,7 @@ export function ParentDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Updates</h3>
             <p className="text-xs text-gray-400 mb-4">Your child's activity feed</p>
             <div className="space-y-1">
-              {recentUpdates.map((u, i) => (
+              {activityRows.map((u, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
