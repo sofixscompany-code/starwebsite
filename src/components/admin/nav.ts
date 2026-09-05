@@ -315,6 +315,7 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Quote,
         roles: ["super_admin"],
       },
+      { label: "Faculty", to: "/admin/faculty", icon: GraduationCap, roles: ["super_admin"] },
       { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["super_admin"] },
     ],
   },

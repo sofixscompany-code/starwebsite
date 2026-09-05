@@ -1,9 +1,10 @@
 ﻿import {} from "react-router-dom";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { faculty } from "@/lib/site-config";
+import { useFaculty } from "@/hooks/use-faculty";
 
 export function FacultyPage() {
+  const faculty = useFaculty();
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />

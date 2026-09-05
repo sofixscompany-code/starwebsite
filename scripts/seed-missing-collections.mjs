@@ -205,6 +205,59 @@ async function main() {
     },
   ]);
 
+  await seed("faculty", [
+    {
+      name: "Suraj Pandit",
+      role: "Senior Faculty",
+      subject: "Veterinary Science",
+      initials: "SP",
+      order: 1,
+    },
+    {
+      name: "Ramesh Yadav",
+      role: "Senior Faculty",
+      subject: "Staff Nurse / HA",
+      initials: "RY",
+      order: 2,
+    },
+    {
+      name: "Purushotam Mandal",
+      role: "Faculty",
+      subject: "Electrical Engineering",
+      initials: "PM",
+      order: 3,
+    },
+    {
+      name: "Chandan Thakur",
+      role: "Faculty",
+      subject: "Electrical Engineering",
+      initials: "CT",
+      order: 4,
+    },
+    {
+      name: "Rajababu Yadav",
+      role: "Faculty",
+      subject: "Geomatic Engineering",
+      initials: "RY",
+      order: 5,
+    },
+    { name: "Bishesh Mandal", role: "Faculty", subject: "Agriculture", initials: "BM", order: 6 },
+    {
+      name: "Hare Kripal Yadav",
+      role: "Faculty",
+      subject: "Nepal Police Coaching",
+      initials: "HY",
+      order: 7,
+    },
+    {
+      name: "Phuleshwar Pandit",
+      role: "Faculty",
+      subject: "Nepal Police Physical",
+      initials: "PP",
+      order: 8,
+    },
+  ]);
+
   console.log("ALL DONE");
 }
 
