@@ -3,8 +3,10 @@ import { Target, Eye, Trophy, Users } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/lib/site-config";
+import { useMdMessage } from "@/hooks/use-homepage-settings";
 
 export function AboutPage() {
+  const md = useMdMessage();
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -36,13 +38,8 @@ export function AboutPage() {
             <h2 className="font-display font-black text-2xl text-navy mt-8">
               Message from the Managing Director
             </h2>
-            <p className="text-foreground/80 leading-relaxed">
-              "Dear students and parents, education is not just about academics — it's a journey of
-              personal growth, skill development, and pursuit of dreams. Our dedicated team is
-              committed to helping you succeed. Stay focused, work hard, and never hesitate to reach
-              out. We are here for you."
-            </p>
-            <p className="font-bold text-navy">— {site.managingDirector}, Managing Director</p>
+            <p className="text-foreground/80 leading-relaxed">"{md.message}"</p>
+            <p className="font-bold text-navy">— {md.name}, Managing Director</p>
           </div>
         </section>
 
