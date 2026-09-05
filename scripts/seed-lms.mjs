@@ -156,21 +156,26 @@ async function main() {
     },
   ]);
 
-  const firstQuiz = quizzes[1] || quizzes[0];
-  await seedIfEmpty("lms_quiz_attempts", [
-    {
-      studentId: STUDENT_UID,
-      studentName: "Aarav Sharma",
-      quizId: firstQuiz?.courseId ? "" : "",
-      quizTitle: firstQuiz?.title || "Nepal Police Preparation — Unit Quiz",
-      courseId: firstQuiz?.courseId || "",
-      score: 40,
-      totalPoints: 50,
-      answers: { q1: "All of the above", q2: "Kathmandu" },
-      startedAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
-    },
-  ]);
+  const quizSnap = await getDocs(collection(db, "lms_quizzes"));
+  const firstQuiz = quizSnap.docs[0];
+  if (firstQuiz) {
+    await seedIfEmpty("lms_quiz_attempts", [
+      {
+        studentId: STUDENT_UID,
+        studentName: "Aarav Sharma",
+        quizId: firstQuiz.id,
+        quizTitle: firstQuiz.data().title || "Unit Quiz",
+        courseId: firstQuiz.data().courseId || "",
+        score: 40,
+        totalPoints: 50,
+        answers: { q1: "All of the above", q2: "Kathmandu" },
+        startedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      },
+    ]);
+  } else {
+    console.log("lms_quiz_attempts: skipped (no quizzes found)");
+  }
 
   console.log("ALL DONE");
 }
