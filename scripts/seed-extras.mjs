@@ -265,6 +265,66 @@ async function main() {
     },
   ]);
 
+  await seed("whatsapp_campaigns", [
+    {
+      name: "Admission Open 2083",
+      message:
+        "Admissions open for 2083/84 at Star Coaching Institute, Zeromile Janakpurdham. Call today!",
+      recipients: 850,
+      delivered: 812,
+      status: "Sent",
+    },
+    {
+      name: "Mock Test Weekend",
+      message: "Free mock test this Saturday at 8 AM. Register at the office.",
+      recipients: 420,
+      delivered: 0,
+      status: "Scheduled",
+    },
+  ]);
+
+  await seed("messages", [
+    {
+      from: "Admin",
+      to: "All Teachers",
+      subject: "March schedule",
+      body: "Please submit your monthly attendance reports by Friday.",
+      status: "Read",
+    },
+    {
+      from: "Ramesh Sharma",
+      to: "Admin",
+      subject: "Room change",
+      body: "Monday Physics class moved to Room 203.",
+      status: "Read",
+    },
+    {
+      from: "Admin",
+      to: "Parents",
+      subject: "Parent-teacher meeting",
+      body: "Quarterly PTM on 2083/05/01 at 11 AM.",
+      status: "Sent",
+    },
+  ]);
+
+  await seed("roles", [
+    {
+      name: "Librarian",
+      description: "Manages the institute library and issue/return records.",
+      status: "Active",
+    },
+    {
+      name: "Receptionist",
+      description: "Handles walk-in enquiries and admission counselling.",
+      status: "Active",
+    },
+    {
+      name: "Accountant",
+      description: "Manages fees, payments and expense records.",
+      status: "Active",
+    },
+  ]);
+
   console.log("ALL DONE");
 }
 

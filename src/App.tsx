@@ -94,11 +94,7 @@ const SMSPage = lazy(() =>
 const EmailPage = lazy(() =>
   import("./routes/_authenticated/admin.marketing.email").then((m) => ({ default: m.EmailPage })),
 );
-const WhatsAppPage = lazy(() =>
-  import("./routes/_authenticated/admin.marketing.whatsapp").then((m) => ({
-    default: m.WhatsAppPage,
-  })),
-);
+const WhatsAppPage = lazy(() => import("./routes/_authenticated/admin.marketing.whatsapp"));
 const PushPage = lazy(() =>
   import("./routes/_authenticated/admin.marketing.push").then((m) => ({ default: m.PushPage })),
 );
@@ -108,9 +104,7 @@ const NoticesEventsPage = lazy(() =>
 const UserManagementPage = lazy(() =>
   import("./routes/_authenticated/admin/users").then((m) => ({ default: m.UserManagementPage })),
 );
-const RolesPage = lazy(() =>
-  import("./routes/_authenticated/admin.roles").then((m) => ({ default: m.RolesPage })),
-);
+const RolesPage = lazy(() => import("./routes/_authenticated/admin.roles"));
 const BranchesPage = lazy(() =>
   import("./routes/_authenticated/admin.branches").then((m) => ({ default: m.BranchesPage })),
 );
