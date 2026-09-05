@@ -199,6 +199,72 @@ async function main() {
     },
   ]);
 
+  await seed("gallery", [
+    {
+      title: "Nepal Police physical training",
+      url: "https://picsum.photos/seed/star-np/800/600",
+      category: "Training",
+      order: 1,
+      status: "Active",
+    },
+    {
+      title: "Classroom in session",
+      url: "https://picsum.photos/seed/star-class/800/600",
+      category: "Campus",
+      order: 2,
+      status: "Active",
+    },
+    {
+      title: "Loksewa mock test day",
+      url: "https://picsum.photos/seed/star-loksewa/800/600",
+      category: "Exams",
+      order: 3,
+      status: "Active",
+    },
+    {
+      title: "Staff Nurse practical",
+      url: "https://picsum.photos/seed/star-medical/800/600",
+      category: "Training",
+      order: 4,
+      status: "Active",
+    },
+    {
+      title: "Result celebration",
+      url: "https://picsum.photos/seed/star-celebrate/800/600",
+      category: "Events",
+      order: 5,
+      status: "Active",
+    },
+    {
+      title: "Faculty session",
+      url: "https://picsum.photos/seed/star-faculty/800/600",
+      category: "Campus",
+      order: 6,
+      status: "Active",
+    },
+    {
+      title: "Hostel - Boys & Girls",
+      url: "https://picsum.photos/seed/star-hostel/800/600",
+      category: "Campus",
+      order: 7,
+      status: "Active",
+    },
+    {
+      title: "Computer lab",
+      url: "https://picsum.photos/seed/star-lab/800/600",
+      category: "Campus",
+      order: 8,
+      status: "Active",
+    },
+    {
+      title: "SEE Preparation batch",
+      url: "https://picsum.photos/seed/star-see/800/600",
+      category: "Training",
+      order: 9,
+      status: "Active",
+    },
+  ]);
+
   console.log("ALL DONE");
 }
 

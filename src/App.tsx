@@ -163,6 +163,11 @@ const MdMessagePage = lazy(() =>
 const FacultyPage = lazy(() =>
   import("./routes/_authenticated/admin.faculty").then((m) => ({ default: m.FacultyPage })),
 );
+const GalleryManagerPage = lazy(() =>
+  import("./routes/_authenticated/admin.gallery").then((m) => ({
+    default: m.GalleryManagerPage,
+  })),
+);
 const FeeStructurePage = lazy(() =>
   import("./routes/_authenticated/admin.fee-structure").then((m) => ({
     default: m.FeeStructurePage,
@@ -309,6 +314,7 @@ export default function App() {
               <Route path="why-choose-us" element={<LazyPage Component={WhyChooseUsPage} />} />
               <Route path="md-message" element={<LazyPage Component={MdMessagePage} />} />
               <Route path="faculty" element={<LazyPage Component={FacultyPage} />} />
+              <Route path="gallery" element={<LazyPage Component={GalleryManagerPage} />} />
               <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
               <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
               <Route path="api-keys" element={<LazyPage Component={ApiKeysPage} />} />
