@@ -64,7 +64,7 @@ export function clearToken(): void {
 
 export function getUserRole(): string | null {
   const storedUser = getStoredUser();
-  return storedUser?.role || null;
+  return storedUser?.role || localStorage.getItem("demo_role");
 }
 
 export function isAuthenticated(): boolean {
