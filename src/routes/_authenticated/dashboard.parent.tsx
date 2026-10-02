@@ -1,55 +1,22 @@
 ﻿import { useEffect, useState } from "react";
-import {
-  GraduationCap,
-  CalendarCheck,
-  Trophy,
-  Wallet,
-  Bell,
-  BookOpen,
-  Loader2,
-  FileText,
-  TrendingUp,
-  User,
-  MessageSquare,
-  Star,
-  Heart,
-} from "lucide-react";
+import { CalendarCheck, Trophy, Wallet, Bell, Loader2, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useParentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
-
-const recentUpdates = [
-  { time: "1h ago", title: "Attendance updated", desc: "Today: Present · 95% overall" },
-  { time: "1d ago", title: "Homework assigned", desc: "English Essay · Due Friday" },
-  { time: "3d ago", title: "Result published", desc: "Science: 82/100" },
-  { time: "5d ago", title: "Teacher feedback", desc: "Mathematics: Excellent progress" },
-  { time: "1w ago", title: "Fees paid", desc: "Monthly tuition · Rs 5,000 received" },
-];
-
-const childrenData = [
-  { name: "Aarav Sharma", class: "Nepal Police Prep", grade: "A", attendance: 95, avgScore: 86 },
-  {
-    name: "Ananya Sharma",
-    class: "Loksewa Officer Prep",
-    grade: "A+",
-    attendance: 97,
-    avgScore: 91,
-  },
-];
+import { auth } from "@/integrations/firebase/config";
 
 export function ParentDashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (getUserRole() === "parent" || localStorage.getItem("demo_role") === "parent") {
+    if (getUserRole() === "parent") {
       setMounted(true);
     }
   }, []);
 
   const storedUser = getStoredAuthUser();
-  const { data: stats, isLoading } = useParentDashboard(
-    storedUser?.email || "parent@demo.starcoaching.edu.np",
-  );
+  const parentEmail = storedUser?.email || auth.currentUser?.email || undefined;
+  const { data: stats, isLoading } = useParentDashboard(parentEmail);
 
   if (!mounted || isLoading) {
     return (
@@ -62,20 +29,23 @@ export function ParentDashboard() {
     );
   }
 
-  const childRows = (stats?.children || []).length
-    ? (stats?.children || []).map((c) => ({
-        name: String(c.fullName || "Student"),
-        class: String(c.course || c.batch || ""),
-        grade: Number(c.avgScore) >= 90 ? "A+" : Number(c.avgScore) >= 75 ? "A" : "B",
-        attendance: Number(c.attendancePercent || 0),
-        avgScore: Number(c.avgScore || 0),
-      }))
-    : childrenData;
-  const attPercent = stats?.avgAttendance || 92;
-  const avgScore = stats?.avgScore || 86;
-  const pendingHw = stats?.pendingHw ?? Math.max(1, Math.min(3, childRows.length));
-  const activityRows =
-    stats?.activities && stats.activities.length > 0 ? stats.activities : recentUpdates;
+  const hasData = !!stats?.hasData;
+  const childRows = (stats?.children || []).map((c) => {
+    const score = Number(c.avgScore);
+    const hasScore = Number.isFinite(score);
+    return {
+      name: String(c.fullName || c.name || c.firstName || "Student"),
+      class: String(c.course || c.batch || ""),
+      grade: !hasScore ? "—" : score >= 90 ? "A+" : score >= 75 ? "A" : "B",
+      hasScore,
+      attendance: Number.isFinite(Number(c.attendancePercent)) ? Number(c.attendancePercent) : 0,
+      avgScore: hasScore ? score : 0,
+    };
+  });
+  const attPercent = hasData ? (stats?.avgAttendance ?? 0) : null;
+  const avgScore = hasData ? (stats?.avgScore ?? 0) : null;
+  const pendingHw = stats?.pendingHw ?? 0;
+  const activityRows = stats?.activities ?? [];
 
   return (
     <div className="space-y-6">
@@ -103,28 +73,28 @@ export function ParentDashboard() {
         {[
           {
             label: "Attendance",
-            value: attPercent + "%",
+            value: attPercent === null ? "No data yet" : attPercent + "%",
             icon: CalendarCheck,
             color: "from-emerald-500 to-emerald-600",
             bg: "bg-emerald-50",
           },
           {
             label: "Avg. Results",
-            value: avgScore + "%",
+            value: avgScore === null ? "No data yet" : avgScore + "%",
             icon: Trophy,
             color: "from-navy to-navy/80",
             bg: "bg-navy/5",
           },
           {
             label: "Homework Pend.",
-            value: String(pendingHw),
+            value: hasData ? String(pendingHw) : "No data yet",
             icon: FileText,
             color: "from-gold to-gold/80",
             bg: "bg-gold/5",
           },
           {
             label: "Notices",
-            value: stats?.notices?.length || 5,
+            value: hasData ? String(stats?.notices?.length ?? 0) : "No data yet",
             icon: Bell,
             color: "from-brand-red to-brand-red/80",
             bg: "bg-brand-red/5",
@@ -160,81 +130,100 @@ export function ParentDashboard() {
               Children Overview
             </h3>
             <p className="text-xs text-gray-400 mb-4">Academic status of your children</p>
-            <div className="space-y-4">
-              {childRows.map((child, i) => (
-                <div key={i} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/30">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-navy to-navy/80 flex items-center justify-center text-white font-bold text-sm">
-                        {child.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+            {childRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No children linked to this account yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {childRows.map((child, i) => (
+                  <div key={i} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-navy to-navy/80 flex items-center justify-center text-white font-bold text-sm">
+                          {child.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                            {child.name}
+                          </p>
+                          <p className="text-xs text-gray-400">{child.class}</p>
+                        </div>
+                        <span
+                          className={
+                            "px-2 py-0.5 rounded text-xs font-bold ml-2 " +
+                            (child.hasScore
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-300")
+                          }
+                        >
+                          {child.grade}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400">Attendance</p>
+                        <p className="text-lg font-bold text-emerald-600">{child.attendance}%</p>
+                        <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
+                          <div
+                            className="h-full rounded-full bg-emerald-500"
+                            style={{ width: child.attendance + "%" }}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">
-                          {child.name}
-                        </p>
-                        <p className="text-xs text-gray-400">{child.class}</p>
+                        <p className="text-xs text-gray-400">Avg. Score</p>
+                        <p className="text-lg font-bold text-navy">{child.avgScore}%</p>
+                        <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
+                          <div
+                            className="h-full rounded-full bg-navy"
+                            style={{ width: child.avgScore + "%" }}
+                          />
+                        </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs font-bold ml-2">
-                        {child.grade}
-                      </span>
+                      <div className="flex items-center justify-end">
+                        <Link
+                          to="/admin/results"
+                          className="text-xs font-semibold text-navy hover:text-navy/80 transition"
+                        >
+                          View Full Report →
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400">Attendance</p>
-                      <p className="text-lg font-bold text-emerald-600">{child.attendance}%</p>
-                      <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
-                        <div
-                          className="h-full rounded-full bg-emerald-500"
-                          style={{ width: child.attendance + "%" }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Avg. Score</p>
-                      <p className="text-lg font-bold text-navy">{child.avgScore}%</p>
-                      <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
-                        <div
-                          className="h-full rounded-full bg-navy"
-                          style={{ width: child.avgScore + "%" }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end">
-                      <Link
-                        to="/admin/results"
-                        className="text-xs font-semibold text-navy hover:text-navy/80 transition"
-                      >
-                        View Full Report →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Updates</h3>
             <p className="text-xs text-gray-400 mb-4">Your child's activity feed</p>
-            <div className="space-y-1">
-              {activityRows.map((u, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                >
-                  <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{u.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{u.desc}</p>
+            {activityRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No activity yet
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {activityRows.map((u, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{u.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{u.desc}</p>
+                    </div>
+                    <p className="text-xs text-gray-400 shrink-0">{u.time}</p>
                   </div>
-                  <p className="text-xs text-gray-400 shrink-0">{u.time}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -244,10 +233,8 @@ export function ParentDashboard() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "View Results", icon: Trophy, to: "/admin/results" },
-                { label: "Notices", icon: Bell, to: "/admin/notices" },
-                { label: "Courses", icon: BookOpen, to: "/admin/courses" },
+                { label: "Notices", icon: Bell, to: "/admin/communication/notices" },
                 { label: "Pay Fees", icon: Wallet, to: "/admin/payments" },
-                { label: "Homework", icon: FileText, to: "/admin/homework" },
                 { label: "Attendance", icon: CalendarCheck, to: "/admin/attendance" },
               ].map((a) => {
                 const Icon = a.icon;

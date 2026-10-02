@@ -25,13 +25,16 @@ async function seedIfEmpty(name, docs) {
 }
 
 async function main() {
-  await signInWithEmailAndPassword(auth, "super_admin@demo.starcoaching.edu.np", "Demo@2026!");
+  await signInWithEmailAndPassword(
+    auth,
+    "super_admin@demo.starcoaching.edu.np",
+    "Star#Demo2026!Kx7",
+  );
   console.log("Signed in");
 
   await seedIfEmpty("homepage_stats", [
     ["stat-1", { value: "5,000+", label: "Students Trained" }],
     ["stat-2", { value: "800+", label: "Top Selections" }],
-    ["stat-3", { value: "40%", label: "Super 40 Scholarship" }],
     ["stat-4", { value: "10+", label: "Years of Trust" }],
   ]);
 

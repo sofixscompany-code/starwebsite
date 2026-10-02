@@ -1,17 +1,26 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { History, Users, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { History, Users, CheckCircle2 } from "lucide-react";
 
 export function AuditLogsPage() {
+  const { rows } = useModuleData("audit_logs");
+
+  const total = rows.length;
+  const uniqueUsers = new Set(rows.map((r) => r.user).filter((u) => u != null && u !== "")).size;
+  const today = new Date().toISOString().slice(0, 10);
+  const eventsToday = rows.filter((r) =>
+    String(r.date ?? r.createdAt ?? "").startsWith(today),
+  ).length;
+
   return (
     <FirestoreModulePage
       collectionName="audit_logs"
       title="Audit Logs"
       subtitle="Track all user and system actions across the platform"
       stats={[
-        { label: "Total Events", value: "12.4k", icon: History, tone: "purple" },
-        { label: "Unique Users", value: 48, icon: Users, tone: "info" },
-        { label: "Security Events", value: 3, icon: ShieldCheck, tone: "warning" },
-        { label: "Successful Actions", value: "98%", icon: CheckCircle2, tone: "success" },
+        { label: "Total Events", value: total, icon: History, tone: "purple" },
+        { label: "Unique Users", value: uniqueUsers, icon: Users, tone: "info" },
+        { label: "Events Today", value: eventsToday, icon: CheckCircle2, tone: "success" },
       ]}
       columns={[
         { key: "user", label: "User" },

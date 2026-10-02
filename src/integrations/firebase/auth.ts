@@ -45,6 +45,35 @@ export const firebaseAuth = {
     }
   },
 
+  /**
+   * Waits for Firebase Auth to finish initializing before reading the current
+   * user. `auth.currentUser` is null on a cold page reload until the persisted
+   * session is restored — calling getUser() too early would falsely report
+   * "logged out" for a perfectly valid session.
+   */
+  async waitForUser(): Promise<AuthResult> {
+    try {
+      validateConfig();
+      const user = await new Promise<FirebaseUser | null>((resolve) => {
+        const unsub = onAuthStateChanged(
+          auth,
+          (u) => {
+            unsub();
+            resolve(u);
+          },
+          (err) => {
+            unsub();
+            resolve(null);
+            void err;
+          },
+        );
+      });
+      return { data: { user }, error: null };
+    } catch (err) {
+      return { data: { user: null }, error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  },
+
   async getSession(): Promise<AuthResult> {
     try {
       validateConfig();
@@ -88,12 +117,20 @@ export const firebaseAuth = {
         await updateProfile(cred.user, { displayName: options.data.full_name as string });
       }
       if (options?.data) {
-        await setDoc(doc(db, "users", cred.user.uid), {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          ...options.data,
-          createdAt: new Date().toISOString(),
-        });
+        // Best-effort profile write: Firestore rules may reject the caller's
+        // requested fields (e.g. self-signup trying a privileged role). The
+        // Auth account is already created at this point — failing the whole
+        // signUp because the profile doc was denied would strand it.
+        try {
+          await setDoc(doc(db, "users", cred.user.uid), {
+            uid: cred.user.uid,
+            email: cred.user.email,
+            ...options.data,
+            createdAt: new Date().toISOString(),
+          });
+        } catch {
+          // Profile doc will be created/adjusted later by an admin.
+        }
       }
       return { user: cred.user as FirebaseUser | null };
     });

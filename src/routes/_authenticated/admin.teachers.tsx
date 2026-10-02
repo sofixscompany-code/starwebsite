@@ -1,4 +1,3 @@
-﻿import {} from "react-router-dom";
 import { useState, useMemo } from "react";
 import {
   Users,
@@ -44,13 +43,19 @@ import {
   useTeacherStats,
 } from "@/hooks/use-teacher";
 import { useCourses } from "@/hooks/use-lms";
+import { getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { toast } from "sonner";
 
 const DEMO_TEACHER_ID = "demo_teacher_001";
 
+/** Resolve the logged-in teacher's UID from auth, falling back to the demo teacher. */
+function currentTeacherId(): string {
+  return getStoredAuthUser()?.uid || DEMO_TEACHER_ID;
+}
+
 export function TeacherPortalPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: stats, isLoading: statsLoading } = useTeacherStats(DEMO_TEACHER_ID);
+  const { data: stats, isLoading: statsLoading } = useTeacherStats(currentTeacherId());
 
   const tabs = [
     { label: "Overview", value: "overview" },
@@ -121,9 +126,9 @@ export function OverviewTab() {
     classes,
     getTodayClasses,
     isLoading: classesLoading,
-  } = useTeacherClasses(DEMO_TEACHER_ID);
-  const { students, isLoading: studentsLoading } = useTeacherStudentProgress(DEMO_TEACHER_ID);
-  const { content, isLoading: contentLoading } = useTeacherContent(DEMO_TEACHER_ID);
+  } = useTeacherClasses(currentTeacherId());
+  const { students, isLoading: studentsLoading } = useTeacherStudentProgress(currentTeacherId());
+  const { content, isLoading: contentLoading } = useTeacherContent(currentTeacherId());
 
   const todayClasses = getTodayClasses();
   const recentContent = content.slice(0, 3);
@@ -288,7 +293,7 @@ export function OverviewTab() {
 /* ================================================================ */
 export function ClassesTab() {
   const { classes, isLoading, addClass, updateClass, deleteClass } =
-    useTeacherClasses(DEMO_TEACHER_ID);
+    useTeacherClasses(currentTeacherId());
   const { courses } = useCourses();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -296,7 +301,7 @@ export function ClassesTab() {
 
   const openAdd = () => {
     setEditing({
-      teacherId: DEMO_TEACHER_ID,
+      teacherId: currentTeacherId(),
       courseId: "",
       courseName: "",
       day: "Monday",
@@ -530,7 +535,7 @@ export function ClassesTab() {
 /*  STUDENTS TAB                                                    */
 /* ================================================================ */
 export function StudentsTab() {
-  const { students, isLoading } = useTeacherStudentProgress(DEMO_TEACHER_ID);
+  const { students, isLoading } = useTeacherStudentProgress(currentTeacherId());
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -648,7 +653,7 @@ export function StudentsTab() {
 /* ================================================================ */
 export function ContentTab() {
   const { content, isLoading, addContent, updateContent, deleteContent } =
-    useTeacherContent(DEMO_TEACHER_ID);
+    useTeacherContent(currentTeacherId());
   const { courses } = useCourses();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -662,7 +667,7 @@ export function ContentTab() {
 
   const openAdd = () => {
     setEditing({
-      teacherId: DEMO_TEACHER_ID,
+      teacherId: currentTeacherId(),
       courseId: "",
       courseName: "",
       title: "",
@@ -898,7 +903,7 @@ export function ContentTab() {
 /*  GRADING TAB                                                     */
 /* ================================================================ */
 export function GradingTab() {
-  const { students, isLoading } = useTeacherStudentProgress(DEMO_TEACHER_ID);
+  const { students, isLoading } = useTeacherStudentProgress(currentTeacherId());
 
   return (
     <Panel title="Student Grading" subtitle="View and manage student grades">

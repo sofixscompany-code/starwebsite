@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Loader2,
   UserPlus,
@@ -10,6 +10,7 @@ import {
   Building,
   CheckCircle,
   AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -18,19 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StarLogo } from "@/components/site/StarLogo";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth, db } from "@/integrations/firebase/config";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 
-const ROLES = [
-  { value: "super_admin", label: "Super Admin" },
-  { value: "teacher", label: "Teacher" },
-  { value: "student", label: "Student" },
-  { value: "parent", label: "Parent" },
-  { value: "accountant", label: "Accountant" },
-];
+// Public self-registration is for students only. Staff and parent accounts are
+// issued by the institute (super admin) — they are never self-assignable here.
+const ROLES = [{ value: "student", label: "Student" }];
 
-const BRANCHES = ["Main Branch", "Branch A", "Branch B", "Branch C"];
+const FALLBACK_BRANCHES = ["Main Branch"];
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -41,12 +38,36 @@ export function RegisterPage() {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "teacher",
+    studentId: "",
+    role: "student",
     branch: "Main Branch",
     status: "active",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  const [branches, setBranches] = useState<string[]>(FALLBACK_BRANCHES);
+
+  // Live branches from admin (/admin/branches → Firestore `branches`)
+  useEffect(() => {
+    let cancelled = false;
+    getDocs(collection(db, "branches"))
+      .then((snap) => {
+        if (cancelled) return;
+        const names = snap.docs
+          .map((d) => String((d.data().name as string) || "").trim())
+          .filter(Boolean);
+        if (names.length) setBranches(names);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Keep the select valid even if the default isn't in the live list.
+  const selectedBranch = branches.includes(formData.branch)
+    ? formData.branch
+    : (branches[0] ?? "Main Branch");
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -77,25 +98,43 @@ export function RegisterPage() {
       );
       const user = userCredential.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.role,
-        branch: formData.branch,
-        status: formData.status,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          student_id: formData.studentId || "",
+          role: formData.role,
+          branch: selectedBranch,
+          status: formData.status,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } catch (docErr) {
+        // Roll back the Auth account so no half-created profile is left behind.
+        try {
+          await user.delete();
+        } catch {
+          /* best effort */
+        }
+        throw docErr;
+      }
+
+      // Best effort — the account works even if the email fails to send.
+      try {
+        await sendEmailVerification(user);
+      } catch {
+        /* non-fatal */
+      }
 
       setSuccess(true);
-      toast.success("User created successfully!");
+      toast.success("Account created successfully!");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         setErrors({ email: "Email already registered" });
       } else {
-        toast.error("Failed to create user. Please try again.");
+        toast.error("Failed to create account. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -110,11 +149,19 @@ export function RegisterPage() {
           <div className="w-full max-w-md text-center">
             <div className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-8 shadow-sm">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-[hsl(var(--ap-ink))] mb-2">User Created!</h2>
+              <h2 className="text-2xl font-bold text-[hsl(var(--ap-ink))] mb-2">
+                Account Created!
+              </h2>
               <p className="text-sm text-[hsl(var(--ap-muted))] mb-6">
-                {formData.fullName} has been registered as {formData.role}.
+                Welcome, {formData.fullName}! You can now sign in.
               </p>
               <div className="flex gap-3">
+                <Button
+                  onClick={() => navigate("/auth")}
+                  className="flex-1 bg-[hsl(var(--ap-blue))] hover:bg-[hsl(var(--ap-blue-light))]"
+                >
+                  Sign In
+                </Button>
                 <Button
                   onClick={() => {
                     setSuccess(false);
@@ -124,21 +171,16 @@ export function RegisterPage() {
                       phone: "",
                       password: "",
                       confirmPassword: "",
-                      role: "teacher",
+                      studentId: "",
+                      role: "student",
                       branch: "Main Branch",
                       status: "active",
                     });
                   }}
-                  className="flex-1 bg-[hsl(var(--ap-blue))] hover:bg-[hsl(var(--ap-blue-light))]"
-                >
-                  Create Another
-                </Button>
-                <Button
-                  onClick={() => navigate("/admin/users")}
                   variant="outline"
                   className="flex-1"
                 >
-                  View Users
+                  Register Another
                 </Button>
               </div>
             </div>
@@ -155,20 +197,18 @@ export function RegisterPage() {
 
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-lg">
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 flex items-center justify-center bg-white rounded-2xl border border-[hsl(var(--ap-border))] shadow-sm">
                 <StarLogo size="lg" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--ap-ink))]">Create New User</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--ap-ink))]">Create Account</h1>
             <p className="text-sm text-[hsl(var(--ap-muted))] mt-1">
-              Register a new user to the system
+              Join Star Coaching Institute today
             </p>
           </div>
 
-          {/* Registration Form */}
           <div className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6 shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
@@ -279,6 +319,23 @@ export function RegisterPage() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-[hsl(var(--ap-ink))]">
+                  Student ID{" "}
+                  <span className="text-[hsl(var(--ap-muted))] font-normal">(optional)</span>
+                </Label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
+                  <Input
+                    type="text"
+                    value={formData.studentId}
+                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                    className="pl-10"
+                    placeholder="e.g. SCI-2083-001"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-[hsl(var(--ap-ink))]">Role</Label>
@@ -300,11 +357,11 @@ export function RegisterPage() {
                   <div className="relative">
                     <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
                     <select
-                      value={formData.branch}
+                      value={selectedBranch}
                       onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                       className="w-full pl-10 px-3 py-2 rounded-xl border border-[hsl(var(--ap-border))] text-sm"
                     >
-                      {BRANCHES.map((b) => (
+                      {branches.map((b) => (
                         <option key={b} value={b}>
                           {b}
                         </option>
@@ -323,15 +380,21 @@ export function RegisterPage() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <UserPlus className="w-4 h-4 mr-2" /> Create User
+                    <UserPlus className="w-4 h-4 mr-2" /> Create Account
                   </>
                 )}
               </Button>
             </form>
           </div>
 
+          <p className="text-center text-xs text-[hsl(var(--ap-muted))] mt-4">
+            Already have an account?{" "}
+            <Link to="/auth" className="text-[hsl(var(--ap-blue))] font-semibold hover:underline">
+              Sign In
+            </Link>
+          </p>
           <p className="text-center text-xs text-[hsl(var(--ap-muted))] mt-6">
-            © 2025 Star Coaching Institute, Janakpurdham
+            © {new Date().getFullYear()} Star Coaching Institute, Janakpurdham
           </p>
         </div>
       </main>

@@ -5,8 +5,6 @@ import {
   Baby,
   Wallet,
   BookOpen,
-  PlayCircle,
-  Radio,
   FileText,
   CalendarCheck,
   Trophy,
@@ -22,16 +20,21 @@ import {
   Library,
   Megaphone,
   MessageSquare,
-  MessageSquareQuote,
-  Mail,
-  MessageCircle,
-  Send,
-  Star,
-  Quote,
   Receipt,
   Image,
   Clock,
   Shield,
+  MessageSquareQuote,
+  Sparkles,
+  Newspaper,
+  FolderOpen,
+  Briefcase,
+  Send,
+  Phone,
+  Key,
+  History,
+  Building2,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -120,8 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
     roles: ["student"],
     items: [
       { label: "My Courses", to: "/admin/courses", icon: BookOpen, roles: ["student"] },
-      { label: "LMS", to: "/admin/lms", icon: PlayCircle, badge: "NEW", roles: ["student"] },
-      { label: "Live Classes", to: "/admin/live", icon: Radio, roles: ["student"] },
+      { label: "Live Classes", to: "/admin/live", icon: LineChart, roles: ["student"] },
       { label: "Homework", to: "/admin/homework", icon: FileText, roles: ["student"] },
       { label: "Assignments", to: "/admin/assignments", icon: FileText, roles: ["student"] },
     ],
@@ -133,7 +135,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck, roles: ["student"] },
       { label: "Exams", to: "/admin/exams", icon: FileText, roles: ["student"] },
       { label: "Results", to: "/admin/results", icon: Trophy, roles: ["student"] },
-      { label: "Certificates", to: "/admin/certificates", icon: Award, roles: ["student"] },
     ],
   },
   {
@@ -216,7 +217,24 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Admissions",
         to: "/admin/admissions",
         icon: FileText,
-        badge: 24,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Courses & Pricing",
+        to: "/admin/admission-pricing",
+        icon: Receipt,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Preparation Content",
+        to: "/admin/prep-content",
+        icon: BookMarked,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Certificates",
+        to: "/admin/certificates",
+        icon: Award,
         roles: ["super_admin"],
       },
     ],
@@ -235,8 +253,8 @@ export const NAV_SECTIONS: NavSection[] = [
     roles: ["super_admin"],
     items: [
       { label: "Courses", to: "/admin/courses", icon: BookOpen, roles: ["super_admin"] },
-      { label: "LMS", to: "/admin/lms", icon: PlayCircle, badge: "NEW", roles: ["super_admin"] },
-      { label: "Live Classes", to: "/admin/live", icon: Radio, roles: ["super_admin"] },
+      { label: "LMS", to: "/admin/lms", icon: Library, roles: ["super_admin"] },
+      { label: "Live Classes", to: "/admin/live", icon: LineChart, roles: ["super_admin"] },
       { label: "Homework", to: "/admin/homework", icon: FileText, roles: ["super_admin"] },
       { label: "Assignments", to: "/admin/assignments", icon: FileText, roles: ["super_admin"] },
     ],
@@ -248,7 +266,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Attendance", to: "/admin/attendance", icon: CalendarCheck, roles: ["super_admin"] },
       { label: "Exams", to: "/admin/exams", icon: FileText, roles: ["super_admin"] },
       { label: "Results", to: "/admin/results", icon: Trophy, roles: ["super_admin"] },
-      { label: "Certificates", to: "/admin/certificates", icon: Award, roles: ["super_admin"] },
     ],
   },
   {
@@ -284,9 +301,45 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["super_admin"],
       },
       {
+        label: "Hero Slides",
+        to: "/admin/hero-slides",
+        icon: Image,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Feature Slides / Banners",
+        to: "/admin/banners",
+        icon: Images,
+        roles: ["super_admin"],
+      },
+      {
         label: "Top Selections",
         to: "/admin/selections",
         icon: Trophy,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Testimonials",
+        to: "/admin/homepage-testimonials",
+        icon: MessageSquareQuote,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Why Choose Us",
+        to: "/admin/why-choose-us",
+        icon: Sparkles,
+        roles: ["super_admin"],
+      },
+      {
+        label: "MD Message",
+        to: "/admin/md-message",
+        icon: Megaphone,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Site Settings",
+        to: "/admin/site-settings",
+        icon: Settings,
         roles: ["super_admin"],
       },
       {
@@ -301,26 +354,33 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: BookOpen,
         roles: ["super_admin"],
       },
-      {
-        label: "Testimonials",
-        to: "/admin/homepage-testimonials",
-        icon: MessageSquareQuote,
-        roles: ["super_admin"],
-      },
-      {
-        label: "Why Choose Us",
-        to: "/admin/why-choose-us",
-        icon: Star,
-        roles: ["super_admin"],
-      },
-      {
-        label: "MD Message",
-        to: "/admin/md-message",
-        icon: Quote,
-        roles: ["super_admin"],
-      },
       { label: "Faculty", to: "/admin/faculty", icon: GraduationCap, roles: ["super_admin"] },
       { label: "Gallery", to: "/admin/gallery", icon: Images, roles: ["super_admin"] },
+      { label: "Messages", to: "/admin/messages", icon: MessageSquare, roles: ["super_admin"] },
+      {
+        label: "Career Services",
+        to: "/admin/career",
+        icon: Briefcase,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Advertisements",
+        to: "/admin/advertisements",
+        icon: Newspaper,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Feature Content",
+        to: "/admin/feature-content",
+        icon: Sparkles,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Media Library",
+        to: "/admin/media-library",
+        icon: FolderOpen,
+        roles: ["super_admin"],
+      },
       { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["super_admin"] },
     ],
   },
@@ -340,17 +400,22 @@ export const NAV_SECTIONS: NavSection[] = [
     header: "Marketing",
     roles: ["super_admin"],
     items: [
-      { label: "SMS Campaigns", to: "/admin/marketing/sms", icon: Send, roles: ["super_admin"] },
       {
-        label: "Email Campaigns",
-        to: "/admin/marketing/email",
-        icon: Mail,
+        label: "SMS Campaigns",
+        to: "/admin/marketing/sms",
+        icon: MessageSquare,
         roles: ["super_admin"],
       },
       {
-        label: "WhatsApp Campaigns",
+        label: "Email Campaigns",
+        to: "/admin/marketing/email",
+        icon: Send,
+        roles: ["super_admin"],
+      },
+      {
+        label: "WhatsApp",
         to: "/admin/marketing/whatsapp",
-        icon: MessageCircle,
+        icon: Phone,
         roles: ["super_admin"],
       },
       {
@@ -368,9 +433,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Users", to: "/admin/users", icon: Users, roles: ["super_admin"] },
       { label: "Roles", to: "/admin/roles", icon: Shield, roles: ["super_admin"] },
       { label: "Permissions", to: "/admin/permissions", icon: Shield, roles: ["super_admin"] },
-      { label: "Branches", to: "/admin/branches", icon: BookMarked, roles: ["super_admin"] },
       { label: "Settings", to: "/admin/settings", icon: Settings, roles: ["super_admin"] },
-      { label: "Audit Logs", to: "/admin/audit", icon: FileText, roles: ["super_admin"] },
       { label: "AI Assistant", to: "/admin/ai", icon: Trophy, roles: ["super_admin"] },
       {
         label: "Backup",
@@ -379,10 +442,17 @@ export const NAV_SECTIONS: NavSection[] = [
         badge: "New",
         roles: ["super_admin"],
       },
-      { label: "Integrations", to: "/admin/integrations", icon: Radio, roles: ["super_admin"] },
-      { label: "API Keys", to: "/admin/api-keys", icon: Shield, roles: ["super_admin"] },
+      { label: "Branches", to: "/admin/branches", icon: Building2, roles: ["super_admin"] },
+      { label: "Audit Logs", to: "/admin/audit", icon: History, roles: ["super_admin"] },
+      { label: "API Keys", to: "/admin/api-keys", icon: Key, roles: ["super_admin"] },
+      { label: "Integrations", to: "/admin/integrations", icon: Plug, roles: ["super_admin"] },
       { label: "Feature Slides", to: "/admin/light", icon: Image, roles: ["super_admin"] },
     ],
+  },
+  {
+    header: "Schedule",
+    roles: ["super_admin"],
+    items: [{ label: "Calendar", to: "/admin/calendar", icon: Clock, roles: ["super_admin"] }],
   },
 ];
 
@@ -391,7 +461,11 @@ export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 export function getNavSectionsForRole(role: string): NavSection[] {
   return NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.roles || item.roles.includes(role)),
+    items: section.items.filter(
+      (item) =>
+        (!section.roles || section.roles.includes(role)) &&
+        (!item.roles || item.roles.includes(role)),
+    ),
   })).filter((section) => section.items.length > 0);
 }
 

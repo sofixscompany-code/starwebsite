@@ -1,17 +1,29 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
+import { useModuleData } from "@/hooks/use-module-data";
 import { FileText, Award, TrendingUp, AlertCircle } from "lucide-react";
 
 export function AssignmentsPage() {
+  const { rows } = useModuleData("assignments");
+
+  const isDone = (status: unknown) =>
+    ["completed", "graded"].includes(String(status || "").toLowerCase());
+  const today = new Date().toISOString().slice(0, 10);
+  const completed = rows.filter((r) => isDone(r.status)).length;
+  const overdue = rows.filter(
+    (r) => r.dueDate && String(r.dueDate).slice(0, 10) < today && !isDone(r.status),
+  ).length;
+  const submissionRate = rows.length ? Math.round((completed / rows.length) * 100) : 0;
+
   return (
     <FirestoreModulePage
       collectionName="assignments"
       title="Assignments"
       subtitle="Create, track and grade student assignments"
       stats={[
-        { label: "Total Assigned", value: 86, icon: FileText, tone: "purple" },
-        { label: "Completed", value: 64, icon: Award, tone: "success" },
-        { label: "Submission Rate", value: "74%", icon: TrendingUp, tone: "info" },
-        { label: "Overdue", value: 5, icon: AlertCircle, tone: "warning" },
+        { label: "Total Assigned", value: rows.length, icon: FileText, tone: "purple" },
+        { label: "Completed", value: completed, icon: Award, tone: "success" },
+        { label: "Submission Rate", value: `${submissionRate}%`, icon: TrendingUp, tone: "info" },
+        { label: "Overdue", value: overdue, icon: AlertCircle, tone: "warning" },
       ]}
       columns={[
         { key: "name", label: "Assignment" },

@@ -1,15 +1,20 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
+import { useModuleData } from "@/hooks/use-module-data";
 import { Library, Video } from "lucide-react";
 
 export default function TeacherLearningMaterialsPage() {
+  const { rows } = useModuleData("lms_lessons");
+
+  const courses = new Set(rows.map((r) => String(r.courseId || "")).filter(Boolean)).size;
+
   return (
     <FirestoreModulePage
       collectionName="lms_lessons"
       title="Learning Materials"
       subtitle="Upload and organize study materials"
       stats={[
-        { label: "Lessons", value: 0, icon: Library, tone: "purple" },
-        { label: "Portal", value: "LMS", icon: Video, tone: "info" },
+        { label: "Lessons", value: rows.length, icon: Library, tone: "purple" },
+        { label: "Courses", value: courses, icon: Video, tone: "info" },
       ]}
       columns={[
         { key: "title", label: "Lesson" },

@@ -1,15 +1,17 @@
-﻿import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+﻿import { useState, useEffect, useMemo } from "react";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { HeroSlider } from "@/components/site/HeroSlider";
 import { motion, AnimatePresence } from "framer-motion";
-import { clearToken, getUserRole } from "@/lib/api-auth";
+import { handleSignOut, getUserRole } from "@/lib/api-auth";
 import { ROLE_LABELS } from "@/hooks/use-user-role";
-import { toast } from "sonner";
 import { Sidebar } from "./Sidebar";
+import { NAV_ITEMS, getNavItemsForRole } from "./nav";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/config";
 import {
   Bell,
   Calendar,
   ChevronRight,
-  Command,
   Menu,
   Moon,
   Search,
@@ -31,6 +33,19 @@ export function AdminShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const role = getUserRole();
+
+  // Route-level role enforcement: every role other than super_admin may only
+  // open paths listed in its sidebar (nav.ts is the single source of truth),
+  // plus its own dashboard and profile. Blocks URL-bypass into admin pages.
+  const allowedPaths = useMemo(() => {
+    if (role === "super_admin") return null; // unrestricted
+    const base = new Set<string>(["/admin", "/admin/profile"]);
+    if (role) getNavItemsForRole(role).forEach((i) => i.to && base.add(i.to));
+    return base;
+  }, [role]);
+  const currentPath = location.pathname.replace(/\/+$/, "") || "/admin";
+  const denied =
+    !!allowedPaths && currentPath.startsWith("/admin") && !allowedPaths.has(currentPath);
 
   useEffect(() => {
     const saved = localStorage.getItem("admin-theme");
@@ -54,8 +69,7 @@ export function AdminShell() {
   }, []);
 
   const signOut = () => {
-    clearToken();
-    navigate("/auth");
+    void handleSignOut(navigate);
   };
 
   return (
@@ -107,11 +121,19 @@ export function AdminShell() {
 
             <button
               onClick={() => setRightOpen((v) => !v)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400 relative"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            </button>
+
+            <button
+              onClick={() => navigate("/admin/profile")}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+              aria-label="Profile"
+              title="Profile"
+            >
+              <User className="w-4 h-4" />
             </button>
 
             <button
@@ -138,8 +160,27 @@ export function AdminShell() {
           className="flex-1 min-w-0 px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto overflow-y-auto"
           style={{ height: "calc(100vh - 57px)" }}
         >
-          <Breadcrumbs />
-          <Outlet />
+          <HeroSlider compact />
+          {denied ? (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Access denied</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                This page isn&apos;t available for your role. If you think this is a mistake,
+                contact the administrator.
+              </p>
+              <button
+                onClick={() => navigate("/admin")}
+                className="mt-5 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Back to dashboard
+              </button>
+            </div>
+          ) : (
+            <>
+              <Breadcrumbs />
+              <Outlet />
+            </>
+          )}
         </main>
 
         <AnimatePresence>
@@ -166,12 +207,62 @@ export function AdminShell() {
 }
 
 function RightPanel({ onClose }: { onClose: () => void }) {
+  const [items, setItems] = useState<{ title: string; desc: string; time: string }[]>([]);
+  const [pendingAdmissions, setPendingAdmissions] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Latest public-form inquiries (readable by super admin only — other
+      // roles simply see an empty panel).
+      try {
+        const snap = await getDocs(collection(db, "inquiries"));
+        if (cancelled) return;
+        const list = snap.docs
+          .map((d) => d.data() as Record<string, unknown>)
+          .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+          .slice(0, 5)
+          .map((q) => ({
+            title: `New inquiry from ${String(q.name || q.fullName || "someone")}`,
+            desc: String(q.message || q.email || q.phone || "").slice(0, 120),
+            time: String(q.createdAt || "").slice(0, 10),
+          }));
+        setItems(list);
+      } catch {
+        // No access — leave empty.
+      }
+      try {
+        const snap = await getDocs(collection(db, "admissions"));
+        if (cancelled) return;
+        setPendingAdmissions(
+          snap.docs.filter(
+            (d) =>
+              String((d.data() as Record<string, unknown>).status || "pending").toLowerCase() ===
+              "pending",
+          ).length,
+        );
+      } catch {
+        // No access — leave 0.
+      }
+      if (!cancelled) setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const notifications = [
-    { title: "New admission request", desc: "John Doe applied for Class 10", time: "2m ago" },
-    { title: "Fee payment received", desc: "₹15,000 from Student #1234", time: "15m ago" },
-    { title: "Exam schedule updated", desc: "Mid-term exams moved to next week", time: "1h ago" },
-    { title: "New inquiry", desc: "Parent requested campus tour", time: "3h ago" },
-    { title: "Attendance report", desc: "Class 12A has 92% attendance", time: "5h ago" },
+    ...(pendingAdmissions > 0
+      ? [
+          {
+            title: `${pendingAdmissions} pending admission${pendingAdmissions > 1 ? "s" : ""}`,
+            desc: "Open Admissions to review and update statuses.",
+            time: "",
+          },
+        ]
+      : []),
+    ...items,
   ];
 
   return (
@@ -192,16 +283,24 @@ function RightPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <div className="overflow-y-auto h-[calc(100%-60px)]">
-        {notifications.map((n, i) => (
-          <div
-            key={i}
-            className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
-          >
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{n.desc}</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">{n.time}</p>
-          </div>
-        ))}
+        {!loaded ? (
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">Loading…</p>
+        ) : notifications.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">You&apos;re all caught up.</p>
+        ) : (
+          notifications.map((n, i) => (
+            <div
+              key={i}
+              className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            >
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{n.desc}</p>
+              {n.time && (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">{n.time}</p>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </motion.div>
   );
@@ -217,12 +316,13 @@ function FloatingAI({ open, onToggle }: { open: boolean; onToggle: () => void })
     if (!input.trim()) return;
     setMessages((prev) => [...prev, { role: "user", text: input }]);
     setInput("");
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: "I'm processing your request. This is a demo response." },
-      ]);
-    }, 1000);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "ai",
+        text: "I'm not connected to a live AI model yet, so I can't answer questions. Use the search (⌘K / Ctrl+K) to jump to any page, or ask your administrator.",
+      },
+    ]);
   };
 
   return (
@@ -303,18 +403,21 @@ function CommandPalette({
   onNavigate: (to: string) => void;
 }) {
   const [query, setQuery] = useState("");
+  const role = getUserRole();
 
-  const items = [
-    { title: "Dashboard", path: "/admin" },
-    { title: "Students", path: "/admin/students" },
-    { title: "Teachers", path: "/admin/teachers" },
-    { title: "Admissions", path: "/admin/admissions" },
-    { title: "Payments", path: "/admin/payments" },
-    { title: "Reports", path: "/admin/reports" },
-    { title: "Settings", path: "/admin/settings" },
-    { title: "Courses", path: "/admin/courses" },
-    { title: "Attendance", path: "/admin/attendance" },
-  ].filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
+  const items = useMemo(() => {
+    const seen = new Set<string>();
+    const base: { title: string; path: string }[] = [{ title: "Dashboard", path: "/admin" }];
+    if (role) {
+      getNavItemsForRole(role).forEach((item) => {
+        if (item.to && !seen.has(item.to)) {
+          seen.add(item.to);
+          base.push({ title: item.label, path: item.to });
+        }
+      });
+    }
+    return base.filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
+  }, [role, query]);
 
   return (
     <motion.div
@@ -426,6 +529,13 @@ function Breadcrumbs() {
 
   if (parts.length < 2) return null;
 
+  // Only crumb targets that are real pages (dashboard index, the role's nav
+  // entries, or profile) become links; intermediate path segments like
+  // "/admin/teacher" or "/admin/crm" have no route of their own, so they are
+  // rendered as plain text instead of a link that would bounce to the homepage.
+  const linkable = new Set<string>(["/admin", "/admin/profile"]);
+  NAV_ITEMS.forEach((i) => i.to && linkable.add(i.to));
+
   return (
     <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-4">
       {parts.map((part, i) => {
@@ -433,18 +543,27 @@ function Breadcrumbs() {
           BREADCRUMB_LABELS[part] ||
           part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " ");
         const href = "/" + parts.slice(0, i + 1).join("/");
+        const isLast = i === parts.length - 1;
         return (
           <span key={href} className="flex items-center gap-1.5">
             {i > 0 && <span className="text-gray-300 dark:text-gray-600">/</span>}
-            {i < parts.length - 1 ? (
-              <a
-                href={href}
+            {!isLast && linkable.has(href) ? (
+              <Link
+                to={href}
                 className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 {label}
-              </a>
+              </Link>
             ) : (
-              <span className="text-gray-600 dark:text-gray-300 font-medium">{label}</span>
+              <span
+                className={
+                  isLast
+                    ? "text-gray-600 dark:text-gray-300 font-medium"
+                    : "text-gray-400 dark:text-gray-500"
+                }
+              >
+                {label}
+              </span>
             )}
           </span>
         );

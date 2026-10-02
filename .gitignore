@@ -34,3 +34,4 @@ dist-ssr
 # Firebase deploy cache
 .firebase
 
+*.tsbuildinfo

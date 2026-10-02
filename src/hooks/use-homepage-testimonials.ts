@@ -7,6 +7,7 @@ export interface HomepageTestimonial {
   quote: string;
   name: string;
   result: string;
+  photoUrl?: string;
   order?: number;
 }
 
@@ -48,6 +49,7 @@ export function useHomepageTestimonials() {
           quote: (d.data().quote as string) ?? "",
           name: (d.data().name as string) ?? "",
           result: (d.data().result as string) ?? "",
+          photoUrl: (d.data().photoUrl as string) ?? "",
           order: (d.data().order as number) ?? 9999,
         }));
         rows.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));

@@ -8,12 +8,21 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  writeBatch,
   serverTimestamp,
   where,
-  limit,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
+
+/** Normalize Firestore Timestamps / ISO strings / numbers to epoch ms (client-side sorting). */
+const toMs = (v: unknown): number => {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return Date.parse(v) || 0;
+  const t = v as { toMillis?: () => number; seconds?: number };
+  if (typeof t.toMillis === "function") return t.toMillis();
+  if (typeof t.seconds === "number") return t.seconds * 1000;
+  return 0;
+};
 
 /* -------------------- TYPES -------------------- */
 export interface Course {
@@ -158,16 +167,14 @@ export function useLessons(courseId?: string) {
   const { data: lessons = [], isLoading } = useQuery({
     queryKey: ["lms", "lessons", courseId],
     queryFn: async () => {
-      let q = query(collection(db, "lms_lessons"), orderBy("order", "asc"));
-      if (courseId) {
-        q = query(
-          collection(db, "lms_lessons"),
-          where("courseId", "==", courseId),
-          orderBy("order", "asc"),
-        );
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Lesson[];
+      // Index-free: equality `where` only (no orderBy after where) —
+      // sorted client-side by `order` (same field, same direction).
+      const constraints: any[] = [];
+      if (courseId) constraints.push(where("courseId", "==", courseId));
+      const snap = await getDocs(query(collection(db, "lms_lessons"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as Lesson)
+        .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
     },
   });
 
@@ -210,16 +217,14 @@ export function useQuizzes(courseId?: string) {
   const { data: quizzes = [], isLoading } = useQuery({
     queryKey: ["lms", "quizzes", courseId],
     queryFn: async () => {
-      let q = query(collection(db, "lms_quizzes"), orderBy("createdAt", "desc"));
-      if (courseId) {
-        q = query(
-          collection(db, "lms_quizzes"),
-          where("courseId", "==", courseId),
-          orderBy("createdAt", "desc"),
-        );
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Quiz[];
+      // Index-free: equality `where` only (no orderBy after where) —
+      // sorted client-side by createdAt (newest first).
+      const constraints: any[] = [];
+      if (courseId) constraints.push(where("courseId", "==", courseId));
+      const snap = await getDocs(query(collection(db, "lms_quizzes"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as Quiz)
+        .sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
     },
   });
 
@@ -262,17 +267,15 @@ export function useEnrollments(studentId?: string, courseId?: string) {
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["lms", "enrollments", studentId, courseId],
     queryFn: async () => {
-      let q: any = collection(db, "lms_enrollments");
+      // Index-free: equality `where` clauses only (no orderBy after where) —
+      // sorted client-side by enrolledAt (newest first).
       const constraints: any[] = [];
       if (studentId) constraints.push(where("studentId", "==", studentId));
       if (courseId) constraints.push(where("courseId", "==", courseId));
-      if (constraints.length > 0) {
-        q = query(q, ...constraints, orderBy("enrolledAt", "desc"));
-      } else {
-        q = query(q, orderBy("enrolledAt", "desc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Enrollment[];
+      const snap = await getDocs(query(collection(db, "lms_enrollments"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as Enrollment)
+        .sort((a, b) => toMs(b.enrolledAt) - toMs(a.enrolledAt));
     },
   });
 
@@ -307,17 +310,15 @@ export function useQuizAttempts(quizId?: string, studentId?: string) {
   const { data: attempts = [], isLoading } = useQuery({
     queryKey: ["lms", "quiz-attempts", quizId, studentId],
     queryFn: async () => {
-      let q: any = collection(db, "lms_quiz_attempts");
+      // Index-free: equality `where` clauses only (no orderBy after where) —
+      // sorted client-side by completedAt (newest first).
       const constraints: any[] = [];
       if (quizId) constraints.push(where("quizId", "==", quizId));
       if (studentId) constraints.push(where("studentId", "==", studentId));
-      if (constraints.length > 0) {
-        q = query(q, ...constraints, orderBy("completedAt", "desc"));
-      } else {
-        q = query(q, orderBy("completedAt", "desc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as QuizAttempt[];
+      const snap = await getDocs(query(collection(db, "lms_quiz_attempts"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as QuizAttempt)
+        .sort((a, b) => toMs(b.completedAt) - toMs(a.completedAt));
     },
   });
 

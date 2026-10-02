@@ -1,17 +1,23 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { Bed, CheckCircle2, Users, Wallet } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { Bed, CheckCircle2, Users } from "lucide-react";
 
 export function HostelPage() {
+  const { rows } = useModuleData("hostel");
+
+  const total = rows.length;
+  const occupied = rows.filter((r) => String(r.status ?? "") === "Occupied").length;
+  const available = rows.filter((r) => String(r.status ?? "") === "Available").length;
+
   return (
     <FirestoreModulePage
       collectionName="hostel"
       title="Hostel"
       subtitle="Manage hostel rooms, occupancy and payments"
       stats={[
-        { label: "Total Rooms", value: 120, icon: Bed, tone: "purple" },
-        { label: "Occupied", value: 98, icon: Users, tone: "info" },
-        { label: "Available", value: 22, icon: CheckCircle2, tone: "success" },
-        { label: "Monthly Revenue", value: "₹3.6L", icon: Wallet, tone: "warning" },
+        { label: "Total Rooms", value: total, icon: Bed, tone: "purple" },
+        { label: "Occupied", value: occupied, icon: Users, tone: "info" },
+        { label: "Available", value: available, icon: CheckCircle2, tone: "success" },
       ]}
       columns={[
         { key: "room", label: "Room" },

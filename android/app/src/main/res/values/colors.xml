@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#1E3A8A</color>
+    <color name="colorPrimaryDark">#152E6D</color>
+    <color name="colorAccent">#D4AF37</color>
+    <color name="splash_bg">#1E3A8A</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="star_gold">#D4AF37</color>
+    <color name="star_navy">#1E3A8A</color>
+    <color name="star_red">#DC2626</color>
+    <color name="star_green">#10B981</color>
+    <color name="status_bar">#152E6D</color>
+    <color name="nav_bar">#1E3A8A</color>
+</resources>

@@ -3,47 +3,35 @@ import {
   GraduationCap,
   FileText,
   CalendarCheck,
-  Wallet,
   Download,
-  Video,
   Upload,
   CreditCard,
   Loader2,
   Trophy,
   BookOpen,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  BarChart3,
-  PlayCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useStudentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
+import {
+  useStudentDashboard,
+  getStoredAuthUser,
+  fmtClassTime,
+  fmtShortDate,
+} from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
-
-const upcomingClasses = [
-  { time: "08:00 AM", name: "Mathematics", room: "Room 101", teacher: "Mr. Sharma" },
-  { time: "09:30 AM", name: "Physics", room: "Room 203", teacher: "Mrs. Thapa" },
-  { time: "11:00 AM", name: "English", room: "Room 105", teacher: "Mr. Adhikari" },
-];
-
-const recentScores = [
-  { subject: "Mathematics", score: 85, total: 100 },
-  { subject: "Physics", score: 72, total: 100 },
-  { subject: "English", score: 91, total: 100 },
-];
+import { auth } from "@/integrations/firebase/config";
 
 export function StudentDashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (getUserRole() === "student" || localStorage.getItem("demo_role") === "student") {
+    if (getUserRole() === "student") {
       setMounted(true);
     }
   }, []);
 
   const storedUser = getStoredAuthUser();
-  const { data: stats, isLoading } = useStudentDashboard(storedUser?.uid);
+  const uid = storedUser?.uid || auth.currentUser?.uid || undefined;
+  const { data: stats, isLoading } = useStudentDashboard(uid);
 
   if (!mounted || isLoading) {
     return (
@@ -56,78 +44,59 @@ export function StudentDashboard() {
     );
   }
 
-  const fmtTime = (v: unknown) => {
-    const ms = Date.parse(String(v));
-    if (!Number.isFinite(ms)) return "";
-    return new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  };
-  const classRows = (stats?.upcomingClasses || []).length
-    ? (stats?.upcomingClasses || []).map((c) => ({
-        time: fmtTime(c.startTime),
-        name: String(c.name || "Class"),
-        room: String(c.room || "TBA"),
-        teacher: String(c.teacherName || ""),
-      }))
-    : upcomingClasses;
+  const hasData = !!stats?.hasData;
+  const classRows = (stats?.upcomingClasses || []).map((c) => ({
+    time: fmtClassTime(c.startTime) || "—",
+    name: String(c.name || "Class"),
+    room: String(c.room || "TBA"),
+    teacher: String(c.teacherName || ""),
+  }));
 
-  const scoreRows = (stats?.results || []).length
-    ? (stats?.results || []).map((r) => ({
-        subject: String(r.subject || "Exam"),
-        score: Number(r.score || 0),
-        total: Number(r.total || 100),
-      }))
-    : recentScores;
+  const scoreRows = (stats?.results || []).map((r) => ({
+    subject: String(r.subject || "Exam"),
+    score: Number(r.marks || r.score || 0),
+    total: Number(r.total) > 0 ? Number(r.total) : 100,
+  }));
 
-  const examRows = [
-    ...(stats?.homework || [])
-      .filter((h) => Date.parse(String(h.dueDate)) > Date.now())
-      .slice(0, 3)
-      .map((h) => ({
-        subject: String(h.title || h.subject || ""),
-        date: new Date(Date.parse(String(h.dueDate))).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        type: "Homework Due",
-      })),
-    ...(scoreRows.length === recentScores.length
-      ? []
-      : [
-          { subject: "Mathematics", date: "Dec 18", type: "Unit Test" },
-          { subject: "Physics", date: "Dec 20", type: "Mid Term" },
-          { subject: "English", date: "Dec 23", type: "Assignment" },
-        ]),
-  ].slice(0, 3);
+  const examRows = (stats?.exams || []).slice(0, 3).map((e) => ({
+    subject: String(e.title || e.subject || "Exam"),
+    date: fmtShortDate(e.scheduledAt) || "TBA",
+    type: String(e.subject || "Written"),
+  }));
 
-  const attPercent = stats?.attendancePercent || 85;
-  const attColor = attPercent >= 80 ? "from-emerald-500 to-emerald-600" : "from-gold to-gold/80";
-  const attBg = attPercent >= 80 ? "bg-emerald-50" : "bg-gold/5";
+  const attPercent =
+    hasData && typeof stats?.attendancePercent === "number" ? stats.attendancePercent : null;
+  const attColor =
+    attPercent !== null && attPercent < 80
+      ? "from-gold to-gold/80"
+      : "from-emerald-500 to-emerald-600";
+  const attBg = attPercent !== null && attPercent < 80 ? "bg-gold/5" : "bg-emerald-50";
 
   const statCards = [
     {
       label: "Enrolled Courses",
-      value: stats?.enrollments?.length || 4,
+      value: hasData ? (stats?.enrollments?.length ?? 0) : "No data yet",
       icon: GraduationCap,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
     },
     {
       label: "Attendance",
-      value: attPercent + "%",
+      value: attPercent === null ? "No data yet" : attPercent + "%",
       icon: CalendarCheck,
       color: attColor,
       bg: attBg,
     },
     {
       label: "Homework",
-      value: stats?.homework?.length || 6,
+      value: hasData ? (stats?.homework?.length ?? 0) : "No data yet",
       icon: FileText,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
     },
     {
       label: "Results",
-      value: stats?.results?.length || 3,
+      value: hasData ? (stats?.results?.length ?? 0) : "No data yet",
       icon: Trophy,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
@@ -186,54 +155,68 @@ export function StudentDashboard() {
               Today's Classes
             </h3>
             <p className="text-xs text-gray-400 mb-4">Your schedule for today</p>
-            <div className="space-y-2">
-              {classRows.map((c, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                >
-                  <div className="w-16 text-center shrink-0">
-                    <p className="text-xs font-bold text-navy">{c.time}</p>
+            {classRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No upcoming classes
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {classRows.map((c, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                  >
+                    <div className="w-16 text-center shrink-0">
+                      <p className="text-xs font-bold text-navy">{c.time}</p>
+                    </div>
+                    <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {c.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {c.room} · {c.teacher}
+                      </p>
+                    </div>
                   </div>
-                  <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {c.room} · {c.teacher}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Scores</h3>
             <p className="text-xs text-gray-400 mb-4">Your latest exam results</p>
-            <div className="space-y-3">
-              {scoreRows.map((r, i) => {
-                const pct = Math.round((r.score / r.total) * 100);
-                return (
-                  <div key={i} className="flex items-center gap-4">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-24 shrink-0">
-                      {r.subject}
-                    </p>
-                    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className={
-                          "h-full rounded-full " +
-                          (pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-gold" : "bg-brand-red")
-                        }
-                        style={{ width: pct + "%" }}
-                      />
+            {scoreRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No results yet
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {scoreRows.map((r, i) => {
+                  const pct = Math.round((r.score / r.total) * 100);
+                  return (
+                    <div key={i} className="flex items-center gap-4">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-24 shrink-0">
+                        {r.subject}
+                      </p>
+                      <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={
+                            "h-full rounded-full " +
+                            (pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-gold" : "bg-brand-red")
+                          }
+                          style={{ width: pct + "%" }}
+                        />
+                      </div>
+                      <p className="text-xs font-bold text-gray-900 dark:text-white w-16 text-right">
+                        {r.score}/{r.total}
+                      </p>
                     </div>
-                    <p className="text-xs font-bold text-gray-900 dark:text-white w-16 text-right">
-                      {r.score}/{r.total}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -245,7 +228,7 @@ export function StudentDashboard() {
                 {
                   label: "Study Materials",
                   icon: Download,
-                  to: "/admin/lms",
+                  to: "/admin/courses",
                   desc: "Notes & videos",
                 },
                 {
@@ -261,7 +244,6 @@ export function StudentDashboard() {
                   to: "/admin/payments",
                   desc: "Online payment",
                 },
-                { label: "Live Classes", icon: PlayCircle, to: "/admin/live", desc: "Join now" },
               ].map((a) => {
                 const Icon = a.icon;
                 return (
@@ -288,23 +270,29 @@ export function StudentDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Exams</h3>
             <p className="text-xs text-gray-400 mb-3">Next tests scheduled</p>
-            <div className="space-y-3">
-              {examRows.map((ex, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
-                    <BookOpen className="w-4 h-4 text-navy" />
+            {examRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                Nothing to show
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {examRows.map((ex, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
+                      <BookOpen className="w-4 h-4 text-navy" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white">
+                        {ex.subject}
+                      </p>
+                      <p className="text-[11px] text-gray-400">
+                        {ex.date} · {ex.type}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                      {ex.subject}
-                    </p>
-                    <p className="text-[11px] text-gray-400">
-                      {ex.date} · {ex.type}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

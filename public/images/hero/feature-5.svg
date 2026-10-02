@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="450" viewBox="0 0 1400 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2a6b"/>
+      <stop offset="0.5" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#075985"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.9" r="0.75">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="450" fill="url(#g)"/>
+  <rect width="1400" height="450" fill="url(#glow)"/>
+  <circle cx="1050" cy="80" r="210" fill="#ffffff" opacity="0.06"/>
+  <circle cx="350" cy="410" r="170" fill="#ffffff" opacity="0.04"/>
+  <circle cx="840" cy="-40" r="150" fill="#ffffff" opacity="0.03"/>
+  <g fill="#ffffff" opacity="0.2" transform="translate(1250 90) scale(2.3)">
+    <polygon points="0,-18 5,-6 18,-5 8,4 11,17 0,9 -11,17 -8,4 -18,-5 -5,-6"/>
+  </g>
+  <g fill="#fbbf24" opacity="0.4" transform="translate(180 120) scale(1.5)">
+    <polygon points="0,-18 5,-6 18,-5 8,4 11,17 0,9 -11,17 -8,4 -18,-5 -5,-6"/>
+  </g>
+  <g fill="#ffffff" opacity="0.12" transform="translate(620 150) scale(1.1)">
+    <polygon points="0,-18 5,-6 18,-5 8,4 11,17 0,9 -11,17 -8,4 -18,-5 -5,-6"/>
+  </g>
+</svg>

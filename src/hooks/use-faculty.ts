@@ -8,6 +8,7 @@ export interface FacultyMember {
   role: string;
   subject: string;
   initials: string;
+  photoUrl?: string;
   order?: number;
 }
 
@@ -18,6 +19,7 @@ const FALLBACK_FACULTY: FacultyMember[] = [
     role: "Senior Faculty",
     subject: "Veterinary Science",
     initials: "SP",
+    photoUrl: "",
   },
   {
     id: "f2",
@@ -90,6 +92,7 @@ export function useFaculty() {
             role: (data.role as string) ?? "",
             subject: (data.subject as string) ?? "",
             initials,
+            photoUrl: (data.photoUrl as string) ?? "",
             order: (data.order as number) ?? 9999,
           };
         });

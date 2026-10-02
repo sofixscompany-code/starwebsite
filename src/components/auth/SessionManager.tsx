@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearAuthData } from "@/lib/api-auth";
+import { firebaseAuth } from "@/integrations/firebase/auth";
 import { toast } from "sonner";
 
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -31,6 +32,7 @@ export function SessionManager({ isActive }: SessionManagerProps) {
       timerRef.current = setTimeout(() => {
         toast.info("Session expired. Please login again.");
         clearAuthData();
+        void firebaseAuth.signOut();
         navigate("/auth", { replace: true });
       }, SESSION_TIMEOUT);
     };

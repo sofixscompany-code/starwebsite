@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Navy blue background -->
+    <item>
+        <color android:color="#1E3A8A" />
+    </item>
+    <!-- Centered logo -->
+    <item
+        android:gravity="center"
+        android:width="140dp"
+        android:height="140dp">
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/ic_launcher"
+            android:tint="#D4AF37" />
+    </item>
+    <!-- App name text -->
+    <item
+        android:gravity="center"
+        android:bottom="80dp">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash" />
+    </item>
+</layer-list>

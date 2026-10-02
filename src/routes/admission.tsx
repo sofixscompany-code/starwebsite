@@ -1,805 +1,563 @@
-﻿import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
-  CheckCircle2,
   Loader2,
+  Printer,
+  FileDown,
+  Eye,
+  Pencil,
+  Save,
+  Send,
+  Home,
   Copy,
   MessageCircle,
-  Printer,
-  Home,
-  UserPlus,
-  ArrowRight,
-  Shield,
-  LayoutDashboard,
-  ChevronRight,
-  ChevronLeft,
   AlertCircle,
-  Smartphone,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { collection, addDoc, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/firebase/config";
+import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { site } from "@/lib/site-config";
+import { whatsappDigits } from "@/lib/links";
+import { useLanguage } from "@/hooks/use-language";
+import { useAdmissionCourses } from "@/hooks/use-admission-courses";
+import { AdmissionDocument } from "@/components/admission/AdmissionDocument";
+import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
+import { PaymentMethodCard, usePaymentQrSettings } from "@/components/admission/PaymentMethodCard";
+import { PAYMENT_METHODS } from "@/lib/admission-form/types";
+import "@/components/admission/admission-print.css";
+import { applicableCourses } from "@/lib/admission-form/defaults";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { firebaseAuth } from "@/integrations/firebase/auth";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+  EMPTY_ADMISSION,
+  generateApplicationId,
+  type AdmissionFormData,
+  type AdmissionRecord,
+  type PricingSnapshot,
+  type Organization,
+  type AppliedPost,
+} from "@/lib/admission-form/types";
+import { validateAdmissionForm } from "@/lib/admission-form/validation";
 
-const WHATSAPP_NUMBER = "977984XXXXXXX";
+const DRAFT_KEY = "sci_admission_draft_v1";
+const WHATSAPP_NUMBER = whatsappDigits(site.whatsapp);
 
-const admissionSchema = z.object({
-  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
-  dateOfBirth: z.string().optional(),
-  gender: z.string().optional(),
-  phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
-  email: z.string().trim().email().max(255).optional().or(z.literal("")),
-  address: z.string().trim().min(3, "Address is required").max(250),
-  citizenshipNumber: z.string().trim().max(50).optional().or(z.literal("")),
-  parentName: z.string().trim().min(2, "Parent name is required").max(120),
-  parentPhone: z.string().trim().min(7, "Enter a valid phone number").max(20),
-  previousSchool: z.string().trim().max(150).optional().or(z.literal("")),
-  previousQualification: z.string().trim().max(150).optional().or(z.literal("")),
-  courseId: z.string().min(1, "Please select a course"),
-  notes: z.string().trim().max(500).optional().or(z.literal("")),
-});
-
-type AdmissionSearch = { course?: string };
-
-export function generateAdmissionNumber() {
-  const year = new Date().getFullYear();
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `SCI-${year}-${rand}`;
-}
-
-export function formatWhatsAppMessage(data: {
-  admissionNumber: string;
-  fullName: string;
-  phone: string;
-  courseTitle: string;
-  parentName: string;
-  parentPhone: string;
-  address: string;
-}) {
-  return encodeURIComponent(
-    ` *New Admission — Star Coaching Institute*\n\n` +
-      ` *Admission #:* ${data.admissionNumber}\n` +
-      ` *Name:* ${data.fullName}\n` +
-      ` *Phone:* ${data.phone}\n` +
-      ` *Course:* ${data.courseTitle}\n` +
-      ` *Guardian:* ${data.parentName}\n` +
-      ` *Guardian Phone:* ${data.parentPhone}\n` +
-      ` *Address:* ${data.address}\n\n` +
-      `_Please verify and process this admission._`,
-  );
-}
-
-const STEPS = ["Personal Info", "Guardian", "Education", "Course", "Review"];
+type Mode = "edit" | "preview" | "success";
 
 export function AdmissionPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<AdmissionResult | null>(null);
+  const [searchParams] = useSearchParams();
+
+  const { data: courses = [] } = useAdmissionCourses();
+  const [form, setForm] = useState<AdmissionFormData>(() => ({ ...EMPTY_ADMISSION }));
+  const [mode, setMode] = useState<Mode>("edit");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [applicationId, setApplicationId] = useState("");
+  const restored = useRef(false);
+  // QR config for the success screen (always mounted — rules of hooks).
+  const { data: qrCfg } = usePaymentQrSettings();
 
-  const { data: courses = [] } = useQuery({
-    queryKey: ["admission-courses"],
-    queryFn: async () => {
-      const q = query(
-        collection(db, "courses"),
-        where("isActive", "==", true),
-        orderBy("sortOrder"),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    },
-  });
-
-  const [form, setForm] = useState({
-    fullName: "",
-    dateOfBirth: "",
-    gender: "",
-    phone: "",
-    email: "",
-    address: "",
-    citizenshipNumber: "",
-    parentName: "",
-    parentPhone: "",
-    previousSchool: "",
-    previousQualification: "",
-    courseId: "",
-    notes: "",
-  });
-
-  const prefillSlug = "";
-  const prefilledCourse = prefillSlug
-    ? courses.find((c: any) => c.slug === prefillSlug)
-    : undefined;
-  useEffect(() => {
-    if (prefilledCourse && !form.courseId) {
-      setForm((f) => ({ ...f, courseId: prefilledCourse.id }));
-    }
-  }, [prefilledCourse, courses]);
-
-  const handleChange =
-    (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm((f) => ({ ...f, [key]: e.target.value }));
-      if (errors[key])
-        setErrors((prev) => {
-          const n = { ...prev };
-          delete n[key];
+  const patch = (p: Partial<AdmissionFormData>) => {
+    setForm((f) => ({ ...f, ...p }));
+    if (Object.keys(p).length === 1) {
+      const k = Object.keys(p)[0];
+      if (errors[k])
+        setErrors((e) => {
+          const n = { ...e };
+          delete n[k];
           return n;
         });
-    };
-
-  const validateStep = (s: number): boolean => {
-    const fields: Record<number, (keyof typeof form)[]> = {
-      0: ["fullName", "phone", "address"],
-      1: ["parentName", "parentPhone"],
-      2: [],
-      3: ["courseId"],
-      4: [],
-    };
-    const required = fields[s] || [];
-    const newErrors: Record<string, string> = {};
-    required.forEach((f) => {
-      if (!form[f] || (typeof form[f] === "string" && !(form[f] as string).trim())) {
-        newErrors[f] = "This field is required";
-      }
-    });
-    if (s === 0 && form.phone && form.phone.replace(/\D/g, "").length < 7) {
-      newErrors.phone = "Enter a valid phone number";
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  const nextStep = () => {
-    if (validateStep(step)) setStep((s) => Math.min(s + 1, 4));
-  };
-  const prevStep = () => setStep((s) => Math.max(s - 1, 0));
+  /* ── Restore saved draft ── */
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<AdmissionFormData>;
+        if (parsed && typeof parsed === "object" && parsed.studentName) {
+          setForm({ ...EMPTY_ADMISSION, ...parsed, status: "Draft" });
+          toast.info("Saved draft restored.");
+        }
+      }
+    } catch {
+      /* ignore broken drafts */
+    }
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStep(4)) return;
+  /* ── ?course=<id> deep-link (Courses page "Apply for this course") ── */
+  const courseIdParam = searchParams.get("course") ?? "";
+  // Public `courses` collection uses different IDs than `admission_courses`;
+  // resolve the public course name first so the deep-link keeps working.
+  const { data: publicCourses = [] } = useQuery({
+    queryKey: ["public-courses-lite"],
+    queryFn: async () => {
+      try {
+        const snap = await getDocs(collection(db, "courses"));
+        return snap.docs.map((d) => ({
+          id: d.id,
+          name: String((d.data() as { name?: string }).name ?? ""),
+        }));
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  useEffect(() => {
+    if (!courseIdParam || form.courseId || courses.length === 0) return;
+
+    const label =
+      publicCourses.find((c) => c.id === courseIdParam)?.name ??
+      decodeURIComponent(courseIdParam).replace(/-/g, " ");
+    const q = label.toLowerCase().trim();
+
+    const score = (name: string) => {
+      const n = name.toLowerCase();
+      if (n === q) return 100;
+      if (q.length > 3 && n.includes(q)) return 80;
+      const words = q.split(/\s+/).filter((w) => w.length > 3);
+      return words.filter((w) => n.includes(w)).length;
+    };
+    const best = courses.map((c) => ({ c, s: score(c.name) })).sort((a, b) => b.s - a.s)[0];
+
+    // Derive organization/post from the public course label as a fallback.
+    const orgGuess: Organization | "" = /police/.test(q)
+      ? "Nepal Police"
+      : /army|sainik|soldier/.test(q)
+        ? "Nepal Army"
+        : /\bapf\b|armed police/.test(q)
+          ? "APF"
+          : "";
+    const postGuess: AppliedPost | "" = /sub.?inspector|\basi\b/.test(q)
+      ? "Sub-Inspector (ASI)"
+      : /inspector/.test(q)
+        ? "Inspector"
+        : /jawan|constable|soldier|guard/.test(q)
+          ? "Jawan"
+          : "";
+
+    let hit = best && best.s >= 2 ? best.c : null;
+    if (!hit && (orgGuess || postGuess)) {
+      hit = applicableCourses(courses, orgGuess, postGuess)[0] ?? null;
+    }
+    if (!hit) return;
+
+    patch({
+      courseId: hit.id,
+      courseName: hit.name,
+      classAppliedFor: hit.name,
+      organization: hit.organization || orgGuess || form.organization,
+      appliedPost: hit.post || postGuess || form.appliedPost,
+      coursePackage: "",
+      packageDuration: "",
+      pricingSnapshot: null,
+      totalPayment: null,
+    });
+    toast.info(`Course pre-selected: ${hit.name}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseIdParam, courses, publicCourses]);
+
+  const errList = useMemo(() => Object.entries(errors), [errors]);
+
+  const focusFirstError = (errs: Record<string, string>) => {
+    const first = Object.keys(errs)[0];
+    if (!first) return;
+    const el =
+      document.querySelector<HTMLElement>(`[data-sci-field="${first}"]`) ??
+      document.querySelector<HTMLElement>(".sci-error-msg");
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const doValidate = () => {
+    const errs = validateAdmissionForm(form);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error(`Please fix ${Object.keys(errs).length} field(s) before continuing.`);
+      focusFirstError(errs);
+      return false;
+    }
+    return true;
+  };
+
+  const saveDraft = () => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+      toast.success("Draft saved on this device.");
+    } catch {
+      toast.error("Could not save draft (storage full).");
+    }
+  };
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const printDoc = (pdf: boolean) => {
+    if (pdf) toast.info('Choose "Save as PDF" as the destination in the print dialog.');
+    setTimeout(() => window.print(), 120);
+  };
+
+  /* ── Submit to Firestore `admissions` ── */
+  const submit = async () => {
+    if (!doValidate()) return;
+
+    // Rebuild pricing snapshot at submission time (historical accuracy, §61).
+    const course = courses.find((c) => c.id === form.courseId);
+    const pkg = course?.packages.find((p) => p.name === form.coursePackage && p.active !== false);
+    const snapshot: PricingSnapshot | null =
+      pkg && course
+        ? {
+            admissionFee: pkg.admissionFee,
+            tuitionFee: pkg.tuitionFee,
+            examFee: pkg.examFee,
+            physicalFee: pkg.physicalFee,
+            additionalFee: pkg.additionalFee,
+            totalFee: pkg.totalFee,
+            package: pkg.name,
+            course: course.name,
+            capturedAt: Date.now(),
+          }
+        : form.pricingSnapshot;
+    if (!snapshot) {
+      setErrors({ coursePackage: "Select a course package to calculate the fee." });
+      toast.error("Select a course package.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const parsed = admissionSchema.safeParse(form);
-      if (!parsed.success) {
-        toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
-        setSubmitting(false);
-        return;
-      }
-
-      const chosen = courses.find((c: any) => c.id === form.courseId);
-      if (!chosen) {
-        toast.error("Please select a valid course.");
-        setSubmitting(false);
-        return;
-      }
-
-      const { data: userData } = await firebaseAuth.getUser();
-      const admissionNumber = generateAdmissionNumber();
-
-      await addDoc(collection(db, "admissions"), {
-        admissionNumber,
-        fullName: form.fullName.trim(),
-        dateOfBirth: form.dateOfBirth || null,
-        gender: form.gender || null,
-        phone: form.phone.trim(),
-        email: form.email.trim() || null,
-        address: form.address.trim(),
-        citizenshipNumber: form.citizenshipNumber.trim() || null,
-        parentName: form.parentName.trim(),
-        parentPhone: form.parentPhone.trim(),
-        previousSchool: form.previousSchool.trim() || null,
-        previousQualification: form.previousQualification.trim() || null,
-        courseId: chosen.id,
-        courseTitle: (chosen as any).title,
-        courseCategory: (chosen as any).category || null,
-        notes: form.notes.trim() || null,
-        userId: userData?.user?.uid ?? null,
-        status: "pending",
-        createdAt: serverTimestamp(),
-      });
-
-      setResult({
-        admissionNumber,
-        fullName: form.fullName.trim(),
-        phone: form.phone.trim(),
-        courseTitle: (chosen as any).title,
-        parentName: form.parentName.trim(),
-        parentPhone: form.parentPhone.trim(),
-        address: form.address.trim(),
-      });
-      toast.success("Application submitted successfully!");
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+      const id = generateApplicationId();
+      const record: AdmissionRecord = {
+        ...form,
+        courseName: course?.name ?? form.courseName,
+        classAppliedFor: course?.name ?? form.classAppliedFor,
+        pricingSnapshot: snapshot,
+        totalPayment: snapshot.totalFee,
+        paymentReference: form.paymentReference.trim(),
+        paymentChosenAt: form.paymentMethod ? Date.now() : undefined,
+        applicationId: id,
+        admissionNumber: "",
+        billNumber: "",
+        status: "Submitted",
+        createdAt: Date.now(),
+        submittedAt: Date.now(),
+      };
+      await addDoc(collection(db, "admissions"), record as unknown as Record<string, unknown>);
+      clearDraft();
+      setApplicationId(id);
+      setMode("success");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      toast.error("Submission failed. Check your connection and try again.");
+      console.error(e);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (result) {
-    return <SuccessPage result={result} navigate={navigate} />;
-  }
+  const resetAll = () => {
+    if (!confirm("Start a new application? Current fields will be cleared.")) return;
+    clearDraft();
+    setForm({ ...EMPTY_ADMISSION });
+    setErrors({});
+    setApplicationId("");
+    setMode("edit");
+    navigate("/admission");
+  };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-
-      {/* Role-based demo bar */}
-      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white py-2">
-        <div className="max-w-4xl mx-auto px-4 flex items-center justify-center gap-3 text-sm">
-          <span className="font-semibold">Demo Mode:</span>
-          <button
-            onClick={() => navigate("/auth")}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition font-medium"
-          >
-            <LayoutDashboard className="w-3.5 h-3.5" /> Student Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/admin")}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition font-medium"
-          >
-            <Shield className="w-3.5 h-3.5" /> Admin Panel
-          </button>
-        </div>
-      </div>
-
-      <main className="flex-1">
-        <section className="bg-navy text-navy-foreground py-10 md:py-14">
-          <div className="max-w-3xl mx-auto px-4 text-center">
-            <p className="text-xs uppercase tracking-widest text-gold font-bold">
-              Admission Open 2083/84 BS
-            </p>
-            <h1 className="font-display font-black text-3xl md:text-4xl mt-2">Online Admission</h1>
-            <p className="mt-3 text-white/70">
-              Fill this form and we'll generate your admission number instantly.
-            </p>
-          </div>
-        </section>
-
-        <section className="py-8 md:py-12">
-          <div className="max-w-3xl mx-auto px-4">
-            {/* Step indicator */}
-            <div className="flex items-center justify-between mb-8 px-2">
-              {STEPS.map((s, i) => (
-                <div key={s} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                        i < step
-                          ? "ap-grad text-white"
-                          : i === step
-                            ? "ap-grad text-white ring-4 ring-purple-200"
-                            : "bg-gray-200 text-gray-500"
-                      }`}
-                    >
-                      {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
-                    </div>
-                    <span
-                      className={`text-[10px] mt-1.5 font-semibold hidden sm:block ${
-                        i <= step ? "text-navy" : "text-gray-400"
-                      }`}
-                    >
-                      {s}
-                    </span>
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-2 ${i < step ? "ap-grad" : "bg-gray-200"}`} />
-                  )}
-                </div>
-              ))}
+  /* ── Success screen ── */
+  if (mode === "success") {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#eef1f5] sci-print-root">
+        <SiteHeader />
+        <main className="flex-1 flex items-center justify-center px-4 py-12 no-print">
+          <div className="bg-white rounded-2xl shadow-xl border max-w-lg w-full p-8 text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <Send className="text-green-600" size={28} />
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Step 0: Personal Info */}
-              {step === 0 && (
-                <FormSection title="Student Information" icon={UserPlus}>
-                  <Field label="Full Name *" error={errors.fullName}>
-                    <Input
-                      value={form.fullName}
-                      onChange={handleChange("fullName")}
-                      maxLength={120}
-                      placeholder="Enter your full name"
-                      className={errors.fullName ? "border-red-400" : ""}
-                    />
-                  </Field>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Date of Birth">
-                      <Input
-                        type="date"
-                        value={form.dateOfBirth}
-                        onChange={handleChange("dateOfBirth")}
-                      />
-                    </Field>
-                    <Field label="Gender">
-                      <Select
-                        value={form.gender}
-                        onValueChange={(v) => setForm((f) => ({ ...f, gender: v }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Phone *" error={errors.phone}>
-                      <Input
-                        value={form.phone}
-                        onChange={handleChange("phone")}
-                        maxLength={20}
-                        placeholder="98XXXXXXXX"
-                        className={errors.phone ? "border-red-400" : ""}
-                      />
-                    </Field>
-                    <Field label="Email">
-                      <Input
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange("email")}
-                        maxLength={255}
-                        placeholder="your@email.com"
-                      />
-                    </Field>
-                  </div>
-                  <Field label="Full Address *" error={errors.address}>
-                    <Input
-                      value={form.address}
-                      onChange={handleChange("address")}
-                      maxLength={250}
-                      placeholder="Municipality, Ward, District"
-                      className={errors.address ? "border-red-400" : ""}
-                    />
-                  </Field>
-                  <Field label="Citizenship Number">
-                    <Input
-                      value={form.citizenshipNumber}
-                      onChange={handleChange("citizenshipNumber")}
-                      maxLength={50}
-                      placeholder="XX-XX-XX-XXXXX"
-                    />
-                  </Field>
-                </FormSection>
-              )}
-
-              {/* Step 1: Guardian */}
-              {step === 1 && (
-                <FormSection title="Parent / Guardian" icon={UserPlus}>
-                  <Field label="Parent / Guardian Name *" error={errors.parentName}>
-                    <Input
-                      value={form.parentName}
-                      onChange={handleChange("parentName")}
-                      maxLength={120}
-                      placeholder="Father/Mother/Guardian name"
-                      className={errors.parentName ? "border-red-400" : ""}
-                    />
-                  </Field>
-                  <Field label="Parent Phone *" error={errors.parentPhone}>
-                    <Input
-                      value={form.parentPhone}
-                      onChange={handleChange("parentPhone")}
-                      maxLength={20}
-                      placeholder="98XXXXXXXX"
-                      className={errors.parentPhone ? "border-red-400" : ""}
-                    />
-                  </Field>
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-                    <p className="text-sm text-blue-800">
-                      We'll use this number to contact your guardian regarding admission
-                      verification and fee details.
-                    </p>
-                  </div>
-                </FormSection>
-              )}
-
-              {/* Step 2: Education */}
-              {step === 2 && (
-                <FormSection title="Education Background" icon={UserPlus}>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Previous School">
-                      <Input
-                        value={form.previousSchool}
-                        onChange={handleChange("previousSchool")}
-                        maxLength={150}
-                        placeholder="School name"
-                      />
-                    </Field>
-                    <Field label="Last Qualification">
-                      <Input
-                        value={form.previousQualification}
-                        onChange={handleChange("previousQualification")}
-                        maxLength={150}
-                        placeholder="e.g. SEE, +2, BSc"
-                      />
-                    </Field>
-                  </div>
-                </FormSection>
-              )}
-
-              {/* Step 3: Course */}
-              {step === 3 && (
-                <FormSection title="Course Selection" icon={UserPlus}>
-                  <Field label="Choose Course *" error={errors.courseId}>
-                    <Select
-                      value={form.courseId}
-                      onValueChange={(v) => setForm((f) => ({ ...f, courseId: v }))}
-                    >
-                      <SelectTrigger className={errors.courseId ? "border-red-400" : ""}>
-                        <SelectValue placeholder="Select a course" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses.map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {(c as any).title}
-                            {c.feeNpr && (
-                              <span className="text-muted-foreground ml-2">
-                                · ₹{c.feeNpr.toLocaleString()}
-                              </span>
-                            )}
-                          </SelectItem>
-                        ))}
-                        {courses.length === 0 && (
-                          <SelectItem value="_none" disabled>
-                            Loading courses...
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
-                  {form.courseId && (
-                    <div className="ap-card p-4 bg-purple-50 border-purple-200">
-                      {(() => {
-                        const c = courses.find((x: any) => x.id === form.courseId);
-                        if (!c) return null;
-                        return (
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-xl ap-grad flex items-center justify-center text-white shrink-0">
-                              <CheckCircle2 className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="font-bold text-navy">{(c as any).title}</p>
-                              <p className="text-xs text-muted-foreground">{(c as any).category}</p>
-                              {(c as any).duration && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Duration: {(c as any).duration}
-                                </p>
-                              )}
-                              {(c as any).feeNpr && (
-                                <p className="text-sm font-bold text-green-700 mt-1">
-                                  Fee: ₹{(c as any).feeNpr.toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  <Field label="Notes (optional)">
-                    <Textarea
-                      value={form.notes}
-                      onChange={handleChange("notes")}
-                      maxLength={500}
-                      rows={3}
-                      placeholder="Any specific request or question"
-                    />
-                  </Field>
-                </FormSection>
-              )}
-
-              {/* Step 4: Review */}
-              {step === 4 && (
-                <FormSection title="Review & Submit" icon={UserPlus}>
-                  <div className="space-y-3">
-                    <ReviewRow label="Name" value={form.fullName} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <ReviewRow label="Phone" value={form.phone} />
-                      <ReviewRow label="Email" value={form.email || "—"} />
-                    </div>
-                    <ReviewRow label="Address" value={form.address} />
-                    <ReviewRow label="Date of Birth" value={form.dateOfBirth || "—"} />
-                    <ReviewRow label="Gender" value={form.gender || "—"} />
-                    <div className="border-t pt-3 mt-3">
-                      <ReviewRow label="Guardian" value={form.parentName} />
-                      <ReviewRow label="Guardian Phone" value={form.parentPhone} />
-                    </div>
-                    {form.previousSchool && (
-                      <ReviewRow label="Previous School" value={form.previousSchool} />
-                    )}
-                    {form.previousQualification && (
-                      <ReviewRow label="Qualification" value={form.previousQualification} />
-                    )}
-                    <div className="border-t pt-3 mt-3">
-                      {(() => {
-                        const c = courses.find((x: any) => x.id === form.courseId);
-                        return c ? (
-                          <ReviewRow
-                            label="Course"
-                            value={`${(c as any).title} (${(c as any).category})`}
-                            highlight
-                          />
-                        ) : null;
-                      })()}
-                    </div>
-                    {form.notes && <ReviewRow label="Notes" value={form.notes} />}
-                  </div>
-
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 mt-4">
-                    <Smartphone className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-green-800">WhatsApp Confirmation</p>
-                      <p className="text-xs text-green-700 mt-1">
-                        After submission, you can share your admission details via WhatsApp for
-                        faster processing.
-                      </p>
-                    </div>
-                  </div>
-                </FormSection>
-              )}
-
-              {/* Agreement */}
-              <div className="bg-secondary/60 border border-border rounded-2xl p-5 text-sm text-muted-foreground">
-                By submitting this form, you agree to be contacted by Star Coaching Institute
-                regarding your admission. Fee payment (eSewa · Khalti · FonePay · IME Pay · Cash) is
-                handled after verification.
-              </div>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between gap-3">
-                {step > 0 ? (
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="ap-btn-ghost flex items-center gap-2"
-                  >
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                {step < 4 ? (
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="ap-btn flex items-center gap-2"
-                  >
-                    Next <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold shadow-red"
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" /> Submit Application
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </form>
-          </div>
-        </section>
-      </main>
-      <SiteFooter />
-    </div>
-  );
-}
-
-/* -------------------- SUCCESS PAGE -------------------- */
-interface AdmissionResult {
-  admissionNumber: string;
-  fullName: string;
-  phone: string;
-  courseTitle: string;
-  parentName: string;
-  parentPhone: string;
-  address: string;
-}
-
-export function SuccessPage({
-  result,
-  navigate,
-}: {
-  result: AdmissionResult;
-  navigate: (to: string) => void;
-}) {
-  const waMsg = formatWhatsAppMessage(result);
-  const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`;
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-      <main className="flex-1 py-10">
-        <div className="max-w-lg mx-auto px-4">
-          <div className="bg-white border-2 border-green-300 rounded-2xl p-8 text-center shadow-lg">
-            <div className="w-20 h-20 rounded-full bg-green-100 text-green-600 mx-auto flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-            <h1 className="font-display font-black text-2xl text-navy mt-4">
-              Admission Submitted!
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Welcome, <strong className="text-foreground">{result.fullName}</strong>. Our team will
-              call you shortly.
+            <h1 className="text-2xl font-extrabold text-navy">Application Submitted</h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Your admission form has been received. The institute will contact you on your mobile
+              number for verification.
             </p>
-
-            <div className="mt-6 bg-navy text-navy-foreground rounded-xl p-5">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold">
-                Your Admission Number
+            <div className="mt-5 border border-dashed border-brand-red/50 rounded-xl p-4 bg-red-50/50">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                Application ID
               </p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <p className="font-display font-black text-3xl tracking-wider">
-                  {result.admissionNumber}
-                </p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(result.admissionNumber);
-                    toast.success("Copied!");
-                  }}
-                  className="p-2 rounded-lg hover:bg-white/10 transition"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-[11px] text-white/60 mt-2">
-                Keep this number safe for your first visit.
+              <p className="text-xl font-extrabold text-brand-red mt-1 select-all">
+                {applicationId}
               </p>
-            </div>
-
-            {/* Quick info */}
-            <div className="mt-4 grid grid-cols-2 gap-3 text-left">
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] uppercase text-muted-foreground font-bold">Course</p>
-                <p className="text-sm font-semibold text-navy">{result.courseTitle}</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[10px] uppercase text-muted-foreground font-bold">Status</p>
-                <p className="text-sm font-semibold text-amber-600">Pending Verification</p>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="mt-6 space-y-3">
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition"
-              >
-                <MessageCircle className="w-5 h-5" /> Share via WhatsApp
-              </a>
-
               <button
-                onClick={() => window.print()}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-navy text-navy font-bold hover:bg-navy hover:text-white transition"
+                type="button"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  navigator.clipboard.writeText(applicationId);
+                  toast.success("Application ID copied.");
+                }}
               >
-                <Printer className="w-4 h-4" /> Print Admission Form
+                <Copy size={12} /> Copy ID
               </button>
             </div>
+            {form.paymentMethod && (
+              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                  Payment Method
+                </p>
+                <p className="mt-1 text-sm font-bold text-navy">
+                  {PAYMENT_METHODS.find((m) => m.value === form.paymentMethod)?.label ??
+                    form.paymentMethod}
+                  {form.paymentReference && (
+                    <span className="ml-1 font-mono text-xs font-semibold text-gray-500">
+                      · Ref: {form.paymentReference}
+                    </span>
+                  )}
+                </p>
+                {form.paymentMethod === "cod" ? (
+                  <p className="mt-1 text-xs text-gray-600">
+                    कुनै अग्रिम भुक्तानी छैन — भुक्तानी अफिसमा पहुँदा गर्नुहुनेछ। तपाईंको भुक्तानी
+                    विधि यस आवेदनसँगै रेकर्ड भइसकेको छ।
+                  </p>
+                ) : qrCfg?.[form.paymentMethod as "esewa" | "khalti" | "fonepay"] ? (
+                  <img
+                    src={qrCfg[form.paymentMethod as "esewa" | "khalti" | "fonepay"]}
+                    alt="Payment QR code"
+                    className="mt-2 h-36 w-36 rounded-lg border bg-white object-contain p-1"
+                  />
+                ) : (
+                  <p className="mt-1 text-xs text-gray-600">
+                    QR भुक्तानी गर्न भए व्हाट्सएप वा अफिसबाट QR कोड लिनुहोस्।
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => printDoc(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold hover:bg-gray-50"
+              >
+                <FileDown size={15} /> Download PDF
+              </button>
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                  `Namaste! I have submitted an online admission application at Star Coaching Institute.\nApplication ID: ${applicationId}\nName: ${form.studentName}\nCourse: ${form.courseName}\nTotal Fee: Rs. ${form.totalPayment?.toLocaleString("en-IN") ?? "-"}`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 text-white px-4 py-2.5 text-sm font-bold hover:bg-green-700"
+              >
+                <MessageCircle size={15} /> Share on WhatsApp
+              </a>
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold hover:bg-gray-50"
+              >
+                <Home size={15} /> Home
+              </Link>
+              <button
+                type="button"
+                onClick={resetAll}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold hover:bg-gray-50"
+              >
+                <RotateCcw size={15} /> New Application
+              </button>
+            </div>
+          </div>
+        </main>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-2">
-              <Button
-                className="flex-1 bg-brand-red hover:bg-brand-red/90 text-brand-red-foreground font-bold"
-                onClick={() => navigate("/auth")}
+        {/* Submitted document — exactly what will print / export as PDF */}
+        <div className="sci-paper-scroll">
+          <AdmissionDocument data={form} courses={courses} mode="readonly" onChange={() => {}} />
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  const editing = mode === "edit";
+
+  return (
+    <div className="min-h-screen flex flex-col sci-print-root">
+      <SiteHeader />
+
+      {/* Hero strip */}
+      <div className="bg-brand-red text-white no-print">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display">
+            {t("admissionOpen")} {t("admissionYear")} BS
+          </h1>
+          <p className="text-white/80 text-sm mt-1.5">{t("admissionFormHint")}</p>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="bg-white border-b sticky top-0 z-40 no-print shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mr-auto">
+            Digital Admission Form — 2 Page A4 Document
+          </span>
+
+          {editing ? (
+            <>
+              <ToolbarBtn icon={<Save size={14} />} label="Save Draft" onClick={saveDraft} />
+              <ToolbarBtn
+                icon={<Printer size={14} />}
+                label="Print"
+                onClick={() => printDoc(false)}
+              />
+              <ToolbarBtn
+                icon={<FileDown size={14} />}
+                label="Download PDF"
+                onClick={() => printDoc(true)}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("preview");
+                  setErrors({});
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-red text-brand-red px-3.5 py-2 text-xs font-bold hover:bg-brand-red/5"
               >
-                <UserPlus className="w-4 h-4 mr-1.5" /> Create Login
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 border-navy text-navy font-bold"
-                onClick={() => navigate("/")}
+                <Eye size={14} /> Preview
+              </button>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={submitting}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-red text-white px-4 py-2 text-xs font-bold hover:bg-brand-red/90 disabled:opacity-60"
               >
-                <Home className="w-4 h-4 mr-1.5" /> Go Home
-              </Button>
+                {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                {submitting ? "Submitting…" : "Submit Application"}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("edit");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold hover:bg-gray-50"
+              >
+                <Pencil size={14} /> Back to Edit
+              </button>
+              <ToolbarBtn
+                icon={<Printer size={14} />}
+                label="Print"
+                onClick={() => printDoc(false)}
+              />
+              <ToolbarBtn
+                icon={<FileDown size={14} />}
+                label="Download PDF"
+                onClick={() => printDoc(true)}
+              />
+              <button
+                type="button"
+                onClick={submit}
+                disabled={submitting}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-red text-white px-4 py-2 text-xs font-bold hover:bg-brand-red/90 disabled:opacity-60"
+              >
+                {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                {submitting ? "Submitting…" : "Submit Application"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Error summary */}
+      {editing && errList.length > 0 && (
+        <div className="max-w-7xl mx-auto w-full px-4 pt-4 no-print">
+          <div className="rounded-lg border border-brand-red/40 bg-red-50 px-4 py-3 text-sm flex gap-2">
+            <AlertCircle size={16} className="text-brand-red mt-0.5 shrink-0" />
+            <div>
+              <p className="font-bold text-brand-red">
+                {errList.length} field(s) need attention before submission:
+              </p>
+              <ul className="mt-1 list-disc pl-5 text-xs text-red-800/90 space-y-0.5">
+                {errList.slice(0, 6).map(([k, v]) => (
+                  <li key={k}>{v}</li>
+                ))}
+                {errList.length > 6 && <li>…and {errList.length - 6} more</li>}
+              </ul>
             </div>
           </div>
         </div>
-      </main>
+      )}
+
+      {/* Workspace */}
+      <div className="sci-workspace no-print-bg">
+        <aside className="sci-side no-print">
+          <FeeBreakdown pricing={form.pricingSnapshot} />
+          <PaymentMethodCard
+            value={form.paymentMethod}
+            reference={form.paymentReference}
+            amount={form.pricingSnapshot?.totalFee ?? form.totalPayment}
+            error={errors.paymentMethod}
+            onChange={(m) => patch({ paymentMethod: m })}
+            onReferenceChange={(v) => patch({ paymentReference: v })}
+          />
+          <div className="sci-side-card">
+            <p className="sci-side-title">How it works</p>
+            <ol className="sci-side-steps">
+              <li>Fill both pages of the form (draft saves on this device).</li>
+              <li>Preview to check exactly what will print.</li>
+              <li>Print or Download PDF (A4, 2 pages).</li>
+              <li>Submit — you get an Application ID instantly.</li>
+            </ol>
+            <p className="sci-side-note">
+              Office fields (Admission No., Bill No., signatures) are filled by the institute only.
+            </p>
+          </div>
+        </aside>
+
+        <div className="sci-paper-scroll">
+          <AdmissionDocument
+            data={form}
+            courses={courses}
+            mode={editing ? "edit" : "readonly"}
+            errors={errors}
+            onChange={patch}
+          />
+        </div>
+      </div>
+
       <SiteFooter />
     </div>
   );
 }
 
-/* -------------------- FORM COMPONENTS -------------------- */
-export function FormSection({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-white border border-border rounded-2xl p-5 md:p-6 space-y-4">
-      <div className="flex items-center gap-2 pb-3 border-b border-border">
-        <div className="w-8 h-8 rounded-lg ap-grad flex items-center justify-center text-white">
-          <Icon className="w-4 h-4" />
-        </div>
-        <h2 className="font-display font-black text-lg text-navy">{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-export function Field({
+function ToolbarBtn({
+  icon,
   label,
-  children,
-  error,
+  onClick,
 }: {
+  icon: React.ReactNode;
   label: string;
-  children: React.ReactNode;
-  error?: string;
+  onClick: () => void;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wider font-bold text-foreground/80">
-        {label}
-      </Label>
-      {children}
-      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-    </div>
-  );
-}
-
-export function ReviewRow({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex justify-between items-start py-1.5">
-      <span className="text-xs uppercase text-muted-foreground font-bold">{label}</span>
-      <span
-        className={`text-sm text-right max-w-[60%] ${highlight ? "font-bold text-navy" : "font-medium"}`}
-      >
-        {value}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold hover:bg-gray-50"
+    >
+      {icon} {label}
+    </button>
   );
 }

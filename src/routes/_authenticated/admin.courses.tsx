@@ -1,4 +1,4 @@
-﻿import {} from "react-router-dom";
+import {} from "react-router-dom";
 import { useState, useMemo } from "react";
 import {
   BookOpen,
@@ -31,26 +31,55 @@ import { StatCard, Panel, Badge, Toolbar, Tabs, Modal, ProgressBar } from "@/com
 import { useCourses } from "@/hooks/use-lms";
 import { toast } from "sonner";
 
+const EMPTY_COURSE = {
+  title: "",
+  slug: "",
+  category: "Public Service",
+  duration: "",
+  price: 0,
+  shortDescription: "",
+  level: "beginner" as "beginner" | "intermediate" | "advanced",
+  totalLessons: 0,
+  order: 0,
+  isPublished: true,
+};
+
+function exportCsv(
+  rows: Record<string, unknown>[],
+  keys: { key: string; label: string }[],
+  file: string,
+) {
+  if (!rows.length) return toast.error("No data to export");
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [
+    keys.map((k) => k.label).join(","),
+    ...rows.map((r) => keys.map((k) => esc(r[k.key])).join(",")),
+  ].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = file;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Exported successfully");
+}
+
 export function CoursesPage() {
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState("all");
   const [activeTab, setActiveTab] = useState("catalog");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
-  const [newCourse, setNewCourse] = useState({
-    title: "",
-    slug: "",
-    category: "Public Service",
-    duration: "",
-    price: 0,
-    shortDescription: "",
-    level: "beginner" as "beginner" | "intermediate" | "advanced",
-    totalLessons: 0,
-    order: 0,
-    isPublished: true,
-  });
+  const [newCourse, setNewCourse] = useState({ ...EMPTY_COURSE });
   const [saving, setSaving] = useState(false);
 
   const { courses, isLoading, addCourse, updateCourse, deleteCourse } = useCourses();
+
+  const categories = useMemo(
+    () => ["all", ...Array.from(new Set(courses.map((c) => c.category).filter(Boolean)))],
+    [courses],
+  );
 
   const uiCourses = useMemo(
     () =>
@@ -70,9 +99,10 @@ export function CoursesPage() {
 
   const filtered = uiCourses.filter(
     (c) =>
-      !q ||
-      c.title.toLowerCase().includes(q.toLowerCase()) ||
-      c.category.toLowerCase().includes(q.toLowerCase()),
+      (!q ||
+        c.title.toLowerCase().includes(q.toLowerCase()) ||
+        c.category.toLowerCase().includes(q.toLowerCase())) &&
+      (category === "all" || c.category === category),
   );
 
   const totalStudents = useMemo(() => uiCourses.reduce((s, c) => s + c.students, 0), [uiCourses]);
@@ -91,52 +121,68 @@ export function CoursesPage() {
     [uiCourses],
   );
 
-  const handleCreate = async () => {
+  const openEdit = (course: any) => {
+    setSelectedCourse(null);
+    setNewCourse({
+      title: course.title || "",
+      slug: course.slug || "",
+      category: course.category || "Public Service",
+      duration: course.duration || "",
+      price: course.price || 0,
+      shortDescription: course.shortDescription || course.description || "",
+      level: (course.level || "beginner") as typeof EMPTY_COURSE.level,
+      totalLessons: course.totalLessons || 0,
+      order: course.order || 0,
+      isPublished: course.isPublished ?? true,
+    });
+    setEditingId(course.id);
+    setModalOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!newCourse.title || !newCourse.slug) {
       toast.error("Title and slug are required");
       return;
     }
     setSaving(true);
     try {
-      await addCourse.mutateAsync({
-        title: newCourse.title,
-        slug: newCourse.slug,
-        category: newCourse.category,
-        duration: newCourse.duration,
-        price: newCourse.price,
-        shortDescription: newCourse.shortDescription,
-        description: newCourse.shortDescription,
-        level: newCourse.level,
-        totalLessons: newCourse.totalLessons,
-        order: newCourse.order || uiCourses.length + 1,
-        isPublished: newCourse.isPublished,
-        imageUrl: "",
-        discountPrice: 0,
-        totalStudents: 0,
-        rating: 0,
-        instructor: "",
-        instructorAvatar: "",
-        tags: [],
-        isActive: true,
-      } as any);
-      toast.success("Course created");
+      if (editingId) {
+        await updateCourse.mutateAsync({ id: editingId, ...newCourse });
+        toast.success("Course updated");
+      } else {
+        await addCourse.mutateAsync({
+          ...newCourse,
+          description: newCourse.shortDescription,
+          order: newCourse.order || uiCourses.length + 1,
+          imageUrl: "",
+          discountPrice: 0,
+          totalStudents: 0,
+          rating: 0,
+          instructor: "",
+          instructorAvatar: "",
+          tags: [],
+          isActive: true,
+        } as any);
+        toast.success("Course created");
+      }
       setModalOpen(false);
-      setNewCourse({
-        title: "",
-        slug: "",
-        category: "Public Service",
-        duration: "",
-        price: 0,
-        shortDescription: "",
-        level: "beginner",
-        totalLessons: 0,
-        order: 0,
-        isPublished: true,
-      });
+      setEditingId(null);
+      setNewCourse({ ...EMPTY_COURSE });
     } catch {
-      toast.error("Failed to create course");
+      toast.error(editingId ? "Failed to update course" : "Failed to create course");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (course: any) => {
+    if (!confirm(`Delete "${course.title}"? This cannot be undone.`)) return;
+    try {
+      await deleteCourse.mutateAsync(course.id);
+      setSelectedCourse(null);
+      toast.success("Course deleted");
+    } catch {
+      toast.error("Failed to delete course");
     }
   };
 
@@ -147,10 +193,34 @@ export function CoursesPage() {
         subtitle="Course catalog, batches, seats, fees & enrollment management."
         actions={
           <>
-            <button className="ap-btn-ghost">
+            <button
+              className="ap-btn-ghost"
+              onClick={() =>
+                exportCsv(
+                  filtered,
+                  [
+                    { key: "title", label: "Title" },
+                    { key: "slug", label: "Slug" },
+                    { key: "category", label: "Category" },
+                    { key: "duration", label: "Duration" },
+                    { key: "fee", label: "Fee" },
+                    { key: "students", label: "Students" },
+                    { key: "status", label: "Status" },
+                  ],
+                  "courses-export.csv",
+                )
+              }
+            >
               <Download className="w-4 h-4" /> Export
             </button>
-            <button className="ap-btn" onClick={() => setModalOpen(true)}>
+            <button
+              className="ap-btn"
+              onClick={() => {
+                setEditingId(null);
+                setNewCourse({ ...EMPTY_COURSE });
+                setModalOpen(true);
+              }}
+            >
               <Plus className="w-4 h-4" /> Add Course
             </button>
           </>
@@ -161,8 +231,8 @@ export function CoursesPage() {
         <StatCard label="Active Students" value={totalStudents} icon={Users} tone="success" />
         <StatCard label="Total Batches" value={totalBatches} icon={Clock} tone="orange" />
         <StatCard
-          label="Revenue MTD"
-          prefix="₹"
+          label="Gross Value"
+          prefix="Rs"
           value={totalRevenue}
           icon={Wallet}
           tone="success"
@@ -193,16 +263,16 @@ export function CoursesPage() {
                   className="ap-input pl-9"
                 />
               </div>
-              <button className="ap-btn-ghost">
-                <Filter className="w-4 h-4" /> Filters
-              </button>
-              <select className="ap-input max-w-[180px]">
-                <option>All categories</option>
-                <option>Public Service</option>
-                <option>Banking</option>
-                <option>Army</option>
-                <option>Armed Police</option>
-                <option>Entrance</option>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="ap-input max-w-[180px]"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c === "all" ? "All categories" : c}
+                  </option>
+                ))}
               </select>
             </Toolbar>
 
@@ -262,7 +332,7 @@ export function CoursesPage() {
                             </span>
                           </div>
                           <span className="font-bold text-[hsl(var(--ap-success))]">
-                            ₹{c.fee.toLocaleString()}
+                            Rs {c.fee.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -361,7 +431,7 @@ export function CoursesPage() {
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[hsl(var(--ap-success))] w-24 text-right">
-                      ₹{(c.fee * c.students).toLocaleString()}
+                      Rs {(c.fee * c.students).toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -390,11 +460,24 @@ export function CoursesPage() {
       </div>
 
       <Modal open={!!selectedCourse} onClose={() => setSelectedCourse(null)} size="lg">
-        {selectedCourse && <CourseDetail course={selectedCourse} />}
+        {selectedCourse && (
+          <CourseDetail
+            course={selectedCourse}
+            onEdit={() => openEdit(selectedCourse)}
+            onDelete={() => handleDelete(selectedCourse)}
+          />
+        )}
       </Modal>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} size="lg">
-        <h2 className="text-xl font-black mb-1">Add New Course</h2>
+      <Modal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingId(null);
+        }}
+        size="lg"
+      >
+        <h2 className="text-xl font-black mb-1">{editingId ? "Edit Course" : "Add New Course"}</h2>
         <p className="text-sm text-[hsl(var(--ap-muted))] mb-6">
           Create a new course with details, fees, and batches.
         </p>
@@ -489,12 +572,18 @@ export function CoursesPage() {
           </label>
         </div>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModalOpen(false)} className="ap-btn-ghost">
+          <button
+            onClick={() => {
+              setModalOpen(false);
+              setEditingId(null);
+            }}
+            className="ap-btn-ghost"
+          >
             Cancel
           </button>
-          <button onClick={handleCreate} disabled={saving} className="ap-btn">
+          <button onClick={handleSave} disabled={saving} className="ap-btn">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}{" "}
-            Create Course
+            {editingId ? "Update Course" : "Create Course"}
           </button>
         </div>
       </Modal>
@@ -502,7 +591,15 @@ export function CoursesPage() {
   );
 }
 
-export function CourseDetail({ course }: { course: any }) {
+export function CourseDetail({
+  course,
+  onEdit,
+  onDelete,
+}: {
+  course: any;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) {
   const pct = Math.round((course.filled / course.seats) * 100);
   return (
     <div>
@@ -530,7 +627,7 @@ export function CourseDetail({ course }: { course: any }) {
         </div>
         <div className="ap-card p-3 text-center">
           <p className="text-2xl font-black text-[hsl(var(--ap-success))]">
-            ₹{course.fee.toLocaleString()}
+            Rs {course.fee.toLocaleString()}
           </p>
           <p className="text-[10px] text-[hsl(var(--ap-muted))] uppercase font-bold">Fee</p>
         </div>
@@ -550,6 +647,24 @@ export function CourseDetail({ course }: { course: any }) {
           label={`${course.filled}/${course.seats} filled (${pct}%)`}
         />
       </div>
+      {(onEdit || onDelete) && (
+        <div className="flex gap-2 mt-4">
+          {onEdit && (
+            <button onClick={onEdit} className="ap-btn flex-1 justify-center">
+              <Edit className="w-4 h-4" /> Edit Course
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="ap-btn flex-1 justify-center"
+              style={{ background: "hsl(var(--ap-danger))" }}
+            >
+              <Trash2 className="w-4 h-4" /> Delete Course
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

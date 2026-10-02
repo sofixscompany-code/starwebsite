@@ -21,15 +21,12 @@ This is the Star Coaching Institute ERP built with React 19, TypeScript, Tailwin
 
 ### Routing
 
-- `/admin` — Admin shell (sidebar + content area). Only super_admin can access.
-- `/dashboard/teacher` — Teacher dashboard
-- `/dashboard/student` — Student dashboard
-- `/dashboard/parent` — Parent dashboard
-- `/dashboard/accountant` — Accountant dashboard
+- `/admin` — Admin shell (sidebar + content area), available to ALL 5 roles. The shell enforces access: a role can only open routes listed for it in `nav.ts` (plus `/admin` and `/admin/profile`); everything else renders an inline "Access denied" panel. `super_admin` is unrestricted.
+- `/dashboard/teacher|student|parent|accountant|super-admin` — all redirect to `/admin`; `admin.index.tsx` renders the matching role dashboard (unknown/missing role → "No role assigned" panel, never the super-admin dashboard).
 
 ### Sidebar (`nav.ts`)
 
-Single source of truth for all navigation. Each `NavItem` has a `roles` array that defines which roles can see it. The `getNavItemsForRole()` function filters sections + items per role.
+Single source of truth for navigation AND route access. Each `NavItem` (and `NavSection`) has an optional `roles` array; `getNavSectionsForRole()` filters both section-level and item-level roles. Missing `roles` = visible to all roles. The same config feeds the sidebar, the command palette (⌘K), breadcrumb linkability, and AdminShell's route enforcement.
 
 Sidebar features:
 
@@ -41,11 +38,12 @@ Sidebar features:
 
 ### Auth Flow
 
-- `api-auth.ts` handles login: Firebase Auth first + role from Firestore users/{uid}; hardcoded super admin only as offline fallback.
-- `demoLogin(role)` signs into Firebase Auth with `{role}@demo.starcoaching.edu.np` / `Demo@2026!` (auto-creates Auth + Firestore doc if missing), then stores `auth_token`, `auth_user`, `demo_role` in localStorage.
+- `api-auth.ts` handles login: Firebase Auth + role from Firestore users/{uid} only (no offline/hardcoded fallback).
+- `demoLogin(role)` signs into Firebase Auth with `{role}@demo.starcoaching.edu.np` / `Star#Demo2026!Kx7` (auto-creates Auth + Firestore doc if missing), then stores `auth_token`, `auth_user`, `demo_role` in localStorage. **Ships in production** (owner's explicit request): the Quick Demo Access buttons and `demoLogin()` are no longer gated by `import.meta.env.DEV`, and the demo password is present in the prod bundle. The demo accounts are dedicated `*@demo.starcoaching.edu.np` users only — never real institute accounts. `verifyToken()` still ignores bare `demo_role`/`super-admin-hardcoded` localStorage entries unless they match a real Firebase session (prod) — demo login works because `demoLogin()` performs a real Firebase sign-in with role docs in `users/{uid}` (verified for all 5 roles).
 - All role accounts live in Firebase Auth AND Firestore `users/{uid}` docs (`role` field). Super Admin: Starcoaching@gmail.com.
-- `AuthGuard` checks auth status and redirects unauthenticated users to `/auth`.
-- `Sidebar` reads `getUserRole()` from localStorage and filters nav items.
+- `AuthGuard` (async): local session markers → `verifyToken()` which waits for Firebase Auth init (`firebaseAuth.waitForUser()`), then re-fetches the role from Firestore. A tampered localStorage session with no real Firebase sign-in is wiped and redirected to `/auth`. Role mismatches are re-synced from Firestore on entry.
+- `Sidebar`/`AdminShell` sign-out goes through `handleSignOut()` (clears localStorage AND ends the Firebase session); `SessionManager` does the same on idle timeout.
+- `src/lib/access.ts` — `canCreate()/canManage(collection, role)` mirror `firestore.rules` so the UI never offers an action the backend would reject (e.g. students get read-only Payments, teachers can't edit support tickets).
 
 ### Dashboards & Firestore
 
@@ -55,17 +53,19 @@ Sidebar features:
   - `useStudentDashboard(uid)` — attendance %, results, enrollments, classes
   - `useParentDashboard(email)` — children matched via students.parentEmail
   - `useAccountantDashboard()` — collections, dues, expenses, transactions
-- Queries are composite-index-free (client-side filter/sort) and fall back to static defaults when a collection is empty.
-- Demo seed data lives in `scripts/seed-dashboard-data.mjs` (run with `node scripts/seed-dashboard-data.mjs`).
-- `src/hooks/use-module-data.ts` — generic live CRUD hook used by admin module pages.
+- Queries are composite-index-free (client-side filter/sort) and fall back to static defaults when a collection is empty; dashboards check `hasData` and render honest "No data yet" empty states instead of fabricated numbers.
+- Demo seed data lives in `scripts/seed-dashboard-data.mjs` (run with `node scripts/seed-dashboard-data.mjs`); portal seed: `scripts/seed-portal-data.mjs` (signs in as super_admin — staff collections are role-gated).
+- `src/hooks/use-module-data.ts` — generic live CRUD hook used by admin module pages. Exposes an `error` flag when the Firestore read fails; `create()` stamps `createdBy`, plus `teacherId`/`studentId` for teacher/student actors (dashboards filter on these).
+- Static `rows={[…]}` fallbacks passed to `FirestoreModulePage` render only in dev builds — production shows live data or an empty state.
 
 ### Key Files
 
-- `src/components/admin/nav.ts` — Navigation config with role permissions
+- `src/components/admin/nav.ts` — Navigation config + route-access source of truth
 - `src/components/admin/Sidebar.tsx` — Dynamic sidebar with search + accordion + role filtering
-- `src/components/admin/AdminShell.tsx` — Layout wrapper with topbar, sidebar, breadcrumbs
-- `src/lib/api-auth.ts` — Auth helpers (login, demoLogin, verifyToken)
-- `src/components/auth/AuthGuard.tsx` — Route guard
+- `src/components/admin/AdminShell.tsx` — Layout wrapper with topbar, sidebar, breadcrumbs, role-gated content, notifications panel
+- `src/lib/api-auth.ts` — Auth helpers (login, demoLogin, verifyToken, handleSignOut)
+- `src/lib/access.ts` — Role→capability map mirroring firestore.rules (create/manage gating)
+- `src/components/auth/AuthGuard.tsx` — Route guard (async session + role validation)
 - `src/hooks/use-user-role.ts` — Role constants and helpers
 - `src/hooks/use-selections.ts` — public "Top Selections" hook (Firestore `selections` collection, static fallback); used by homepage + `/results`; managed in admin at `/admin/selections`
 - `src/hooks/use-live-notices.ts` — real-time homepage notices (`onSnapshot`, no refresh needed); auto-infers category from title when missing; exports `noticeTimeAgo` / `isNewNotice`
@@ -73,8 +73,7 @@ Sidebar features:
 - `src/hooks/use-homepage-categories.ts` — homepage course categories with icon mapping (Firestore `homepage_categories`, static fallback); managed in admin at `/admin/homepage-categories`
 - `src/hooks/use-homepage-testimonials.ts` — homepage testimonials (Firestore `homepage_testimonials`, static fallback); managed in admin at `/admin/homepage-testimonials`
 - `src/hooks/use-homepage-settings.ts` — exports `useWhyChooseUs()` (Firestore `why_choose_us` collection) and `useMdMessage()` (single doc `homepage_settings/md_message`); managed in admin at `/admin/why-choose-us` and `/admin/md-message`
-- `src/lib/permissions.ts` — Flat menu items with role access (legacy, kept for compatibility)
-- `firestore.rules` — public read for site content (incl. `selections`); auth-only for everything else
+- `firestore.rules` — public read for site content (incl. `selections`); role-gated writes elsewhere. Self-registration may only create `student`/`parent` profiles; `users` profiles are readable by super admin or the owner only.
 
 ## Commands
 

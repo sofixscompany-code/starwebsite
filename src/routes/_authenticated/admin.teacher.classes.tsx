@@ -1,15 +1,20 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { BookOpen, Clock } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { BookOpen, DoorOpen } from "lucide-react";
 
 export default function TeacherClassesPage() {
+  const { rows } = useModuleData("classes");
+
+  const rooms = new Set(rows.map((r) => String(r.room || "")).filter(Boolean)).size;
+
   return (
     <FirestoreModulePage
       collectionName="classes"
       title="My Classes"
       subtitle="View and manage your teaching schedule"
       stats={[
-        { label: "Classes", value: 0, icon: BookOpen, tone: "purple" },
-        { label: "Duration", value: "60–120 min", icon: Clock, tone: "info" },
+        { label: "Classes", value: rows.length, icon: BookOpen, tone: "purple" },
+        { label: "Rooms", value: rooms, icon: DoorOpen, tone: "info" },
       ]}
       columns={[
         { key: "name", label: "Class" },

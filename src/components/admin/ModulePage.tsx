@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/admin/AdminShell";
+import { ImageUpload } from "@/components/admin/image-upload";
 import {
   StatCard,
   Panel,
@@ -68,10 +69,20 @@ export interface FieldDef {
   key: string;
   label: string;
   type:
-    "text" | "email" | "tel" | "number" | "select" | "textarea" | "date" | "checkbox" | "password";
+    | "text"
+    | "email"
+    | "tel"
+    | "number"
+    | "select"
+    | "textarea"
+    | "date"
+    | "checkbox"
+    | "password"
+    | "upload";
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
+  uploadFolder?: string;
 }
 
 export interface ModulePageProps {
@@ -99,6 +110,8 @@ export interface ModulePageProps {
   enableBulkActions?: boolean;
   enablePagination?: boolean;
   pageSize?: number;
+  /** True when the backing Firestore read failed (permissions/offline). */
+  loadError?: boolean;
 }
 
 /* Legacy compat */
@@ -147,6 +160,7 @@ export function ModulePage({
   enableBulkActions = true,
   enablePagination = true,
   pageSize: initialPageSize = 10,
+  loadError = false,
 }: ModulePageProps) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string>("");
@@ -332,22 +346,38 @@ export function ModulePage({
       setConfirmMessage("Are you sure you want to delete this item?");
       setConfirmAction(() => async () => {
         if (!onDelete) return;
+        // Snapshot the row so "Undo" can genuinely restore it (re-creates the
+        // document through the same create path the page uses).
+        const snapshot = rows.find((r) => getId(r) === id);
         try {
           await onDelete(id);
-          toast.success("Deleted successfully", {
-            description: "Click undo to restore",
-            action: {
-              label: "Undo",
-              onClick: () => toast.info("Undo requested — implement restore logic in parent"),
-            },
-          });
+          if (snapshot && onCreate) {
+            toast.success("Deleted successfully", {
+              duration: 8000,
+              action: {
+                label: "Undo",
+                onClick: async () => {
+                  try {
+                    const data = { ...snapshot };
+                    delete data[idKey];
+                    await onCreate(data);
+                    toast.success("Restored");
+                  } catch {
+                    toast.error("Couldn't restore this item");
+                  }
+                },
+              },
+            });
+          } else {
+            toast.success("Deleted successfully");
+          }
         } catch (err: any) {
           toast.error(err?.message || "Delete failed");
         }
       });
       setConfirmOpen(true);
     },
-    [onDelete],
+    [onDelete, rows, onCreate, idKey],
   );
 
   /* ---- Bulk delete ---- */
@@ -566,6 +596,14 @@ export function ModulePage({
           </div>
         }
       />
+
+      {/* Load failure notice — surfaced instead of silently showing an empty list */}
+      {loadError && (
+        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          Couldn&apos;t load this data from Firestore. Check your connection and try again — the
+          list below may be incomplete.
+        </div>
+      )}
 
       {/* Stats */}
       {stats.length > 0 && (
@@ -903,7 +941,13 @@ export function ModulePage({
                   {field.label}
                   {field.required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
-                {field.type === "textarea" ? (
+                {field.type === "upload" ? (
+                  <ImageUpload
+                    value={formData[field.key] ?? ""}
+                    onChange={(url) => handleFormChange(field.key, url)}
+                    folder={field.uploadFolder}
+                  />
+                ) : field.type === "textarea" ? (
                   <textarea
                     value={formData[field.key] ?? ""}
                     onChange={(e) => handleFormChange(field.key, e.target.value)}
@@ -1109,7 +1153,7 @@ export function ModulePage({
                   </label>
                 ) : (
                   <input
-                    type={field.type}
+                    type={field.type === "upload" ? "text" : field.type}
                     value={bulkFormData[field.key] ?? ""}
                     onChange={(e) =>
                       setBulkFormData((prev) => ({

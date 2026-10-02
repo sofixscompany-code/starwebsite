@@ -1,17 +1,31 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { Award, CheckCircle2, ShieldCheck, Download } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { Award, CheckCircle2, GraduationCap } from "lucide-react";
 
 export function CertificatesPage() {
+  const { rows } = useModuleData("certificates");
+
+  const now = new Date();
+  const total = rows.length;
+  const thisMonth = rows.filter((r) => {
+    const d = new Date(String(r.date ?? r.createdAt ?? ""));
+    return (
+      !isNaN(d.getTime()) &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }).length;
+  const courses = new Set(rows.map((r) => r.course).filter((c) => c != null && c !== "")).size;
+
   return (
     <FirestoreModulePage
       collectionName="certificates"
       title="Certificates"
       subtitle="Generate and manage student achievement certificates"
       stats={[
-        { label: "Total Issued", value: 482, icon: Award, tone: "purple" },
-        { label: "Approved", value: 460, icon: CheckCircle2, tone: "success" },
-        { label: "Verified", value: 310, icon: ShieldCheck, tone: "info" },
-        { label: "Downloads", value: 890, icon: Download, tone: "warning" },
+        { label: "Total Issued", value: total, icon: Award, tone: "purple" },
+        { label: "This Month", value: thisMonth, icon: CheckCircle2, tone: "success" },
+        { label: "Courses Covered", value: courses, icon: GraduationCap, tone: "info" },
       ]}
       columns={[
         { key: "name", label: "Student" },

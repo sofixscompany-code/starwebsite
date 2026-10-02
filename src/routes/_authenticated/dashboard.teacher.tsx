@@ -4,47 +4,36 @@ import {
   Users,
   FileText,
   CalendarCheck,
-  Clock,
   ClipboardCheck,
   Upload,
-  PenLine,
   Loader2,
   Bell,
-  TrendingUp,
-  CheckCircle2,
   AlertCircle,
-  MessageSquare,
-  GraduationCap,
-  BarChart3,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useTeacherDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
+import {
+  useTeacherDashboard,
+  getStoredAuthUser,
+  classStartMs,
+  fmtClassTime,
+  fmtShortDate,
+  isClassToday,
+} from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
-
-const activities = [
-  { time: "1h ago", title: "Homework graded", desc: "Batch B-12 · 32 papers" },
-  { time: "3h ago", title: "New assignment created", desc: "Physics Ch. 5 problems" },
-  { time: "5h ago", title: "Attendance marked", desc: "Class A-08 · 28/30 present" },
-  { time: "Yesterday", title: "Exam paper reviewed", desc: "Mock Test #14 answer key" },
-];
-
-const upcomingTasks = [
-  { title: "Grade Homework", subject: "Mathematics", due: "Today, 5 PM" },
-  { title: "Upload Notes", subject: "Physics Ch.6", due: "Tomorrow" },
-  { title: "Create Quiz", subject: "English Grammar", due: "Dec 20" },
-];
+import { auth } from "@/integrations/firebase/config";
 
 export function TeacherDashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (getUserRole() === "teacher" || localStorage.getItem("demo_role") === "teacher") {
+    if (getUserRole() === "teacher") {
       setMounted(true);
     }
   }, []);
 
   const storedUser = getStoredAuthUser();
-  const { data: stats, isLoading } = useTeacherDashboard(storedUser?.uid);
+  const uid = storedUser?.uid || auth.currentUser?.uid || undefined;
+  const { data: stats, isLoading } = useTeacherDashboard(uid);
 
   if (!mounted || isLoading) {
     return (
@@ -60,88 +49,66 @@ export function TeacherDashboard() {
   const classCount = stats?.classes?.length || 0;
   const hwCount = stats?.homework?.length || 0;
   const examCount = stats?.exams?.length || 0;
-  const activityRows =
-    stats?.activities && stats.activities.length > 0 ? stats.activities : activities;
-  const totalStudents = stats?.totalStudents || classCount * 28;
+  const hasData = !!stats?.hasData;
+  const activityRows = stats?.activities ?? [];
+  const totalStudents = stats?.totalStudents ?? 0;
 
-  const fmtTime = (v: unknown) => {
-    const ms = Date.parse(String(v));
-    if (!Number.isFinite(ms)) return "";
-    return new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  };
   const todayClasses = (stats?.classes || [])
-    .filter((c) => {
-      const ms = Date.parse(String(c.startTime));
-      if (!Number.isFinite(ms)) return false;
-      const d = new Date(ms);
-      const nowD = new Date();
-      return (
-        ms > nowD.getTime() - 3600000 &&
-        d.getDate() === nowD.getDate() &&
-        d.getMonth() === nowD.getMonth()
-      );
-    })
-    .slice(0, 4)
-    .map((c) => ({
-      time: fmtTime(c.startTime),
-      name: String(c.name || "Class"),
-      room: String(c.room || ""),
-      status: Date.parse(String(c.startTime)) < Date.now() ? "ongoing" : "upcoming",
-    }));
-  const scheduleRows = todayClasses.length
-    ? todayClasses
-    : [
-        { time: "08:00 AM", name: "Mathematics - Batch A", room: "Room 101", status: "ongoing" },
-        { time: "09:30 AM", name: "Physics - Batch B", room: "Room 203", status: "upcoming" },
-        { time: "11:00 AM", name: "English - Batch A", room: "Room 105", status: "upcoming" },
-        { time: "01:00 PM", name: "Chemistry - Batch C", room: "Lab 2", status: "upcoming" },
-      ];
+    .filter((c) => isClassToday(c))
+    .sort((a, b) => classStartMs(a.startTime) - classStartMs(b.startTime))
+    .slice(0, 6)
+    .map((c) => {
+      const start = classStartMs(c.startTime);
+      const end = c.endTime ? classStartMs(c.endTime) : 0;
+      const finish = end > start ? end : start + 3600000;
+      const nowMs = Date.now();
+      return {
+        time: fmtClassTime(c.startTime),
+        name: String(c.name || c.subject || "Class"),
+        room: String(c.room || ""),
+        status: nowMs > finish ? "ended" : nowMs >= start ? "ongoing" : "upcoming",
+      };
+    });
 
   const dbTasks = [
     ...(stats?.homework || []).map((h) => ({
       title: `Grade Homework`,
       subject: String(h.title || h.subject || ""),
-      due: new Date(Date.parse(String(h.dueDate))).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      due: fmtShortDate(h.dueDate),
     })),
     ...(stats?.exams || []).map((e) => ({
       title: `Prepare Exam Paper`,
       subject: String(e.title || e.subject || ""),
-      due: new Date(Date.parse(String(e.scheduledAt))).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      due: fmtShortDate(e.scheduledAt),
     })),
-  ].filter((t) => t.subject && t.subject !== "Invalid Date");
-  const taskRows = dbTasks.length ? dbTasks.slice(0, 5) : upcomingTasks;
+  ].filter((t) => t.subject);
+  const taskRows = dbTasks.slice(0, 5);
 
   const statCards = [
     {
       label: "My Classes",
-      value: classCount,
+      value: hasData ? classCount : "No data yet",
       icon: BookOpen,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
     },
     {
       label: "Total Students",
-      value: totalStudents,
+      value: hasData ? totalStudents.toLocaleString() : "No data yet",
       icon: Users,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
     },
     {
       label: "Homework",
-      value: hwCount,
+      value: hasData ? hwCount : "No data yet",
       icon: FileText,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
     },
     {
       label: "Upcoming Exams",
-      value: examCount,
+      value: hasData ? examCount : "No data yet",
       icon: ClipboardCheck,
       color: "from-emerald-500 to-emerald-600",
       bg: "bg-emerald-50",
@@ -201,36 +168,48 @@ export function TeacherDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
               Today's Schedule
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Upcoming classes for today</p>
-            <div className="space-y-2">
-              {scheduleRows.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                >
-                  <div className="w-16 text-center shrink-0">
-                    <p className="text-xs font-bold text-navy">{s.time}</p>
-                  </div>
-                  <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                      {s.name}
-                    </p>
-                    <p className="text-xs text-gray-400">{s.room}</p>
-                  </div>
-                  <span
-                    className={
-                      "text-[10px] font-semibold px-2 py-0.5 rounded-full " +
-                      (s.status === "ongoing"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500")
-                    }
+            <p className="text-xs text-gray-400 mb-4">Your classes scheduled for today</p>
+            {todayClasses.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No classes scheduled today
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {todayClasses.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
                   >
-                    {s.status === "ongoing" ? "Live" : "Upcoming"}
-                  </span>
-                </div>
-              ))}
-            </div>
+                    <div className="w-16 text-center shrink-0">
+                      <p className="text-xs font-bold text-navy">{s.time}</p>
+                    </div>
+                    <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {s.name}
+                      </p>
+                      <p className="text-xs text-gray-400">{s.room}</p>
+                    </div>
+                    <span
+                      className={
+                        "text-[10px] font-semibold px-2 py-0.5 rounded-full " +
+                        (s.status === "ongoing"
+                          ? "bg-green-100 text-green-700"
+                          : s.status === "upcoming"
+                            ? "bg-navy/10 text-navy"
+                            : "bg-gray-100 text-gray-500")
+                      }
+                    >
+                      {s.status === "ongoing"
+                        ? "Live"
+                        : s.status === "upcoming"
+                          ? "Upcoming"
+                          : "Ended"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -238,34 +217,40 @@ export function TeacherDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Tasks</h3>
             <p className="text-xs text-gray-400 mb-4">Pending items requiring attention</p>
-            <div className="space-y-3">
-              {taskRows.map((t, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                >
+            {taskRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No pending tasks
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {taskRows.map((t, i) => (
                   <div
-                    className={
-                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 " +
-                      (i === 0
-                        ? "bg-brand-red/10 text-brand-red"
-                        : i === 1
-                          ? "bg-gold/10 text-amber-600"
-                          : "bg-navy/10 text-navy")
-                    }
+                    key={i}
+                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
                   >
-                    <AlertCircle className="w-4 h-4" />
+                    <div
+                      className={
+                        "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 " +
+                        (i === 0
+                          ? "bg-brand-red/10 text-brand-red"
+                          : i === 1
+                            ? "bg-gold/10 text-amber-600"
+                            : "bg-navy/10 text-navy")
+                      }
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                        {t.title}
+                      </p>
+                      <p className="text-[11px] text-gray-400">{t.subject}</p>
+                      {t.due && <p className="text-[10px] text-gray-400 mt-0.5">Due: {t.due}</p>}
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
-                      {t.title}
-                    </p>
-                    <p className="text-[11px] text-gray-400">{t.subject}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Due: {t.due}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -277,21 +262,27 @@ export function TeacherDashboard() {
               Recent Activity
             </h3>
             <p className="text-xs text-gray-400 mb-4">Latest actions and updates</p>
-            <div className="space-y-1">
-              {activityRows.map((a, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                >
-                  <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{a.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{a.desc}</p>
+            {activityRows.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                No activity yet
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {activityRows.map((a, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{a.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{a.desc}</p>
+                    </div>
+                    <p className="text-xs text-gray-400 shrink-0">{a.time}</p>
                   </div>
-                  <p className="text-xs text-gray-400 shrink-0">{a.time}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -303,25 +294,25 @@ export function TeacherDashboard() {
                 {
                   label: "Take Attendance",
                   icon: CalendarCheck,
-                  to: "/admin/attendance",
+                  to: "/admin/teacher/attendance",
                   color: "from-emerald-500 to-emerald-600",
                 },
                 {
                   label: "Upload Notes",
                   icon: Upload,
-                  to: "/admin/lms",
+                  to: "/admin/teacher/resources",
                   color: "from-navy to-navy/80",
                 },
                 {
                   label: "Create Assignment",
                   icon: FileText,
-                  to: "/admin/assignments",
+                  to: "/admin/teacher/assignments",
                   color: "from-gold to-gold/80",
                 },
                 {
                   label: "Send Notice",
                   icon: Bell,
-                  to: "/admin/notices",
+                  to: "/admin/communication/notices",
                   color: "from-brand-red to-brand-red/80",
                 },
               ].map((a) => {

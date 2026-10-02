@@ -1,17 +1,26 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { PlugZap, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { PlugZap, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function IntegrationsPage() {
+  const { rows } = useModuleData("integrations");
+
+  const total = rows.length;
+  const connected = rows.filter((r) => {
+    const s = String(r.status ?? "");
+    return s === "Connected" || s === "Active";
+  }).length;
+  const needsAttention = rows.filter((r) => String(r.status ?? "") === "Error").length;
+
   return (
     <FirestoreModulePage
       collectionName="integrations"
       title="Integrations"
       subtitle="Manage third-party service connections and API integrations"
       stats={[
-        { label: "Active Integrations", value: 9, icon: PlugZap, tone: "purple" },
-        { label: "Connected", value: 7, icon: CheckCircle2, tone: "success" },
-        { label: "Needs Attention", value: 1, icon: AlertCircle, tone: "warning" },
-        { label: "API Calls Today", value: "2.1k", icon: TrendingUp, tone: "info" },
+        { label: "Total Integrations", value: total, icon: PlugZap, tone: "purple" },
+        { label: "Connected", value: connected, icon: CheckCircle2, tone: "success" },
+        { label: "Needs Attention", value: needsAttention, icon: AlertCircle, tone: "warning" },
       ]}
       columns={[
         { key: "name", label: "Integration" },

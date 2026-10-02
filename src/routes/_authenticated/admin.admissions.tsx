@@ -1,855 +1,1262 @@
-﻿import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+﻿import { useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ClipboardList,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Download,
-  Filter,
-  Search,
-  Eye,
-  Edit,
-  Trash2,
-  QrCode,
-  FileText,
-  UserPlus,
-  CreditCard,
-  Printer,
-  MoreVertical,
-  ChevronDown,
-  Upload,
-  MessageCircle,
-  Shield,
-  LayoutDashboard,
-  ArrowRight,
-  Phone,
-  Mail,
-  MapPin,
-  ExternalLink,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  updateDoc,
-  doc,
-  deleteDoc,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
+import { toast } from "sonner";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  ExternalLink,
+  Eye,
+  FileText,
+  Loader2,
+  MessageCircle,
+  Pencil,
+  Printer,
+  RefreshCw,
+  Save,
+  Search,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
 import { PageHeader } from "@/components/admin/AdminShell";
 import {
-  StatCard,
-  Panel,
   Badge,
   DataTable,
-  Toolbar,
+  EmptyState,
   Modal,
-  Tabs,
-  Steps,
-  ProgressBar,
-  Drawer,
+  Panel,
+  SkeletonTable,
+  StatCard,
+  Toolbar,
 } from "@/components/admin/ui";
+import { AdmissionDocument } from "@/components/admission/AdmissionDocument";
+import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
+import "@/components/admission/admission-print.css";
+import { useAdmissionCourses } from "@/hooks/use-admission-courses";
+import { whatsappDigits } from "@/lib/links";
+import {
+  ADMISSION_STATUSES,
+  EMPTY_ADMISSION,
+  ORGANIZATIONS,
+  PACKAGE_TYPES,
+  PAYMENT_METHODS,
+  POSTS,
+  type AdmissionCourse,
+  type AdmissionFormData,
+  type AdmissionStatus,
+  type AppliedPost,
+  type Organization,
+  type PackageType,
+  type PricingSnapshot,
+} from "@/lib/admission-form/types";
 
-const WHATSAPP_NUMBER = "977984XXXXXXX";
+/** Human label for a stored payment method ("" when unset/unknown). */
+const paymentLabel = (v: string) =>
+  PAYMENT_METHODS.find((m) => m.value === v)?.label ?? (v ? v : "");
+/** Short payment state for tables/summary: Paid / Cash at office / Pending. */
+const paymentState = (method: string, status: string) =>
+  status === "paid" ? "Paid" : !method ? "" : method === "cod" ? "Cash at office" : "Pending";
 
-const DEMO_ADMISSIONS = [
-  {
-    id: "demo-1",
-    admissionNumber: "SCI-2024-1001",
-    fullName: "Aarav Sharma",
-    phone: "9812345678",
-    email: "aarav@email.com",
-    address: "Kathmandu-12",
-    dateOfBirth: "2002-03-15",
-    gender: "male",
-    parentName: "Suresh Sharma",
-    parentPhone: "9812345679",
-    courseTitle: "Nepal Police",
-    courseCategory: "Public Service",
-    status: "pending",
-    notes: "Interested in morning batch",
-    createdAt: { toDate: () => new Date("2024-09-28") },
-  },
-  {
-    id: "demo-2",
-    admissionNumber: "SCI-2024-1002",
-    fullName: "Priya Karki",
-    phone: "9803344556",
-    email: "priya@email.com",
-    address: "Lalitpur-8",
-    dateOfBirth: "2001-07-22",
-    gender: "female",
-    parentName: "Bina Karki",
-    parentPhone: "9803344557",
-    courseTitle: "Loksewa Officer",
-    courseCategory: "Public Service",
-    status: "pending",
-    notes: "",
-    createdAt: { toDate: () => new Date("2024-09-29") },
-  },
-  {
-    id: "demo-3",
-    admissionNumber: "SCI-2024-1003",
-    fullName: "Rohan Thapa",
-    phone: "9861122334",
-    email: "rohan@email.com",
-    address: "Bhaktapur-4",
-    dateOfBirth: "2003-01-10",
-    gender: "male",
-    parentName: "Dhan Thapa",
-    parentPhone: "9861122335",
-    courseTitle: "APF Constable",
-    courseCategory: "Armed Police",
-    status: "approved",
-    notes: "Referred by alumni",
-    createdAt: { toDate: () => new Date("2024-09-30") },
-  },
-  {
-    id: "demo-4",
-    admissionNumber: "SCI-2024-1004",
-    fullName: "Sita Rana",
-    phone: "9840001111",
-    email: "sita@email.com",
-    address: "Pokhara-5",
-    dateOfBirth: "2000-11-05",
-    gender: "female",
-    parentName: "Radha Rana",
-    parentPhone: "9840001112",
-    courseTitle: "Bank PO",
-    courseCategory: "Banking",
-    status: "pending",
-    notes: "Needs scholarship info",
-    createdAt: { toDate: () => new Date("2024-10-01") },
-  },
-  {
-    id: "demo-5",
-    admissionNumber: "SCI-2024-1005",
-    fullName: "Bikash Gurung",
-    phone: "9855667788",
-    email: "bikash@email.com",
-    address: "Kathmandu-22",
-    dateOfBirth: "2002-06-18",
-    gender: "male",
-    parentName: "Mohan Gurung",
-    parentPhone: "9855667789",
-    courseTitle: "Nepal Army",
-    courseCategory: "Army",
-    status: "approved",
-    notes: "",
-    createdAt: { toDate: () => new Date("2024-10-02") },
-  },
-  {
-    id: "demo-6",
-    admissionNumber: "SCI-2024-1006",
-    fullName: "Anisha Magar",
-    phone: "9800112233",
-    email: "anisha@email.com",
-    address: "Janakpur-3",
-    dateOfBirth: "2001-09-25",
-    gender: "female",
-    parentName: "Ram Magar",
-    parentPhone: "9800112234",
-    courseTitle: "Loksewa Section Officer",
-    courseCategory: "Public Service",
-    status: "pending",
-    notes: "Already attended demo class",
-    createdAt: { toDate: () => new Date("2024-10-03") },
-  },
-  {
-    id: "demo-7",
-    admissionNumber: "SCI-2024-1007",
-    fullName: "Suman Poudel",
-    phone: "9866778899",
-    email: "suman@email.com",
-    address: "Chitwan-7",
-    dateOfBirth: "2003-04-12",
-    gender: "male",
-    parentName: "Hari Poudel",
-    parentPhone: "9866778800",
-    courseTitle: "Nepal Police",
-    courseCategory: "Public Service",
-    status: "rejected",
-    notes: "Incomplete documents",
-    createdAt: { toDate: () => new Date("2024-10-04") },
-  },
-  {
-    id: "demo-8",
-    admissionNumber: "SCI-2024-1008",
-    fullName: "Nisha Basnet",
-    phone: "9877665544",
-    email: "nisha@email.com",
-    address: "Butwal-2",
-    dateOfBirth: "2002-08-30",
-    gender: "female",
-    parentName: "Gita Basnet",
-    parentPhone: "9877665545",
-    courseTitle: "Bank Assistant",
-    courseCategory: "Banking",
-    status: "approved",
-    notes: "",
-    createdAt: { toDate: () => new Date("2024-10-05") },
-  },
+/* ══════════════════════════════════════════════════════════════
+   Normalization — the `admissions` collection holds BOTH the new
+   2-page digital form records (AdmissionRecord) and legacy wizard
+   documents (fullName/phone/address/…). mapToDocShape() folds them
+   into a single view model for the table, filters and detail view.
+   ══════════════════════════════════════════════════════════════ */
+
+type RawAdmission = Record<string, unknown> & { id: string };
+
+interface AdmissionRow {
+  id: string;
+  name: string;
+  mobile: string;
+  applicationId: string;
+  admissionNumber: string;
+  billNumber: string;
+  organization: string;
+  appliedPost: string;
+  courseName: string;
+  coursePackage: string;
+  packageDuration: string;
+  totalPayment: number | null;
+  province: string;
+  district: string;
+  municipality: string;
+  ward: string;
+  addressLine: string;
+  status: string;
+  officeRemarks: string;
+  paymentMethod: string;
+  paymentReference: string;
+  paymentStatus: string;
+  createdLabel: string;
+  isLegacy: boolean;
+  /** Presentation-ready AdmissionFormData (EMPTY_ADMISSION defaults fill gaps). */
+  formData: AdmissionFormData & { academicSignature?: string; principalSignature?: string };
+}
+
+function str(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/** Handles epoch-ms numbers, ISO strings, Firestore Timestamps ({toDate()}) and Date. */
+function toEpoch(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string") {
+    const ms = Date.parse(value);
+    return Number.isNaN(ms) ? null : ms;
+  }
+  if (value && typeof value === "object") {
+    const toDate = (value as { toDate?: () => Date }).toDate;
+    if (typeof toDate === "function") {
+      const d = toDate.call(value);
+      const ms = d instanceof Date ? d.getTime() : NaN;
+      return Number.isNaN(ms) ? null : ms;
+    }
+  }
+  return null;
+}
+
+function cap(value: string): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function normalizeDocStatus(status: string): AdmissionStatus {
+  if ((ADMISSION_STATUSES as string[]).includes(status)) return status as AdmissionStatus;
+  const legacy: Record<string, AdmissionStatus> = {
+    pending: "Submitted",
+    Pending: "Submitted",
+    approved: "Approved",
+    Approved: "Approved",
+    rejected: "Rejected",
+    Rejected: "Rejected",
+  };
+  return legacy[status] ?? "Draft";
+}
+
+function normalizeGender(gender: string): "" | "Male" | "Female" {
+  const v = gender.toLowerCase();
+  if (v === "male") return "Male";
+  if (v === "female") return "Female";
+  return "";
+}
+
+function pick<T extends string>(value: string, allowed: readonly string[]): T | "" {
+  return (allowed as readonly string[]).includes(value) ? (value as T) : "";
+}
+
+/** Fold a raw Firestore doc (new OR legacy shape) into the shared view model. */
+function mapToDocShape(raw: RawAdmission): AdmissionRow {
+  const name = str(raw.studentName) || str(raw.fullName);
+  const mobile = str(raw.mobileNumber) || str(raw.phone);
+  const applicationId = str(raw.applicationId) || str(raw.admissionNumber) || raw.id;
+  const admissionNumber = str(raw.admissionNumber);
+  const billNumber = str(raw.billNumber);
+  const status = str(raw.status) || "Draft";
+
+  const province = str(raw.province);
+  const district = str(raw.district);
+  const municipality = str(raw.municipality);
+  const ward = str(raw.ward);
+  const hostel = str(raw.hostel);
+  const addressLine =
+    province || municipality
+      ? [province, municipality].filter(Boolean).join(" → ")
+      : str(raw.address) || "—";
+
+  const totalPayment = typeof raw.totalPayment === "number" ? raw.totalPayment : null;
+  const createdAt = toEpoch(raw.createdAt);
+
+  const snap = raw.pricingSnapshot;
+  const pricingSnapshot: PricingSnapshot | null =
+    snap && typeof snap === "object" && typeof (snap as PricingSnapshot).totalFee === "number"
+      ? (snap as PricingSnapshot)
+      : null;
+
+  const formData: AdmissionRow["formData"] = {
+    ...EMPTY_ADMISSION,
+    studentName: name,
+    organization: pick<Organization>(str(raw.organization), ORGANIZATIONS),
+    appliedPost: pick<AppliedPost>(str(raw.appliedPost), POSTS),
+    classAppliedFor: str(raw.classAppliedFor) || str(raw.courseName) || str(raw.courseTitle),
+    courseId: str(raw.courseId),
+    courseName: str(raw.courseName) || str(raw.courseTitle) || str(raw.classAppliedFor),
+    packageType: pick<PackageType>(str(raw.packageType), PACKAGE_TYPES),
+    coursePackage: str(raw.coursePackage),
+    packageDuration: str(raw.packageDuration),
+    pricingSnapshot,
+    mobileNumber: mobile,
+    gender: normalizeGender(str(raw.gender)),
+    dateOfBirth: str(raw.dateOfBirth),
+    fatherName: str(raw.fatherName) || str(raw.parentName),
+    fatherOccupation: str(raw.fatherOccupation),
+    fatherMobile: str(raw.fatherMobile) || str(raw.parentPhone),
+    motherName: str(raw.motherName),
+    motherOccupation: str(raw.motherOccupation),
+    motherMobile: str(raw.motherMobile),
+    province,
+    district,
+    municipality,
+    municipalityType: str(raw.municipalityType),
+    ward,
+    tol: str(raw.tol) || str(raw.address),
+    hostel: hostel === "Yes" || hostel === "No" ? hostel : "",
+    admissionDate: str(raw.admissionDate),
+    totalPayment,
+    paymentMethod: (PAYMENT_METHODS.some((m) => m.value === str(raw.paymentMethod))
+      ? str(raw.paymentMethod)
+      : "") as AdmissionFormData["paymentMethod"],
+    paymentReference: str(raw.paymentReference),
+    admissionNumber,
+    billNumber,
+    studentPhoto: str(raw.studentPhoto),
+    studentSignature: str(raw.studentSignature),
+    parentSignature: str(raw.parentSignature),
+    agreementAccepted: raw.agreementAccepted === true,
+    status: normalizeDocStatus(status),
+    createdAt: createdAt ?? 0,
+    academicSignature: str(raw.academicSignature),
+    principalSignature: str(raw.principalSignature),
+  };
+
+  return {
+    id: raw.id,
+    name,
+    mobile,
+    applicationId,
+    admissionNumber,
+    billNumber,
+    organization: str(raw.organization),
+    appliedPost: str(raw.appliedPost),
+    courseName: formData.courseName,
+    coursePackage: str(raw.coursePackage),
+    packageDuration: str(raw.packageDuration),
+    totalPayment,
+    province,
+    district,
+    municipality,
+    ward,
+    addressLine,
+    status,
+    officeRemarks: str(raw.officeRemarks),
+    paymentMethod: str(raw.paymentMethod),
+    paymentReference: str(raw.paymentReference),
+    paymentStatus: str(raw.paymentStatus),
+    createdLabel: createdAt ? new Date(createdAt).toLocaleDateString("en-GB") : "—",
+    isLegacy: !str(raw.applicationId),
+    formData,
+  };
+}
+
+/* ════════════════════════════ PRINT ════════════════════════════
+   Print contract (src/components/admission/admission-print.css):
+   <body class="sci-printing"> hides everything except content inside
+   .sci-print-isolated (the real 2-page document). The detail view
+   containing `.sci-print-root .sci-print-isolated` must be mounted
+   before calling this.
+   ═══════════════════════════════════════════════════════════════ */
+
+let printCleanupBound = false;
+
+function runIsolatedPrint() {
+  if (!printCleanupBound) {
+    printCleanupBound = true;
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("sci-printing");
+    });
+  }
+  document.body.classList.add("sci-printing");
+  window.print();
+  // Fallback: never leave the body stuck in printing mode.
+  window.setTimeout(() => document.body.classList.remove("sci-printing"), 2000);
+}
+
+/* ══════════════════════════ CONSTANTS ══════════════════════════ */
+
+const ALL = "__all__";
+
+const PENDING_STATUSES = new Set(["Submitted", "Draft", "pending"]);
+const APPROVED_STATUSES = new Set(["Approved", "approved"]);
+const REJECTED_STATUSES = new Set(["Rejected", "rejected"]);
+
+const PAYMENT_OPTIONS = [
+  { value: "any", label: "Any payment" },
+  { value: "gte", label: "Paid ≥ 20,000" },
+  { value: "lt", label: "Paid < 20,000" },
+  { value: "none", label: "Not set" },
 ];
 
-const admissionTrend = [
-  { m: "Jan", n: 34, approved: 28 },
-  { m: "Feb", n: 42, approved: 36 },
-  { m: "Mar", n: 55, approved: 48 },
-  { m: "Apr", n: 48, approved: 40 },
-  { m: "May", n: 62, approved: 54 },
-  { m: "Jun", n: 74, approved: 65 },
-  { m: "Jul", n: 88, approved: 78 },
-  { m: "Aug", n: 95, approved: 84 },
-  { m: "Sep", n: 112, approved: 98 },
-];
+type StatusTone = "success" | "danger" | "warning" | "info" | "muted";
 
-const sourceSplit = [
-  { name: "Website", value: 38, color: "hsl(262 83% 58%)" },
-  { name: "Walk-in", value: 28, color: "hsl(24 95% 58%)" },
-  { name: "Facebook", value: 18, color: "hsl(210 92% 55%)" },
-  { name: "Referral", value: 12, color: "hsl(152 60% 42%)" },
-  { name: "Google Ads", value: 4, color: "hsl(355 82% 58%)" },
-];
+function statusTone(status: string): StatusTone {
+  switch (status.toLowerCase()) {
+    case "approved":
+      return "success";
+    case "rejected":
+      return "danger";
+    case "verified":
+      return "info";
+    case "draft":
+      return "muted";
+    default:
+      return "warning"; // Submitted / pending
+  }
+}
+
+/* ══════════════════════════ HELPERS ════════════════════════════ */
+
+function FilterSelect({
+  allLabel,
+  value,
+  onChange,
+  options,
+  display = (v: string) => v,
+}: {
+  allLabel: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  display?: (v: string) => string;
+}) {
+  return (
+    <select
+      aria-label={allLabel}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="ap-input max-w-[170px] text-xs"
+    >
+      <option value={ALL}>{allLabel}</option>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {display(o)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function IconBtn({
+  title,
+  onClick,
+  tone = "default",
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  tone?: "default" | "green" | "red";
+  children: ReactNode;
+}) {
+  const tones = {
+    default: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
+    green: "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20",
+    red: "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
+  };
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      className={`rounded-lg p-1.5 transition-colors ${tones[tone]}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+interface OfficeForm {
+  admissionNumber: string;
+  billNumber: string;
+  totalPayment: string;
+  status: string;
+  officeRemarks: string;
+  /** "", "pending", or "paid" — admin-only (clients cannot forge payment). */
+  paymentStatus: string;
+}
+
+const EMPTY_OFFICE_FORM: OfficeForm = {
+  admissionNumber: "",
+  billNumber: "",
+  totalPayment: "",
+  status: "Draft",
+  officeRemarks: "",
+  paymentStatus: "",
+};
+
+/* ══════════════════════ DETAIL (2-page document) ═══════════════ */
+
+function AdmissionDetailOverlay({
+  row,
+  courses,
+  onClose,
+  onPrint,
+  onEditOffice,
+  onWhatsApp,
+}: {
+  row: AdmissionRow;
+  courses: AdmissionCourse[];
+  onClose: () => void;
+  onPrint: () => void;
+  onEditOffice: () => void;
+  onWhatsApp: () => void;
+}) {
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Admission application ${row.applicationId}`}
+      onClick={onClose}
+      className="adm-print-scope fixed inset-0 z-50 overflow-y-auto bg-black/55 p-3 backdrop-blur-[2px] sm:p-6"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="mx-auto w-full max-w-5xl rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
+      >
+        {/* Toolbar (screen only) */}
+        <div className="no-print flex flex-wrap items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div className="mr-auto min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="truncate text-base font-bold text-gray-900 dark:text-white">
+                {row.name || "Unnamed applicant"}
+              </h2>
+              <Badge tone={statusTone(row.status)}>{cap(row.status)}</Badge>
+              {row.isLegacy && <Badge tone="muted">Legacy record</Badge>}
+            </div>
+            <p className="font-mono text-xs text-gray-500 dark:text-gray-400">
+              {row.applicationId}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onPrint}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Printer className="h-4 w-4" /> Print / PDF
+          </button>
+          <button
+            type="button"
+            onClick={onEditOffice}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Pencil className="h-4 w-4" /> Office Fields
+          </button>
+          <button
+            type="button"
+            onClick={onWhatsApp}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/50 px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+          >
+            <MessageCircle className="h-4 w-4" /> WhatsApp
+          </button>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Summary + fee breakdown (screen only) */}
+        <div className="no-print grid gap-4 border-b border-gray-200 p-4 dark:border-gray-700 sm:grid-cols-2">
+          <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+            {[
+              ["Mobile", row.mobile || "—"],
+              ["Org / Post", `${row.organization || "—"} · ${row.appliedPost || "—"}`],
+              ["Course", row.courseName || "—"],
+              ["Package", row.coursePackage || "—"],
+              [
+                "Total payment",
+                row.totalPayment != null
+                  ? `Rs. ${row.totalPayment.toLocaleString("en-IN")}`
+                  : "Not set",
+              ],
+              [
+                "Payment method",
+                row.paymentMethod
+                  ? `${paymentLabel(row.paymentMethod)}${
+                      row.paymentReference ? ` · ${row.paymentReference}` : ""
+                    } — ${paymentState(row.paymentMethod, row.paymentStatus) || "Unconfirmed"}`
+                  : "—",
+              ],
+              ["Address", row.addressLine],
+              ["Admission No.", row.admissionNumber || "—"],
+              ["Bill No.", row.billNumber || "—"],
+              ["Applied on", row.createdLabel],
+            ].map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3">
+                <span className="text-gray-400 dark:text-gray-500">{k}</span>
+                <span className="text-right font-semibold">{v}</span>
+              </div>
+            ))}
+            {row.officeRemarks && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Office remarks
+                </span>
+                <p className="mt-0.5 text-gray-700 dark:text-gray-200">{row.officeRemarks}</p>
+              </div>
+            )}
+          </div>
+          <FeeBreakdown pricing={row.formData.pricingSnapshot} />
+        </div>
+
+        {/* The real 2-page document (photo + signatures render here) */}
+        <div className="sci-paper-scroll">
+          <div className="sci-print-root sci-print-isolated">
+            <AdmissionDocument
+              data={row.formData}
+              courses={courses}
+              mode="readonly"
+              onChange={() => {}}
+            />
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/* ════════════════════════════ PAGE ═════════════════════════════ */
 
 export function AdmissionsPage() {
   const qc = useQueryClient();
-  const navigate = useNavigate();
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [step, setStep] = useState(0);
-  const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Fetch from Firestore
-  const { data: firestoreData = [] } = useQuery({
-    queryKey: ["admin-admissions-firestore"],
-    queryFn: async () => {
-      const q = query(collection(db, "admissions"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const {
+    data: docs = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["admin-admissions"],
+    queryFn: async (): Promise<RawAdmission[]> => {
+      const snap = await getDocs(query(collection(db, "admissions"), orderBy("createdAt", "desc")));
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as RawAdmission[];
     },
+    staleTime: 15_000,
+    refetchInterval: 60_000, // "live-ish": re-sync every minute
   });
 
-  // Combine Firestore data with demo data
-  const allAdmissions =
-    firestoreData.length > 0
-      ? firestoreData.map((a: any) => ({
-          id: a.id,
-          admNo: a.admissionNumber,
-          name: a.fullName,
-          phone: a.phone,
-          email: a.email,
-          address: a.address,
-          course: a.courseTitle,
-          category: a.courseCategory,
-          parentName: a.parentName,
-          parentPhone: a.parentPhone,
-          notes: a.notes,
-          date: a.createdAt?.toDate?.()?.toLocaleDateString("en-GB") || "—",
-          status: a.status,
-          source: "Online",
-          gender: a.gender,
-          dob: a.dateOfBirth,
-        }))
-      : DEMO_ADMISSIONS.map((a) => ({
-          ...a,
-          admNo: a.admissionNumber,
-          name: a.fullName,
-          course: a.courseTitle,
-          category: a.courseCategory,
-          date: a.createdAt.toDate().toLocaleDateString("en-GB"),
-        }));
+  const { data: courses = [] } = useAdmissionCourses({ includeInactive: true });
 
-  const stats = {
-    total: allAdmissions.length,
-    pending: allAdmissions.filter((a) => a.status === "pending").length,
-    approved: allAdmissions.filter((a) => a.status === "approved").length,
-    rejected: allAdmissions.filter((a) => a.status === "rejected").length,
+  const rows = useMemo(() => docs.map(mapToDocShape), [docs]);
+
+  /* ── filters (client-side; option lists derived from loaded data) ── */
+  const [search, setSearch] = useState("");
+  const [fStatus, setFStatus] = useState(ALL);
+  const [fOrg, setFOrg] = useState(ALL);
+  const [fPost, setFPost] = useState(ALL);
+  const [fCourse, setFCourse] = useState(ALL);
+  const [fPackage, setFPackage] = useState(ALL);
+  const [fDuration, setFDuration] = useState(ALL);
+  const [fProvince, setFProvince] = useState(ALL);
+  const [fDistrict, setFDistrict] = useState(ALL);
+  const [fMunicipality, setFMunicipality] = useState(ALL);
+  const [fPayment, setFPayment] = useState("any");
+
+  /* ── detail + office edit ── */
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [officeRow, setOfficeRow] = useState<AdmissionRow | null>(null);
+  const [officeForm, setOfficeForm] = useState<OfficeForm>(EMPTY_OFFICE_FORM);
+  const [savingOffice, setSavingOffice] = useState(false);
+
+  const filterOptions = useMemo(() => {
+    const uniq = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort();
+    return {
+      status: uniq(rows.map((r) => r.status)),
+      organization: uniq(rows.map((r) => r.organization)),
+      post: uniq(rows.map((r) => r.appliedPost)),
+      course: uniq(rows.map((r) => r.courseName)),
+      coursePackage: uniq(rows.map((r) => r.coursePackage)),
+      duration: uniq(rows.map((r) => r.packageDuration)),
+      province: uniq(rows.map((r) => r.province)),
+      district: uniq(rows.map((r) => r.district)),
+      municipality: uniq(rows.map((r) => r.municipality)),
+    };
+  }, [rows]);
+
+  const stats = useMemo(
+    () => ({
+      total: rows.length,
+      pending: rows.filter((r) => PENDING_STATUSES.has(r.status)).length,
+      approved: rows.filter((r) => APPROVED_STATUSES.has(r.status)).length,
+      rejected: rows.filter((r) => REJECTED_STATUSES.has(r.status)).length,
+    }),
+    [rows],
+  );
+
+  const activeFilterCount =
+    (search.trim() ? 1 : 0) +
+    [
+      fStatus,
+      fOrg,
+      fPost,
+      fCourse,
+      fPackage,
+      fDuration,
+      fProvince,
+      fDistrict,
+      fMunicipality,
+    ].filter((v) => v !== ALL).length +
+    (fPayment !== "any" ? 1 : 0);
+
+  const clearFilters = () => {
+    setSearch("");
+    setFStatus(ALL);
+    setFOrg(ALL);
+    setFPost(ALL);
+    setFCourse(ALL);
+    setFPackage(ALL);
+    setFDuration(ALL);
+    setFProvince(ALL);
+    setFDistrict(ALL);
+    setFMunicipality(ALL);
+    setFPayment("any");
   };
 
-  const filtered = allAdmissions.filter((a) => {
-    const matchQ =
-      !q ||
-      a.name.toLowerCase().includes(q.toLowerCase()) ||
-      a.admNo.toLowerCase().includes(q.toLowerCase()) ||
-      a.phone.includes(q);
-    const matchStatus = statusFilter === "All" || a.status === statusFilter;
-    return matchQ && matchStatus;
-  });
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (q) {
+        const haystack =
+          `${r.name} ${r.mobile} ${r.applicationId} ${r.admissionNumber}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      if (fStatus !== ALL && r.status !== fStatus) return false;
+      if (fOrg !== ALL && r.organization !== fOrg) return false;
+      if (fPost !== ALL && r.appliedPost !== fPost) return false;
+      if (fCourse !== ALL && r.courseName !== fCourse) return false;
+      if (fPackage !== ALL && r.coursePackage !== fPackage) return false;
+      if (fDuration !== ALL && r.packageDuration !== fDuration) return false;
+      if (fProvince !== ALL && r.province !== fProvince) return false;
+      if (fDistrict !== ALL && r.district !== fDistrict) return false;
+      if (fMunicipality !== ALL && r.municipality !== fMunicipality) return false;
+      if (fPayment === "gte" && !(r.totalPayment != null && r.totalPayment >= 20000)) return false;
+      if (fPayment === "lt" && !(r.totalPayment != null && r.totalPayment < 20000)) return false;
+      if (fPayment === "none" && r.totalPayment != null) return false;
+      return true;
+    });
+  }, [
+    rows,
+    search,
+    fStatus,
+    fOrg,
+    fPost,
+    fCourse,
+    fPackage,
+    fDuration,
+    fProvince,
+    fDistrict,
+    fMunicipality,
+    fPayment,
+  ]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const detailRow = useMemo(
+    () => (detailId ? (rows.find((r) => r.id === detailId) ?? null) : null),
+    [rows, detailId],
+  );
+
+  /* ── office-only edit modal ── */
+  const statusOptions = useMemo(() => {
+    const list: { value: string; label: string }[] = ADMISSION_STATUSES.map((s) => ({
+      value: s,
+      label: s,
+    }));
+    const current = officeRow?.status ?? "";
+    if (current && !(ADMISSION_STATUSES as string[]).includes(current)) {
+      list.push({ value: current, label: `${cap(current)} (legacy)` });
+    }
+    return list;
+  }, [officeRow]);
+
+  const openOfficeEdit = (row: AdmissionRow) => {
+    setOfficeRow(row);
+    setOfficeForm({
+      admissionNumber: row.admissionNumber,
+      billNumber: row.billNumber,
+      totalPayment: row.totalPayment != null ? String(row.totalPayment) : "",
+      status: row.status || "Draft",
+      officeRemarks: row.officeRemarks,
+      paymentStatus: row.paymentStatus || "",
+    });
+  };
+
+  const closeOfficeEdit = () => {
+    if (savingOffice) return;
+    setOfficeRow(null);
+    setOfficeForm(EMPTY_OFFICE_FORM);
+  };
+
+  const saveOfficeFields = async () => {
+    if (!officeRow) return;
+    const rawTotal = officeForm.totalPayment.trim();
+    let total: number | null = null;
+    if (rawTotal !== "") {
+      total = Number(rawTotal);
+      if (!Number.isFinite(total)) {
+        toast.error("Total payment must be a number");
+        return;
+      }
+    }
+    setSavingOffice(true);
     try {
-      await updateDoc(doc(db, "admissions", id), { status, updatedAt: serverTimestamp() });
-      qc.invalidateQueries({ queryKey: ["admin-admissions-firestore"] });
-    } catch {
-      // Demo mode - update locally
+      await updateDoc(doc(db, "admissions", officeRow.id), {
+        admissionNumber: officeForm.admissionNumber.trim(),
+        billNumber: officeForm.billNumber.trim(),
+        totalPayment: total,
+        status: officeForm.status,
+        officeRemarks: officeForm.officeRemarks.trim(),
+        paymentStatus: officeForm.paymentStatus,
+        updatedAt: Date.now(),
+      });
+      toast.success("Office fields updated");
+      setOfficeRow(null);
+      setOfficeForm(EMPTY_OFFICE_FORM);
+      qc.invalidateQueries({ queryKey: ["admin-admissions"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSavingOffice(false);
     }
   };
 
-  const sendWhatsApp = (admission: any) => {
-    const msg = encodeURIComponent(
-      ` *Star Coaching Institute*\n\n` +
-        `Dear ${admission.name},\n` +
-        `Your admission (#${admission.admNo}) for *${admission.course}* has been *${admission.status.toUpperCase()}*.\n\n` +
-        `Please visit our office with original documents for verification.\n\n` +
-        ` ${"977-41-520XXX"}\n` +
-        ` Janakpurdham-5, Dhanusha`,
-    );
-    window.open(`https://wa.me/977${admission.phone}?text=${msg}`, "_blank");
+  /* ── row actions ── */
+  const handlePrintRow = (row: AdmissionRow) => {
+    toast.info('Choose "Save as PDF" in the print dialog');
+    if (detailId !== row.id) {
+      // Make sure the detail view containing .sci-print-root .sci-print-isolated
+      // is mounted first, then print once React has committed it.
+      setDetailId(row.id);
+      window.setTimeout(runIsolatedPrint, 350);
+    } else {
+      runIsolatedPrint();
+    }
   };
+
+  const sendWhatsApp = (row: AdmissionRow) => {
+    const digits = whatsappDigits(row.mobile);
+    if (!digits) {
+      toast.error("This application has no mobile number on file.");
+      return;
+    }
+    const text = encodeURIComponent(
+      `Star Coaching Institute\nApplication: ${row.applicationId}\nApplicant: ${row.name || "-"}\nStatus: ${cap(row.status)}`,
+    );
+    window.open(`https://wa.me/${digits}?text=${text}`, "_blank");
+  };
+
+  const removeRow = async (row: AdmissionRow) => {
+    const label = row.name || row.applicationId;
+    if (!window.confirm(`Delete application for "${label}"? This cannot be undone.`)) return;
+    try {
+      await deleteDoc(doc(db, "admissions", row.id));
+      toast.success("Application deleted");
+      if (detailId === row.id) setDetailId(null);
+      if (officeRow?.id === row.id) {
+        setOfficeRow(null);
+        setOfficeForm(EMPTY_OFFICE_FORM);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-admissions"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
+    }
+  };
+
+  /* ── table body: loading / error / empty / data ── */
+  let tableContent: ReactNode;
+  if (isLoading) {
+    tableContent = <SkeletonTable rows={6} />;
+  } else if (isError) {
+    tableContent = (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center dark:border-red-900/60 dark:bg-red-900/10">
+        <AlertCircle className="mx-auto mb-3 h-8 w-8 text-red-500" />
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+          Couldn&apos;t load applications
+        </h3>
+        <p className="mx-auto mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
+          {error instanceof Error ? error.message : "The Firestore read failed."} Check your
+          connection and try again.
+        </p>
+        <button type="button" className="ap-btn mt-4" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4" /> Try again
+        </button>
+      </div>
+    );
+  } else if (rows.length === 0) {
+    tableContent = (
+      <Panel title="Applications" subtitle="Firestore · admissions">
+        <EmptyState
+          icon={FileText}
+          title="No admission applications yet"
+          desc="Applications submitted through the public digital admission form (/admission) will appear here."
+        />
+      </Panel>
+    );
+  } else if (filtered.length === 0) {
+    tableContent = (
+      <Panel title="Applications" subtitle={`${rows.length} total`}>
+        <EmptyState
+          icon={Search}
+          title="No applications match your filters"
+          desc="Try a different search, or clear the active filters to see everything."
+          action={{ label: "Clear filters", onClick: clearFilters }}
+        />
+      </Panel>
+    );
+  } else {
+    tableContent = (
+      <DataTable
+        rows={filtered}
+        columns={[
+          {
+            key: "applicant",
+            label: "Applicant",
+            render: (r) => (
+              <div className="min-w-[150px]">
+                <p className="font-semibold text-gray-900 dark:text-white">{r.name || "—"}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {r.mobile || "No mobile"}
+                </p>
+              </div>
+            ),
+          },
+          {
+            key: "appId",
+            label: "App / Admission ID",
+            render: (r) => (
+              <div className="min-w-[130px]">
+                <p className="font-mono text-xs font-bold text-brand-red">{r.applicationId}</p>
+                {r.admissionNumber && r.admissionNumber !== r.applicationId && (
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    Adm: {r.admissionNumber}
+                  </p>
+                )}
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">{r.createdLabel}</p>
+              </div>
+            ),
+          },
+          {
+            key: "org",
+            label: "Org / Post",
+            render: (r) => (
+              <div>
+                <p className="text-sm">{r.organization || "—"}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{r.appliedPost || "—"}</p>
+              </div>
+            ),
+          },
+          {
+            key: "courseName",
+            label: "Course",
+            render: (r) => <span className="text-sm">{r.courseName || "—"}</span>,
+          },
+          {
+            key: "package",
+            label: "Package",
+            render: (r) => (
+              <div>
+                <p className="text-sm">{r.coursePackage || "—"}</p>
+                {r.packageDuration && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{r.packageDuration}</p>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: "payment",
+            label: "Total Payment",
+            render: (r) => (
+              <div className="min-w-[130px]">
+                {r.totalPayment != null ? (
+                  <span className="font-semibold tabular-nums text-gray-900 dark:text-white">
+                    Rs. {Number(r.totalPayment).toLocaleString("en-IN")}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">Not set</span>
+                )}
+                {r.paymentMethod && (
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    {paymentLabel(r.paymentMethod)}
+                    {paymentState(r.paymentMethod, r.paymentStatus) &&
+                      ` · ${paymentState(r.paymentMethod, r.paymentStatus)}`}
+                  </p>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: "address",
+            label: "Address",
+            render: (r) => (
+              <div className="min-w-[140px]">
+                <p className="text-sm">{r.addressLine}</p>
+                {r.ward && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Ward {r.ward}</p>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: "status",
+            label: "Status",
+            render: (r) => <Badge tone={statusTone(r.status)}>{cap(r.status)}</Badge>,
+          },
+        ]}
+        actions={(r) => (
+          <div className="flex items-center justify-end gap-1">
+            <IconBtn title="View application" onClick={() => setDetailId(r.id)}>
+              <Eye className="h-4 w-4" />
+            </IconBtn>
+            <IconBtn title="Print / PDF" onClick={() => handlePrintRow(r)}>
+              <Printer className="h-4 w-4" />
+            </IconBtn>
+            <IconBtn title="Edit office fields" onClick={() => openOfficeEdit(r)}>
+              <Pencil className="h-4 w-4" />
+            </IconBtn>
+            <IconBtn
+              title="WhatsApp applicant"
+              tone="green"
+              onClick={() => sendWhatsApp(r as AdmissionRow)}
+            >
+              <MessageCircle className="h-4 w-4" />
+            </IconBtn>
+            <IconBtn
+              title="Delete application"
+              tone="red"
+              onClick={() => removeRow(r as AdmissionRow)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </IconBtn>
+          </div>
+        )}
+      />
+    );
+  }
 
   return (
     <div>
-      {/* Role-based demo bar */}
-      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white py-2 -mx-4 -mt-6 mb-6 px-4">
-        <div className="flex items-center justify-center gap-3 text-sm">
-          <span className="font-semibold">Demo:</span>
-          <button
-            onClick={() => navigate("/admin")}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition"
-          >
-            <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/admin/students")}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition"
-          >
-            <Shield className="w-3.5 h-3.5" /> Students
-          </button>
-          <a
-            href="/admission"
-            target="_blank"
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition"
-          >
-            <UserPlus className="w-3.5 h-3.5" /> Admission Form <ArrowRight className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
+      {/* While `sci-printing` is on <body>, only the portaled document prints —
+          flatten the overlay so `.sci-print-isolated` resolves against the page
+          origin (no positioned ancestor), and keep the admin shell out of the
+          printed pages. Scoped to `body.sci-printing` so a plain Ctrl+P on the
+          admin list is unaffected. */}
+      <style>
+        {`@media print {
+  body.sci-printing .admin-shell { display: none !important; }
+  body.sci-printing .adm-print-scope {
+    position: static !important;
+    inset: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    z-index: auto !important;
+  }
+  body.sci-printing .adm-print-scope > div {
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}`}
+      </style>
 
       <PageHeader
         title="Admissions"
-        subtitle="Review, approve, and manage all applications from every source."
+        subtitle="Applications from the digital /admission form (and legacy records) — review, verify, approve and print."
         actions={
           <>
-            <button className="ap-btn-ghost">
-              <Download className="w-4 h-4" /> Export
-            </button>
-            <button className="ap-btn-ghost">
-              <FileText className="w-4 h-4" /> Bulk Import
-            </button>
             <button
-              className="ap-btn"
-              onClick={() => {
-                setStep(0);
-                setModalOpen(true);
-              }}
+              type="button"
+              className="ap-btn-ghost"
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              <UserPlus className="w-4 h-4" /> New Admission
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} /> Refresh
             </button>
+            <a href="/admission" target="_blank" rel="noreferrer" className="ap-btn">
+              <ExternalLink className="h-4 w-4" /> Admission Form
+            </a>
           </>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Stats */}
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard
           label="Total Applications"
           value={stats.total}
           icon={ClipboardList}
           tone="purple"
         />
-        <StatCard label="Pending Review" value={stats.pending} icon={Clock} tone="warning" />
+        <StatCard label="Pending" value={stats.pending} icon={Clock} tone="warning" />
         <StatCard label="Approved" value={stats.approved} icon={CheckCircle2} tone="success" />
         <StatCard label="Rejected" value={stats.rejected} icon={XCircle} tone="danger" />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
-        <Panel
-          title="Admission Trend"
-          subtitle="Monthly applications vs approvals"
-          className="xl:col-span-2"
-        >
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={admissionTrend}>
-                <defs>
-                  <linearGradient id="adm" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(262 83% 58%)" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(262 83% 58%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
-                <XAxis dataKey="m" stroke="hsl(var(--ap-muted))" fontSize={11} />
-                <YAxis stroke="hsl(var(--ap-muted))" fontSize={11} />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--ap-panel))",
-                    border: "1px solid hsl(var(--ap-border))",
-                    borderRadius: 12,
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="n"
-                  name="Applications"
-                  stroke="hsl(262 83% 58%)"
-                  fill="url(#adm)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="approved"
-                  name="Approved"
-                  stroke="hsl(152 60% 42%)"
-                  fill="none"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+      {/* Filters */}
+      <Panel
+        title="Filters"
+        subtitle="Search & filter across all applications — options come from the loaded data."
+        className="mb-4"
+        actions={
+          activeFilterCount > 0 ? (
+            <button type="button" className="ap-btn-ghost" onClick={clearFilters}>
+              <X className="h-4 w-4" /> Clear {activeFilterCount}{" "}
+              {activeFilterCount === 1 ? "filter" : "filters"}
+            </button>
+          ) : (
+            <Badge tone="muted">No filters active</Badge>
+          )
+        }
+      >
+        <Toolbar className="gap-2">
+          <div className="relative min-w-[220px] max-w-xs flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, mobile, application ID..."
+              className="ap-input pl-9"
+            />
           </div>
-        </Panel>
-        <Panel title="Lead Sources" subtitle="Where applications come from">
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={sourceSplit}
-                  innerRadius={45}
-                  outerRadius={75}
-                  dataKey="value"
-                  paddingAngle={4}
-                >
-                  {sourceSplit.map((c) => (
-                    <Cell key={c.name} fill={c.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--ap-panel))",
-                    border: "1px solid hsl(var(--ap-border))",
-                    borderRadius: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-1 mt-2">
-            {sourceSplit.map((s) => (
-              <div key={s.name} className="flex items-center gap-2 text-xs">
-                <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-                <span className="text-[hsl(var(--ap-muted))] truncate">{s.name}</span>
-                <span className="ml-auto font-bold">{s.value}%</span>
-              </div>
+          <FilterSelect
+            allLabel="Any status"
+            value={fStatus}
+            onChange={setFStatus}
+            options={filterOptions.status}
+            display={cap}
+          />
+          <FilterSelect
+            allLabel="Any organization"
+            value={fOrg}
+            onChange={setFOrg}
+            options={filterOptions.organization}
+          />
+          <FilterSelect
+            allLabel="Any post"
+            value={fPost}
+            onChange={setFPost}
+            options={filterOptions.post}
+          />
+          <FilterSelect
+            allLabel="Any course"
+            value={fCourse}
+            onChange={setFCourse}
+            options={filterOptions.course}
+          />
+          <FilterSelect
+            allLabel="Any package"
+            value={fPackage}
+            onChange={setFPackage}
+            options={filterOptions.coursePackage}
+          />
+          <FilterSelect
+            allLabel="Any duration"
+            value={fDuration}
+            onChange={setFDuration}
+            options={filterOptions.duration}
+          />
+          <FilterSelect
+            allLabel="Any province"
+            value={fProvince}
+            onChange={setFProvince}
+            options={filterOptions.province}
+          />
+          <FilterSelect
+            allLabel="Any district"
+            value={fDistrict}
+            onChange={setFDistrict}
+            options={filterOptions.district}
+          />
+          <FilterSelect
+            allLabel="Any municipality"
+            value={fMunicipality}
+            onChange={setFMunicipality}
+            options={filterOptions.municipality}
+          />
+          <select
+            aria-label="Payment filter"
+            value={fPayment}
+            onChange={(e) => setFPayment(e.target.value)}
+            className="ap-input max-w-[170px] text-xs"
+          >
+            {PAYMENT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
-          </div>
-        </Panel>
-      </div>
+          </select>
+        </Toolbar>
+      </Panel>
 
-      <Toolbar>
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ap-muted))]" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, admission #, phone..."
-            className="ap-input pl-9"
-          />
-        </div>
-        <div className="flex gap-1 p-1 bg-[hsl(var(--ap-border)/0.3)] rounded-xl">
-          {["All", "Pending", "Approved", "Rejected"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${statusFilter === s ? "ap-grad text-white" : "text-[hsl(var(--ap-muted))] hover:text-[hsl(var(--ap-ink))]"}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <button className="ap-btn-ghost">
-          <Filter className="w-4 h-4" /> Filters
-        </button>
-        <select className="ap-input max-w-[160px]">
-          <option>All courses</option>
-          <option>Nepal Police</option>
-          <option>Loksewa</option>
-          <option>APF</option>
-        </select>
-      </Toolbar>
+      {tableContent}
 
-      <DataTable
-        rows={filtered}
-        columns={[
-          {
-            key: "admNo",
-            label: "Admission #",
-            render: (r) => (
-              <span className="font-mono font-bold text-[hsl(var(--ap-purple))]">{r.admNo}</span>
-            ),
-          },
-          {
-            key: "name",
-            label: "Applicant",
-            render: (r) => (
+      {/* Detail: the real 2-page admission document (print target) */}
+      {detailRow &&
+        createPortal(
+          <AdmissionDetailOverlay
+            row={detailRow}
+            courses={courses}
+            onClose={() => setDetailId(null)}
+            onPrint={() => {
+              toast.info('Choose "Save as PDF" in the print dialog');
+              runIsolatedPrint();
+            }}
+            onEditOffice={() => openOfficeEdit(detailRow)}
+            onWhatsApp={() => sendWhatsApp(detailRow)}
+          />,
+          document.body,
+        )}
+
+      {/* Office-only fields edit — Admission No., Bill No., Total Payment, Status, Remarks */}
+      <Modal open={!!officeRow} onClose={closeOfficeEdit} size="lg" title="Edit Office Fields">
+        {officeRow && (
+          <div>
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {officeRow.name || "Unnamed applicant"}
+              </span>
+              <span className="font-mono text-xs">{officeRow.applicationId}</span>
+              <Badge tone={statusTone(officeRow.status)}>{cap(officeRow.status)}</Badge>
+            </div>
+            <p className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-900 dark:bg-blue-900/20 dark:text-blue-300">
+              These are office-only fields, filled by the institute after verification — applicants
+              can never edit them from the public form.
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Admission No.">
+                  <input
+                    value={officeForm.admissionNumber}
+                    onChange={(e) =>
+                      setOfficeForm((p) => ({ ...p, admissionNumber: e.target.value }))
+                    }
+                    placeholder="SCI-2026-0001"
+                    className="ap-input w-full"
+                  />
+                </Field>
+                <Field label="Bill No.">
+                  <input
+                    value={officeForm.billNumber}
+                    onChange={(e) => setOfficeForm((p) => ({ ...p, billNumber: e.target.value }))}
+                    placeholder="BILL-001"
+                    className="ap-input w-full"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Total Payment (Rs.)">
+                  <input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    value={officeForm.totalPayment}
+                    onChange={(e) => setOfficeForm((p) => ({ ...p, totalPayment: e.target.value }))}
+                    placeholder="20500"
+                    className="ap-input w-full"
+                  />
+                </Field>
+                <Field label="Status">
+                  <select
+                    value={officeForm.status}
+                    onChange={(e) => setOfficeForm((p) => ({ ...p, status: e.target.value }))}
+                    className="ap-input w-full"
+                  >
+                    {statusOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              {/* Chosen by the applicant (read-only) + confirmed by the office */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Method (as chosen by applicant)">
+                  <div className="ap-input flex min-h-[38px] items-center bg-gray-50 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                    {officeRow?.paymentMethod
+                      ? `${paymentLabel(officeRow.paymentMethod)}${
+                          officeRow.paymentReference ? ` · ${officeRow.paymentReference}` : ""
+                        }`
+                      : "Not chosen"}
+                  </div>
+                </Field>
+                <Field label="Payment Status">
+                  <select
+                    value={officeForm.paymentStatus}
+                    onChange={(e) =>
+                      setOfficeForm((p) => ({ ...p, paymentStatus: e.target.value }))
+                    }
+                    className="ap-input w-full"
+                  >
+                    <option value="">— Not confirmed</option>
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </Field>
+              </div>
+
+              <Field label="Office Remarks">
+                <textarea
+                  rows={3}
+                  value={officeForm.officeRemarks}
+                  onChange={(e) => setOfficeForm((p) => ({ ...p, officeRemarks: e.target.value }))}
+                  placeholder="Documents verified, fee cleared in cash, etc."
+                  className="ap-input w-full resize-none"
+                />
+              </Field>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
               <button
-                onClick={() => {
-                  setSelectedAdmission(r);
-                  setDrawerOpen(true);
-                }}
-                className="flex items-center gap-3 text-left"
+                type="button"
+                className="ap-btn-ghost"
+                onClick={closeOfficeEdit}
+                disabled={savingOffice}
               >
-                <div className="w-9 h-9 rounded-full ap-grad flex items-center justify-center text-white text-xs font-bold">
-                  {r.name
-                    .split(" ")
-                    .map((x: string) => x[0])
-                    .slice(0, 2)
-                    .join("")}
-                </div>
-                <div>
-                  <p className="font-semibold">{r.name}</p>
-                  <p className="text-xs text-[hsl(var(--ap-muted))]">{r.phone}</p>
-                </div>
+                Cancel
               </button>
-            ),
-          },
-          { key: "course", label: "Course" },
-          { key: "date", label: "Date" },
-          {
-            key: "status",
-            label: "Status",
-            render: (r) => (
-              <Badge
-                tone={
-                  r.status === "approved"
-                    ? "success"
-                    : r.status === "rejected"
-                      ? "danger"
-                      : "warning"
-                }
+              <button
+                type="button"
+                className="ap-btn"
+                onClick={saveOfficeFields}
+                disabled={savingOffice}
               >
-                {r.status}
-              </Badge>
-            ),
-          },
-        ]}
-        actions={(r) => (
-          <div className="flex gap-1">
-            {r.status === "pending" && (
-              <>
-                <button
-                  onClick={() => updateStatus(r.id, "approved")}
-                  className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-success)/0.1)]"
-                  title="Approve"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(var(--ap-success))]" />
-                </button>
-                <button
-                  onClick={() => updateStatus(r.id, "rejected")}
-                  className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
-                  title="Reject"
-                >
-                  <XCircle className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => sendWhatsApp(r)}
-              className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-success)/0.1)]"
-              title="WhatsApp"
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-green-600" />
-            </button>
-            <button
-              onClick={() => {
-                setSelectedAdmission(r);
-                setDrawerOpen(true);
-              }}
-              className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
-              title="View"
-            >
-              <Eye className="w-3.5 h-3.5" />
-            </button>
-            <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]" title="Print">
-              <Printer className="w-3.5 h-3.5" />
-            </button>
+                {savingOffice ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save Changes
+              </button>
+            </div>
           </div>
         )}
-      />
-
-      {/* Admission Detail Drawer */}
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width="w-[480px]">
-        {selectedAdmission && (
-          <AdmissionDetail
-            admission={selectedAdmission}
-            onWhatsApp={() => sendWhatsApp(selectedAdmission)}
-            onStatusChange={(s) => updateStatus(selectedAdmission.id, s)}
-          />
-        )}
-      </Drawer>
-
-      {/* New Admission Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} size="lg">
-        <h2 className="text-xl font-black mb-1">New Admission</h2>
-        <p className="text-sm text-[hsl(var(--ap-muted))] mb-6">
-          Complete the steps to enroll a new student.
-        </p>
-        <Steps
-          steps={["Personal Info", "Course Selection", "Documents", "Payment", "Confirm"]}
-          current={step}
-        />
-        <div className="mt-6 ap-card p-4 min-h-[200px]">
-          {step === 0 && (
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                ["Full Name", "text", "Enter full name"],
-                ["Email", "email", "student@email.com"],
-                ["Phone", "tel", "98XXXXXXXX"],
-                ["Date of Birth", "date", ""],
-                ["Address", "text", "City, Ward"],
-                ["Guardian Name", "text", "Parent/Guardian"],
-              ].map(([label, type, ph]) => (
-                <label key={label} className="block">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
-                    {label}
-                  </span>
-                  <input type={type} placeholder={ph} className="ap-input mt-1" />
-                </label>
-              ))}
-            </div>
-          )}
-          {step === 1 && (
-            <div className="space-y-4">
-              <label className="block">
-                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
-                  Course
-                </span>
-                <select className="ap-input mt-1">
-                  <option>Nepal Police Preparation</option>
-                  <option>Loksewa Officer</option>
-                  <option>APF Constable</option>
-                  <option>Bank PO</option>
-                  <option>Nepal Army</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
-                  Batch
-                </span>
-                <select className="ap-input mt-1">
-                  <option>B-12 (Morning)</option>
-                  <option>B-13 (Evening)</option>
-                  <option>L-04 (Weekend)</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
-                  Branch
-                </span>
-                <select className="ap-input mt-1">
-                  <option>Kathmandu</option>
-                  <option>Janakpur</option>
-                  <option>Pokhara</option>
-                </select>
-              </label>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-[hsl(var(--ap-border))] rounded-xl p-8 text-center">
-                <Upload className="w-8 h-8 mx-auto text-[hsl(var(--ap-muted))] mb-2" />
-                <p className="text-sm font-semibold">Upload Documents</p>
-                <p className="text-xs text-[hsl(var(--ap-muted))] mt-1">
-                  Photo, ID proof, certificates (PDF, JPG, PNG)
-                </p>
-                <button className="ap-btn mt-3">
-                  <Upload className="w-4 h-4" /> Browse Files
-                </button>
-              </div>
-            </div>
-          )}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div className="ap-card p-4 bg-[hsl(var(--ap-success)/0.05)] border-[hsl(var(--ap-success)/0.2)]">
-                <p className="text-xs font-bold uppercase text-[hsl(var(--ap-muted))]">
-                  Fee Amount
-                </p>
-                <p className="text-3xl font-black text-[hsl(var(--ap-success))]">₹25,000</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {["eSewa", "Khalti", "Cash", "Card", "Bank", "IME Pay"].map((m) => (
-                  <button key={m} className="ap-btn-ghost text-center text-xs py-2">
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {step === 4 && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-[hsl(var(--ap-success)/0.15)] mx-auto flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-8 h-8 text-[hsl(var(--ap-success))]" />
-              </div>
-              <h3 className="text-lg font-bold">Admission Complete!</h3>
-              <p className="text-sm text-[hsl(var(--ap-muted))] mt-1">
-                Admission #SCI-2024-1009 has been created.
-              </p>
-              <div className="flex gap-3 justify-center mt-4">
-                <button className="ap-btn-ghost">
-                  <Printer className="w-4 h-4" /> Print Form
-                </button>
-                <button className="ap-btn">
-                  <MessageCircle className="w-4 h-4" /> Send WhatsApp
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-between mt-6">
-          <button onClick={() => setModalOpen(false)} className="ap-btn-ghost">
-            Cancel
-          </button>
-          <div className="flex gap-2">
-            {step > 0 && (
-              <button onClick={() => setStep((s) => s - 1)} className="ap-btn-ghost">
-                Back
-              </button>
-            )}
-            {step < 4 && (
-              <button onClick={() => setStep((s) => s + 1)} className="ap-btn">
-                Next Step
-              </button>
-            )}
-            {step === 4 && (
-              <button onClick={() => setModalOpen(false)} className="ap-btn">
-                Done
-              </button>
-            )}
-          </div>
-        </div>
       </Modal>
-    </div>
-  );
-}
-
-export function AdmissionDetail({
-  admission,
-  onWhatsApp,
-  onStatusChange,
-}: {
-  admission: any;
-  onWhatsApp: () => void;
-  onStatusChange: (s: string) => void;
-}) {
-  return (
-    <div className="pt-8">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-2xl ap-grad flex items-center justify-center text-white text-xl font-black">
-          {admission.name
-            .split(" ")
-            .map((x: string) => x[0])
-            .slice(0, 2)
-            .join("")}
-        </div>
-        <div>
-          <h2 className="text-xl font-black">{admission.name}</h2>
-          <p className="text-sm text-[hsl(var(--ap-muted))] font-mono">{admission.admNo}</p>
-          <div className="flex gap-2 mt-1">
-            <Badge
-              tone={
-                admission.status === "approved"
-                  ? "success"
-                  : admission.status === "rejected"
-                    ? "danger"
-                    : "warning"
-              }
-            >
-              {admission.status}
-            </Badge>
-            <Badge tone="purple">{admission.course}</Badge>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 mb-6 text-xs">
-        <div className="flex items-center gap-2">
-          <Phone className="w-3.5 h-3.5 text-[hsl(var(--ap-purple))]" /> {admission.phone}
-        </div>
-        <div className="flex items-center gap-2">
-          <Mail className="w-3.5 h-3.5 text-[hsl(var(--ap-purple))]" /> {admission.email || "—"}
-        </div>
-        <div className="flex items-center gap-2">
-          <MapPin className="w-3.5 h-3.5 text-[hsl(var(--ap-purple))]" /> {admission.address || "—"}
-        </div>
-        <div className="flex items-center gap-2">
-          <UserPlus className="w-3.5 h-3.5 text-[hsl(var(--ap-purple))]" /> {admission.parentName}
-        </div>
-      </div>
-
-      <div className="ap-card p-4 mb-4">
-        <h4 className="font-bold text-sm mb-2">Guardian Details</h4>
-        <div className="space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span className="text-[hsl(var(--ap-muted))]">Name</span>
-            <span className="font-semibold">{admission.parentName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[hsl(var(--ap-muted))]">Phone</span>
-            <span className="font-semibold">{admission.parentPhone}</span>
-          </div>
-        </div>
-      </div>
-
-      {admission.notes && (
-        <div className="ap-card p-4 mb-4">
-          <h4 className="font-bold text-sm mb-2">Notes</h4>
-          <p className="text-sm text-[hsl(var(--ap-muted))]">{admission.notes}</p>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {admission.status === "pending" && (
-          <>
-            <button
-              onClick={() => onStatusChange("approved")}
-              className="ap-btn flex-1 justify-center bg-green-600"
-            >
-              <CheckCircle2 className="w-4 h-4" /> Approve
-            </button>
-            <button
-              onClick={() => onStatusChange("rejected")}
-              className="ap-btn flex-1 justify-center"
-              style={{ background: "hsl(var(--ap-danger))" }}
-            >
-              <XCircle className="w-4 h-4" /> Reject
-            </button>
-          </>
-        )}
-        <button onClick={onWhatsApp} className="ap-btn flex-1 justify-center bg-green-500">
-          <MessageCircle className="w-4 h-4" /> WhatsApp
-        </button>
-      </div>
     </div>
   );
 }

@@ -35,11 +35,14 @@ function toMs(v: unknown): number {
   return 0;
 }
 
-async function fetchAll(name: string, max = 200): Promise<DashRecord[]> {
+async function fetchAll(name: string, max = 200, errors?: Set<string>): Promise<DashRecord[]> {
   try {
     const snap = await getDocs(query(collection(db, name), limit(max)));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch {
+    // Index-free reads should not fail, but record the failure so `hasData`
+    // can stay false and dashboards can show an honest empty state.
+    errors?.add(name);
     return [];
   }
 }
@@ -114,7 +117,7 @@ function buildMonthlySeries(
 function buildIncomeBreakdown(payments: DashRecord[]): { name: string; value: number }[] {
   const map = new Map<string, number>();
   for (const p of payments) {
-    const cat = String(p.category || p.feeType || p.method || "Other");
+    const cat = String(p.category || p.feeType || p.type || p.method || "Other");
     map.set(cat, (map.get(cat) ?? 0) + num(p.amount));
   }
   return Array.from(map.entries())
@@ -123,31 +126,112 @@ function buildIncomeBreakdown(payments: DashRecord[]): { name: string; value: nu
     .slice(0, 6);
 }
 
-function buildFeeBreakdown(fees: DashRecord[]): {
+function buildFeeBreakdown(
+  fees: DashRecord[],
+  invoices: DashRecord[],
+): {
   label: string;
   collected: number;
   total: number;
 }[] {
   const map = new Map<string, { collected: number; total: number }>();
+  const add = (label: string, total: number, collected: number) => {
+    const entry = map.get(label) ?? { collected: 0, total: 0 };
+    entry.total += total;
+    entry.collected += collected;
+    map.set(label, entry);
+  };
   for (const f of fees) {
-    const cat = String(f.category || f.feeType || "Tuition");
-    const entry = map.get(cat) ?? { collected: 0, total: 0 };
-    entry.total += num(f.amount);
-    if (f.status === "paid") entry.collected += num(f.amount);
-    map.set(cat, entry);
+    const label = String(f.category || f.feeType || "Tuition");
+    const total = num(f.amount);
+    add(label, total, f.status === "paid" ? total : 0);
   }
-  if (map.size === 0) {
-    return [
-      { label: "Tuition", collected: 0, total: 0 },
-      { label: "Hostel", collected: 0, total: 0 },
-      { label: "Exam", collected: 0, total: 0 },
-      { label: "Transport", collected: 0, total: 0 },
-    ];
+  // Real invoices (fee_invoices) written by the Fees module, grouped by course.
+  for (const inv of invoices) {
+    const label = String(inv.courseName || inv.feeType || "Course");
+    const total = num(inv.totalAmount) || num(inv.amount);
+    const collected =
+      inv.status === "paid"
+        ? total
+        : inv.status === "partial"
+          ? Math.min(num(inv.amount), total)
+          : 0;
+    add(label, total, collected);
   }
+  if (map.size === 0) return [];
   return Array.from(map.entries())
     .map(([label, v]) => ({ label, collected: v.collected, total: v.total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 6);
+}
+
+/** Class startTime may be a full datetime, free text, or a bare "HH:MM" daily slot → epoch ms. */
+export function classStartMs(v: unknown): number {
+  const s = String(v ?? "").trim();
+  if (!s) return 0;
+  const parsed = Date.parse(s);
+  if (Number.isFinite(parsed)) return parsed;
+  // Bare clock time ("09:00", "9:30 PM") → today at that time.
+  const bare = /^(\d{1,2}):(\d{2})(?:\s*([ap]m))?$/i.exec(s);
+  if (bare) {
+    let h = Number(bare[1]);
+    const meridiem = (bare[3] || "").toLowerCase();
+    if (meridiem === "pm" && h < 12) h += 12;
+    if (meridiem === "am" && h === 12) h = 0;
+    const d = new Date();
+    d.setHours(h, Number(bare[2]), 0, 0);
+    return d.getTime();
+  }
+  // Time embedded in other text ("Mon 09:00") — take the first HH:MM.
+  const embedded = /(\d{1,2}):(\d{2})/.exec(s);
+  if (embedded) {
+    const d = new Date();
+    d.setHours(Number(embedded[1]), Number(embedded[2]), 0, 0);
+    return d.getTime();
+  }
+  return 0;
+}
+
+/** Display time for class slots ("HH:MM" or datetime → "09:00 AM"). */
+export function fmtClassTime(v: unknown): string {
+  const s = String(v ?? "").trim();
+  if (/^\d{1,2}:\d{2}(?:\s*[ap]m)?$/i.test(s)) {
+    const ms = classStartMs(s);
+    return ms
+      ? new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+      : s;
+  }
+  const ms = Date.parse(s);
+  if (!Number.isFinite(ms)) return s;
+  return new Date(ms).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Short "Oct 5" date for any date-ish value (Firestore Timestamp safe); "" when unknown. */
+export function fmtShortDate(v: unknown): string {
+  const ms = toMs(v);
+  if (!ms) return "";
+  return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/** True when a class runs today — handles bare "HH:MM" slots, weekday `day`, and datetimes. */
+export function isClassToday(c: DashRecord): boolean {
+  const start = classStartMs(c.startTime);
+  if (!start) return false;
+  const now = new Date();
+  const d = new Date(start);
+  if (
+    d.getDate() !== now.getDate() ||
+    d.getMonth() !== now.getMonth() ||
+    d.getFullYear() !== now.getFullYear()
+  ) {
+    return false;
+  }
+  const day = String(c.day || "")
+    .trim()
+    .slice(0, 3)
+    .toLowerCase();
+  if (!day) return true;
+  return now.toLocaleDateString("en-US", { weekday: "short" }).toLowerCase() === day;
 }
 
 // ─── Super Admin ──────────────────────────────────────────────
@@ -155,21 +239,41 @@ export function useSuperAdminStats() {
   return useQuery({
     queryKey: ["super-admin-stats"],
     queryFn: async () => {
-      const [students, teachers, users, admissions, payments, notices, expenses, results] =
-        await Promise.all([
-          fetchAll("students"),
-          fetchAll("teachers"),
-          fetchAll("users", 500),
-          fetchAll("admissions"),
-          fetchAll("payments", 500),
-          fetchAll("notices"),
-          fetchAll("expenses", 500),
-          fetchAll("results"),
-        ]);
+      const errs = new Set<string>();
+      const [
+        students,
+        teachers,
+        users,
+        admissions,
+        payments,
+        notices,
+        expenses,
+        results,
+        attendance,
+        invoices,
+        fees,
+      ] = await Promise.all([
+        fetchAll("students", 200, errs),
+        fetchAll("teachers", 200, errs),
+        fetchAll("users", 500, errs),
+        fetchAll("admissions", 200, errs),
+        fetchAll("payments", 500, errs),
+        fetchAll("notices", 200, errs),
+        fetchAll("expenses", 500, errs),
+        fetchAll("results", 200, errs),
+        // Auxiliary reads (no errs): a missing permission must not blank the dashboard.
+        fetchAll("attendance", 500),
+        fetchAll("fee_invoices", 300),
+        fetchAll("fees", 300),
+      ]);
 
       const revenue = payments.reduce((s, p) => s + num(p.amount), 0);
       const parents = users.filter((u) => u.role === "parent").length;
-      const pendingAdmissions = admissions.filter((a) => a.status === "pending");
+      // Real admission workflow statuses (Draft/Submitted/pending).
+      const PENDING_ADMISSION = new Set(["pending", "submitted", "draft"]);
+      const pendingAdmissions = admissions.filter((a) =>
+        PENDING_ADMISSION.has(String(a.status || "").toLowerCase()),
+      );
 
       // Activities
       const activities: { time: string; title: string; desc: string; user: string }[] = [];
@@ -189,11 +293,15 @@ export function useSuperAdminStats() {
           user: "Admin",
         });
       }
-      for (const a of admissions.filter((x) => x.status !== "approved").slice(0, 2)) {
+      for (const a of admissions
+        .filter((x) => !["approved", "rejected"].includes(String(x.status || "").toLowerCase()))
+        .slice(0, 2)) {
         activities.push({
           time: formatAgo(toMs(a.createdAt)),
           title: "New admission request",
-          desc: `${a.name} · ${a.course}`,
+          desc: `${String(a.studentName || a.fullName || a.name || "Applicant")}${
+            a.courseName || a.course ? ` · ${String(a.courseName || a.course)}` : ""
+          }`,
           user: "System",
         });
       }
@@ -201,22 +309,31 @@ export function useSuperAdminStats() {
 
       // Charts
       const revenueByMonth = buildMonthlySeries(payments, "createdAt");
-      const expenseByMonth = buildMonthlySeries(expenses, "createdAt");
       const incomeBreakdown = buildIncomeBreakdown(payments);
 
-      // KPIs from real data
+      // KPIs — real measurements only; null → dashboard shows "No data yet".
       const passRate = results.length
         ? Math.round(
             (results.filter((r) => num(r.marks || r.score) >= 40).length / results.length) * 100,
           )
-        : 87;
-      const retention = students.length
-        ? Math.round(
-            ((students.length - admissions.filter((a) => a.status === "dropped").length) /
-              students.length) *
-              100,
-          )
-        : 94;
+        : null;
+      const activeIds = new Set(
+        [...attendance, ...results].map((r) => String(r.studentId || "")).filter(Boolean),
+      );
+      const isActive = (s: DashRecord) =>
+        activeIds.has(s.id) || activeIds.has(String(s.studentId || ""));
+      const retention =
+        students.length && activeIds.size
+          ? Math.round((students.filter(isActive).length / students.length) * 100)
+          : null;
+      const invoicedTotal = invoices.reduce((s, i) => s + (num(i.totalAmount) || num(i.amount)), 0);
+      const pendingDues =
+        fees.filter((f) => f.status === "pending").reduce((s, f) => s + num(f.amount), 0) +
+        invoices
+          .filter((i) => i.status === "pending" || i.status === "overdue")
+          .reduce((s, i) => s + (num(i.totalAmount) || num(i.amount)), 0);
+      const collectedPct =
+        invoicedTotal > 0 ? Math.min(100, Math.round((revenue / invoicedTotal) * 100)) : null;
 
       return {
         totalStudents: students.length,
@@ -228,11 +345,15 @@ export function useSuperAdminStats() {
         recentActivities: activities.slice(0, 8),
         pendingApprovals: pendingAdmissions.slice(0, 5),
         revenueByMonth,
-        expenseByMonth,
         incomeBreakdown,
+        expenseByMonth: buildMonthlySeries(expenses, "createdAt"),
         passRate,
         retention,
-        hasData: students.length > 0,
+        invoicedTotal,
+        pendingDues,
+        collectedPct,
+        hasData: errs.size === 0 && students.length > 0,
+        error: errs.size > 0,
       };
     },
   });
@@ -243,24 +364,27 @@ export function useTeacherDashboard(teacherId?: string) {
   return useQuery({
     queryKey: ["teacher-dashboard", teacherId],
     queryFn: async () => {
-      const [classes, homework, exams, students, notices] = await Promise.all([
-        fetchAll("classes"),
-        fetchAll("homework"),
-        fetchAll("exams"),
-        fetchAll("students"),
-        fetchAll("notices"),
+      const errs = new Set<string>();
+      const [classes, teacherClasses, homework, exams, students, notices] = await Promise.all([
+        fetchAll("classes", 200, errs),
+        // Recurring schedule from the My Classes tab (day + "HH:MM") — auxiliary read.
+        fetchAll("teacher_classes", 200),
+        fetchAll("homework", 200, errs),
+        fetchAll("exams", 200, errs),
+        fetchAll("students", 200, errs),
+        fetchAll("notices", 200, errs),
       ]);
-      const myClasses = teacherId
-        ? classes
-            .filter((c) => c.teacherId === teacherId)
-            .sort((a, b) => toMs(a.startTime) - toMs(b.startTime))
-        : classes.sort((a, b) => toMs(a.startTime) - toMs(b.startTime));
+      // Own classes plus ones not yet assigned to a specific teacher.
+      const owned = (r: DashRecord) => !teacherId || r.teacherId === teacherId || !r.teacherId;
+      const myClasses = [...classes, ...teacherClasses]
+        .filter(owned)
+        .sort((a, b) => classStartMs(a.startTime) - classStartMs(b.startTime));
       const myHomework = homework
-        .filter((h) => !teacherId || h.teacherId === teacherId)
+        .filter(owned)
         .sort((a, b) => toMs(a.dueDate) - toMs(b.dueDate))
         .slice(0, 5);
       const myExams = exams
-        .filter((e) => !teacherId || e.teacherId === teacherId)
+        .filter(owned)
         .sort((a, b) => toMs(a.scheduledAt) - toMs(b.scheduledAt))
         .slice(0, 5);
 
@@ -294,7 +418,8 @@ export function useTeacherDashboard(teacherId?: string) {
         exams: myExams,
         totalStudents: students.length,
         activities: activities.slice(0, 6),
-        hasData: classes.length > 0,
+        hasData: errs.size === 0 && (classes.length > 0 || teacherClasses.length > 0),
+        error: errs.size > 0,
       };
     },
     initialData: {
@@ -304,6 +429,7 @@ export function useTeacherDashboard(teacherId?: string) {
       totalStudents: 0,
       activities: [],
       hasData: false,
+      error: false,
     },
   });
 }
@@ -313,41 +439,71 @@ export function useStudentDashboard(studentId?: string) {
   return useQuery({
     queryKey: ["student-dashboard", studentId],
     queryFn: async () => {
-      const [enrollments, homework, results, attendance, classes] = await Promise.all([
-        fetchAll("enrollments"),
-        fetchAll("homework"),
-        fetchAll("results"),
-        fetchAll("attendance", 500),
-        fetchAll("classes"),
-      ]);
+      const errs = new Set<string>();
+      const [enrollments, homework, results, attendance, classes, students, exams] =
+        await Promise.all([
+          fetchAll("enrollments", 200, errs),
+          fetchAll("homework", 200, errs),
+          fetchAll("results", 200, errs),
+          fetchAll("attendance", 500, errs),
+          fetchAll("classes", 200, errs),
+          // Auxiliary reads (no errs): a missing permission must not blank the dashboard.
+          fetchAll("students", 200),
+          fetchAll("exams", 100),
+        ]);
       const mine = <T extends DashRecord>(arr: T[]) =>
         arr.filter((r) => !studentId || r.studentId === studentId);
 
       const att = mine(attendance);
       const present = att.filter((a) => a.status === "present" || a.status === "late").length;
-      const attendancePercent = att.length ? Math.round((present / att.length) * 100) : 0;
+      const attendancePercent = att.length ? Math.round((present / att.length) * 100) : null;
+
+      // Batch-level homework has no per-student id — match the student's batch too.
+      const myBatches = new Set(
+        students
+          .filter((s) => s.id === studentId)
+          .map((s) => String(s.batch || "").trim())
+          .filter(Boolean),
+      );
+      const myHomework = homework.filter(
+        (h) =>
+          !studentId ||
+          h.studentId === studentId ||
+          (h.batch != null && myBatches.has(String(h.batch).trim())),
+      );
+
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
 
       return {
         enrollments: mine(enrollments),
-        homework: mine(homework)
-          .sort((a, b) => toMs(a.dueDate) - toMs(b.dueDate))
-          .slice(0, 5),
+        homework: myHomework.sort((a, b) => toMs(a.dueDate) - toMs(b.dueDate)).slice(0, 5),
         results: mine(results).slice(0, 5),
         attendancePercent,
         upcomingClasses: classes
-          .filter((c) => toMs(c.startTime) > Date.now())
-          .sort((a, b) => toMs(a.startTime) - toMs(b.startTime))
+          .filter((c) => {
+            const ms = classStartMs(c.startTime);
+            return ms >= startOfToday.getTime() && ms < startOfToday.getTime() + 86400000;
+          })
+          .sort((a, b) => classStartMs(a.startTime) - classStartMs(b.startTime))
+          .slice(0, 4),
+        exams: exams
+          .filter((e) => toMs(e.scheduledAt) >= startOfToday.getTime())
+          .sort((a, b) => toMs(a.scheduledAt) - toMs(b.scheduledAt))
           .slice(0, 3),
-        hasData: enrollments.length > 0 || results.length > 0,
+        hasData: errs.size === 0 && (enrollments.length > 0 || results.length > 0),
+        error: errs.size > 0,
       };
     },
     initialData: {
       enrollments: [],
       homework: [],
       results: [],
-      attendancePercent: 0,
+      attendancePercent: null,
       upcomingClasses: [],
+      exams: [],
       hasData: false,
+      error: false,
     },
   });
 }
@@ -357,18 +513,39 @@ export function useParentDashboard(parentEmail?: string) {
   return useQuery({
     queryKey: ["parent-dashboard", parentEmail],
     queryFn: async () => {
+      const errs = new Set<string>();
       const [students, notices, homework] = await Promise.all([
-        fetchAll("students"),
-        fetchAll("notices"),
-        fetchAll("homework"),
+        fetchAll("students", 200, errs),
+        fetchAll("notices", 200, errs),
+        fetchAll("homework", 200, errs),
       ]);
-      const children = parentEmail
+      const emailKey = String(parentEmail || "").toLowerCase();
+      const matched = emailKey
         ? students.filter(
             (s) =>
-              s.parentEmail === parentEmail ||
-              String(s.email || "").toLowerCase() === String(parentEmail).toLowerCase(),
+              String(s.parentEmail || "").toLowerCase() === emailKey ||
+              String(s.email || "").toLowerCase() === emailKey,
           )
         : [];
+      // De-duplicate duplicate student documents (same child entered twice).
+      const seenChildren = new Set<string>();
+      const children = matched.filter((s) => {
+        const key =
+          `${String(s.fullName || s.name || "")
+            .toLowerCase()
+            .trim()}|` +
+          `${String(s.course || "")
+            .toLowerCase()
+            .trim()}|` +
+          `${String(s.parentEmail || "")
+            .toLowerCase()
+            .trim()}`;
+        if (seenChildren.has(key)) return false;
+        seenChildren.add(key);
+        return true;
+      });
+      const childName = (c: DashRecord) =>
+        String(c.fullName || c.name || c.firstName || "Your child");
       const avgAtt = children.length
         ? Math.round(
             children.reduce((s, c) => s + Number(c.attendancePercent || 0), 0) / children.length,
@@ -378,18 +555,27 @@ export function useParentDashboard(parentEmail?: string) {
         ? Math.round(children.reduce((s, c) => s + Number(c.avgScore || 0), 0) / children.length)
         : 0;
 
+      const childIds = new Set(
+        children.flatMap((c) => [c.id, String(c.studentId || "")]).filter(Boolean),
+      );
+      const childNames = new Set(children.map((c) => childName(c).toLowerCase()));
+      const childBatches = new Set(
+        children.map((c) => String(c.batch || "").trim()).filter(Boolean),
+      );
       const pendingHw = homework.filter(
         (h) =>
-          children.some((c) => c.id === h.studentId || c.name === h.studentName) &&
-          h.status !== "completed",
+          !["completed", "graded"].includes(String(h.status || "").toLowerCase()) &&
+          (childIds.has(String(h.studentId || "")) ||
+            (h.studentName != null && childNames.has(String(h.studentName).toLowerCase())) ||
+            (h.batch != null && childBatches.has(String(h.batch).trim()))),
       ).length;
 
       const activities: { time: string; title: string; desc: string }[] = [];
       for (const c of children.slice(0, 2)) {
         activities.push({
           time: formatAgo(toMs(c.updatedAt) || toMs(c.createdAt)),
-          title: `${c.name} — attendance updated`,
-          desc: `${c.attendancePercent ?? 0}% attendance`,
+          title: `${childName(c)} — attendance updated`,
+          desc: `${num(c.attendancePercent)}% attendance`,
         });
       }
       for (const n of notices.slice(0, 3)) {
@@ -411,7 +597,8 @@ export function useParentDashboard(parentEmail?: string) {
           .sort((a, b) => toMs(b.publishedAt) - toMs(a.publishedAt))
           .slice(0, 5),
         activities: activities.slice(0, 6),
-        hasData: children.length > 0,
+        hasData: errs.size === 0 && children.length > 0,
+        error: errs.size > 0,
       };
     },
     initialData: {
@@ -422,6 +609,7 @@ export function useParentDashboard(parentEmail?: string) {
       notices: [],
       activities: [],
       hasData: false,
+      error: false,
     },
   });
 }
@@ -431,10 +619,13 @@ export function useAccountantDashboard() {
   return useQuery({
     queryKey: ["accountant-dashboard"],
     queryFn: async () => {
-      const [payments, fees, expenses] = await Promise.all([
-        fetchAll("payments", 500),
-        fetchAll("fees", 500),
-        fetchAll("expenses", 500),
+      const errs = new Set<string>();
+      const [payments, fees, expenses, invoices] = await Promise.all([
+        fetchAll("payments", 500, errs),
+        fetchAll("fees", 500, errs),
+        fetchAll("expenses", 500, errs),
+        // Auxiliary read (no errs): a missing permission must not blank the dashboard.
+        fetchAll("fee_invoices", 500),
       ]);
 
       const byCreated = (a: DashRecord, b: DashRecord) => toMs(b.createdAt) - toMs(a.createdAt);
@@ -456,9 +647,11 @@ export function useAccountantDashboard() {
       const monthExpense = sortedExpenses
         .filter((e) => toMs(e.createdAt) >= startOfMonth.getTime())
         .reduce((s, e) => s + num(e.amount), 0);
-      const pendingDues = fees
-        .filter((f) => f.status === "pending")
-        .reduce((s, f) => s + num(f.amount), 0);
+      const pendingDues =
+        fees.filter((f) => f.status === "pending").reduce((s, f) => s + num(f.amount), 0) +
+        invoices
+          .filter((i) => i.status === "pending" || i.status === "overdue")
+          .reduce((s, i) => s + (num(i.totalAmount) || num(i.amount)), 0);
 
       const txns: { date: string; title: string; desc: string }[] = [];
       for (const p of sortedPayments.slice(0, 4)) {
@@ -478,7 +671,7 @@ export function useAccountantDashboard() {
 
       const incomeByMonth = buildMonthlySeries(payments, "createdAt");
       const expenseByMonthChart = buildMonthlySeries(expenses, "createdAt");
-      const feeBreakdown = buildFeeBreakdown(fees);
+      const feeBreakdown = buildFeeBreakdown(fees, invoices);
 
       return {
         todayCollection,
@@ -489,7 +682,9 @@ export function useAccountantDashboard() {
         incomeByMonth,
         expenseByMonth: expenseByMonthChart,
         feeBreakdown,
-        hasData: payments.length > 0,
+        hasData:
+          errs.size === 0 && (payments.length > 0 || invoices.length > 0 || expenses.length > 0),
+        error: errs.size > 0,
       };
     },
     initialData: {
@@ -502,6 +697,7 @@ export function useAccountantDashboard() {
       expenseByMonth: [],
       feeBreakdown: [],
       hasData: false,
+      error: false,
     },
   });
 }

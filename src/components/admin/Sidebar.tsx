@@ -11,7 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { StarLogo } from "@/components/site/StarLogo";
-import { getUserRole, clearAuthData } from "@/lib/api-auth";
+import { getUserRole, handleSignOut } from "@/lib/api-auth";
 import { getNavSectionsForRole, type NavItem, type NavSection } from "./nav";
 
 interface SidebarProps {
@@ -60,9 +60,8 @@ export function Sidebar({
     setExpandedSections((prev) => ({ ...prev, ...newExpanded }));
   }, [location.pathname, filteredSections]);
 
-  const handleSignOut = () => {
-    clearAuthData();
-    navigate("/auth", { replace: true });
+  const handleSignOutClick = () => {
+    void handleSignOut(navigate);
   };
 
   const isActive = (path: string) => {
@@ -238,7 +237,7 @@ export function Sidebar({
         {/* Footer - Sign Out Only */}
         <div className="border-t border-gray-200 dark:border-gray-800 p-3 shrink-0">
           <button
-            onClick={handleSignOut}
+            onClick={handleSignOutClick}
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <LogOut className="w-4 h-4" />

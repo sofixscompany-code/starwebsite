@@ -26,7 +26,11 @@ function pick(title) {
 }
 
 async function main() {
-  await signInWithEmailAndPassword(auth, "super_admin@demo.starcoaching.edu.np", "Demo@2026!");
+  await signInWithEmailAndPassword(
+    auth,
+    "super_admin@demo.starcoaching.edu.np",
+    "Star#Demo2026!Kx7",
+  );
   const snap = await getDocs(collection(db, "notices"));
   let patched = 0;
   for (const d of snap.docs) {

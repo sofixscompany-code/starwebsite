@@ -2,7 +2,6 @@
 import {
   collection,
   query,
-  orderBy,
   getDocs,
   addDoc,
   updateDoc,
@@ -12,6 +11,17 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
+
+/** Normalize Firestore Timestamps / ISO strings / numbers to epoch ms (client-side sorting). */
+const toMs = (v: unknown): number => {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return Date.parse(v) || 0;
+  const t = v as { toMillis?: () => number; seconds?: number };
+  if (typeof t.toMillis === "function") return t.toMillis();
+  if (typeof t.seconds === "number") return t.seconds * 1000;
+  return 0;
+};
 
 /* -------------------- TYPES -------------------- */
 export interface Invoice {
@@ -74,14 +84,13 @@ export function useInvoices(studentId?: string) {
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["fees", "invoices", studentId],
     queryFn: async () => {
-      let q: any = collection(db, "fee_invoices");
-      if (studentId) {
-        q = query(q, where("studentId", "==", studentId), orderBy("createdAt", "desc"));
-      } else {
-        q = query(q, orderBy("createdAt", "desc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Invoice[];
+      // Index-free: at most one equality `where`, no orderBy after where — sorted client-side.
+      const constraints: any[] = [];
+      if (studentId) constraints.push(where("studentId", "==", studentId));
+      const snap = await getDocs(query(collection(db, "fee_invoices"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as Invoice)
+        .sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
     },
   });
 
@@ -136,22 +145,46 @@ export function usePayments(invoiceId?: string) {
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ["fees", "payments", invoiceId],
     queryFn: async () => {
-      let q: any = collection(db, "fee_payments");
-      if (invoiceId) {
-        q = query(q, where("invoiceId", "==", invoiceId), orderBy("createdAt", "desc"));
-      } else {
-        q = query(q, orderBy("createdAt", "desc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Payment[];
+      // Canonical money-in collection is `payments` (written by admin/payments pages).
+      // Index-free: single equality `where`, no orderBy after where — sorted client-side.
+      const constraints: any[] = [];
+      if (invoiceId) constraints.push(where("invoiceId", "==", invoiceId));
+      const snap = await getDocs(query(collection(db, "payments"), ...constraints));
+      return snap.docs
+        .map((d) => {
+          const data = d.data() as any;
+          const createdAt = data.createdAt ?? null;
+          const createdDate = toMs(createdAt)
+            ? new Date(toMs(createdAt)).toISOString().slice(0, 10)
+            : "";
+          const paymentDate =
+            String(data.paymentDate ?? data.date ?? "").slice(0, 10) || createdDate;
+          return {
+            id: d.id,
+            invoiceId: data.invoiceId ?? "",
+            invoiceNumber: data.invoiceNumber ?? "",
+            studentId: data.studentId ?? "",
+            studentName: data.studentName ?? data.name ?? "",
+            amount: Number(data.amount) || 0,
+            method: (data.method ?? "cash") as Payment["method"],
+            reference: data.reference ?? "",
+            receivedBy: data.receivedBy ?? "",
+            notes: data.notes ?? "",
+            paymentDate,
+            receiptNumber: data.receiptNumber ?? data.receiptNo ?? d.id,
+            createdAt,
+          } as Payment;
+        })
+        .sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
     },
   });
 
   const addPayment = useMutation({
     mutationFn: async (payment: Omit<Payment, "id">) => {
-      const docRef = await addDoc(collection(db, "fee_payments"), {
+      const docRef = await addDoc(collection(db, "payments"), {
         ...payment,
-        createdAt: serverTimestamp(),
+        status: "completed",
+        createdAt: new Date().toISOString(),
       });
       return docRef.id;
     },
@@ -170,9 +203,25 @@ export function useFeeStructure() {
   const { data: fees = [], isLoading } = useQuery({
     queryKey: ["fees", "structure"],
     queryFn: async () => {
-      const q = query(collection(db, "fee_structure"), orderBy("courseName", "asc"));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as FeeStructure[];
+      // Index-free: no orderBy in the query (fee_structure docs are written with
+      // `planName`, legacy docs with `courseName`) — sorted client-side by name.
+      const snap = await getDocs(collection(db, "fee_structure"));
+      return snap.docs
+        .map((d) => {
+          const data = d.data() as any;
+          const name = data.planName ?? data.courseName ?? data.program ?? "";
+          const status = String(data.status ?? "").toLowerCase();
+          return {
+            ...data,
+            id: d.id,
+            courseName: name,
+            amount: Number(data.amount ?? data.monthlyFee ?? data.totalAmount) || 0,
+            feeType: data.feeType ?? "tuition",
+            frequency: data.frequency ?? "monthly",
+            isActive: typeof data.isActive === "boolean" ? data.isActive : status !== "inactive",
+          } as FeeStructure;
+        })
+        .sort((a, b) => String(a.courseName ?? "").localeCompare(String(b.courseName ?? "")));
     },
   });
 
@@ -211,7 +260,7 @@ export function useFeeStats() {
     queryFn: async () => {
       const [invoicesSnap, paymentsSnap] = await Promise.all([
         getDocs(collection(db, "fee_invoices")),
-        getDocs(collection(db, "fee_payments")),
+        getDocs(collection(db, "payments")),
       ]);
 
       const invoices = invoicesSnap.docs.map((d) => d.data());

@@ -14,11 +14,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/integrations/firebase/config";
-import { firebaseAuth } from "@/integrations/firebase/auth";
 import {
   collection,
   getDocs,
-  addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   doc,
@@ -27,10 +26,18 @@ import {
 } from "firebase/firestore";
 import { ROLE_LABELS } from "@/hooks/use-user-role";
 import type { Role } from "@/hooks/use-user-role";
+import {
+  createAuthUser,
+  sendPasswordReset,
+  usernameToLoginEmail,
+  LOGIN_EMAIL_DOMAIN,
+  USERNAME_PATTERN,
+} from "@/lib/user-accounts";
 
 type ManagedUser = {
   id: string;
   uid: string;
+  username: string;
   full_name: string;
   email: string;
   phone: string;
@@ -42,6 +49,7 @@ type ManagedUser = {
 };
 
 type FormData = {
+  username: string;
   full_name: string;
   email: string;
   phone: string;
@@ -52,6 +60,7 @@ type FormData = {
 };
 
 const emptyForm: FormData = {
+  username: "",
   full_name: "",
   email: "",
   phone: "",
@@ -70,6 +79,7 @@ export function UserManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
 
@@ -86,6 +96,7 @@ export function UserManagementPage() {
         snap.docs.map((d) => ({
           id: d.id,
           uid: d.data().uid || d.id,
+          username: d.data().username || (d.data().email || "").split("@")[0] || "",
           full_name: d.data().full_name || "",
           email: d.data().email || "",
           phone: d.data().phone || "",
@@ -112,6 +123,7 @@ export function UserManagementPage() {
   const openEdit = (u: ManagedUser) => {
     setEditingId(u.id);
     setForm({
+      username: u.username || u.email.split("@")[0],
       full_name: u.full_name,
       email: u.email,
       phone: u.phone,
@@ -123,22 +135,69 @@ export function UserManagementPage() {
     setShowModal(true);
   };
 
+  const generatePassword = () => {
+    // Readable strong password (e.g. "Star@k7Xm29Qp") — meets Firebase's
+    // 6-character minimum while staying easy to hand over to the user.
+    const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let body = "";
+    for (let i = 0; i < 10; i++) body += chars[Math.floor(Math.random() * chars.length)];
+    setForm((f) => ({ ...f, password: `Star@${body}` }));
+  };
+
+  const handleSendReset = async () => {
+    if (!form.email) {
+      toast.error("This account has no e-mail on file");
+      return;
+    }
+    setResetting(true);
+    try {
+      await sendPasswordReset(form.email);
+      toast.success(`Password reset email sent to ${form.email}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send the reset email");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.full_name.trim() || !form.email.trim()) {
-      toast.error("Name and email are required");
+    if (!form.full_name.trim()) {
+      toast.error("Full name is required");
       return;
     }
-    if (!editingId && !form.password) {
-      toast.error("Password is required for new users");
-      return;
+
+    const username = form.username.trim().toLowerCase();
+
+    if (!editingId) {
+      // ── New account: admin is assigning username + password ──────
+      if (!USERNAME_PATTERN.test(username)) {
+        toast.error(
+          "Username must be 3–30 characters — letters, numbers, dot (.), dash (-) or underscore (_)",
+        );
+        return;
+      }
+      const loginEmail = usernameToLoginEmail(username);
+      const taken = users.some(
+        (u) =>
+          (u.username || "").toLowerCase() === username || u.email.toLowerCase() === loginEmail,
+      );
+      if (taken) {
+        toast.error("That username is already assigned — pick another one");
+        return;
+      }
+      if (form.password.length < 6) {
+        toast.error("Password must be at least 6 characters");
+        return;
+      }
     }
+
     setSaving(true);
     try {
       if (editingId) {
+        // Profile-only updates (login credentials are fixed after creation).
         const updateData: Record<string, unknown> = {
           full_name: form.full_name.trim(),
-          email: form.email.trim(),
           phone: form.phone.trim(),
           role: form.role,
           branch: form.branch,
@@ -147,33 +206,22 @@ export function UserManagementPage() {
         await updateDoc(doc(db, "users", editingId), updateData);
         toast.success("User updated");
       } else {
-        const { data: authData, error: authError } = await firebaseAuth.signUp({
-          email: form.email.trim(),
-          password: form.password,
-          options: {
-            data: {
-              full_name: form.full_name.trim(),
-              phone: form.phone.trim(),
-              role: form.role,
-              branch: form.branch,
-              status: form.status,
-            },
-          },
+        const email = usernameToLoginEmail(username);
+        // Create the Firebase Auth account via REST so the admin's own
+        // session stays signed in (the SDK signUp would switch sessions).
+        const uid = await createAuthUser({ email, password: form.password });
+        await setDoc(doc(db, "users", uid), {
+          uid,
+          username,
+          email,
+          full_name: form.full_name.trim(),
+          phone: form.phone.trim(),
+          role: form.role,
+          branch: form.branch,
+          status: form.status,
+          createdAt: new Date().toISOString(),
         });
-        if (authError) throw authError;
-        if (authData?.user) {
-          await updateDoc(doc(db, "users", authData.user.uid), {
-            uid: authData.user.uid,
-            role: form.role,
-            branch: form.branch,
-            status: form.status,
-            phone: form.phone.trim(),
-            full_name: form.full_name.trim(),
-            email: form.email.trim(),
-            createdAt: new Date().toISOString(),
-          });
-        }
-        toast.success("User created successfully");
+        toast.success(`Account created — ${username} can now sign in with their password`);
       }
       setShowModal(false);
       setForm(emptyForm);
@@ -190,7 +238,11 @@ export function UserManagementPage() {
     if (!confirm("Delete this user? This cannot be undone.")) return;
     try {
       await deleteDoc(doc(db, "users", id));
-      toast.success("User deleted");
+      // The Firebase Auth account itself can't be removed from the client —
+      // without the users/{uid} profile it can no longer sign in to anything.
+      toast.success(
+        "User removed — their sign-in is disabled because the profile no longer exists.",
+      );
       loadUsers();
     } catch {
       toast.error("Failed to delete user");
@@ -201,6 +253,7 @@ export function UserManagementPage() {
     const matchSearch =
       u.full_name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
+      (u.username || "").toLowerCase().includes(search.toLowerCase()) ||
       u.phone.includes(search);
     const matchRole = filterRole === "all" || u.role === filterRole;
     return matchSearch && matchRole;
@@ -220,13 +273,16 @@ export function UserManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[hsl(var(--ap-ink))]">User Management</h1>
-          <p className="text-sm text-[hsl(var(--ap-muted))]">{users.length} total users</p>
+          <p className="text-sm text-[hsl(var(--ap-muted))]">
+            {users.length} total users · Assign a username &amp; password to give someone access to
+            their role dashboard
+          </p>
         </div>
         <button
           onClick={openAdd}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--ap-blue))] text-white text-sm font-semibold hover:bg-[hsl(var(--ap-blue-light))] transition"
         >
-          <Plus className="w-4 h-4" /> Add User
+          <Plus className="w-4 h-4" /> Assign Credentials
         </button>
       </div>
 
@@ -308,7 +364,10 @@ export function UserManagementPage() {
                         <span className="font-medium text-[hsl(var(--ap-ink))]">{u.full_name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[hsl(var(--ap-muted))]">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-[hsl(var(--ap-ink))]">{u.email}</div>
+                      <div className="text-xs text-[hsl(var(--ap-muted))]">@{u.username}</div>
+                    </td>
                     <td className="px-4 py-3 text-[hsl(var(--ap-muted))]">{u.phone || "—"}</td>
                     <td className="px-4 py-3">
                       <span
@@ -362,7 +421,7 @@ export function UserManagementPage() {
           <div className="relative bg-white rounded-2xl border border-[hsl(var(--ap-border))] shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--ap-border))]">
               <h2 className="text-lg font-bold text-[hsl(var(--ap-ink))]">
-                {editingId ? "Edit User" : "Add New User"}
+                {editingId ? "Edit User" : "Assign Username & Password"}
               </h2>
               <button
                 onClick={() => {
@@ -389,19 +448,38 @@ export function UserManagementPage() {
                     placeholder="Enter full name"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
-                    placeholder="user@example.com"
-                  />
-                </div>
+                {editingId ? (
+                  <div className="col-span-2 rounded-xl border border-[hsl(var(--ap-border))] bg-[hsl(var(--ap-surface))] p-3">
+                    <p className="text-xs font-bold text-[hsl(var(--ap-ink))]">Login ID</p>
+                    <p className="text-sm text-[hsl(var(--ap-muted))] mt-0.5">{form.email}</p>
+                    <p className="text-[11px] text-[hsl(var(--ap-muted))] mt-1.5">
+                      Username & login e-mail are locked after creation — create a new account to
+                      issue different credentials.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={form.username}
+                      onChange={(e) => setForm({ ...form, username: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
+                      placeholder="ram.teacher"
+                    />
+                    <p className="text-[11px] text-[hsl(var(--ap-muted))] mt-1">
+                      Login as{" "}
+                      <span className="font-semibold text-[hsl(var(--ap-ink))]">
+                        {form.username.trim()
+                          ? usernameToLoginEmail(form.username)
+                          : `yourname@${LOGIN_EMAIL_DOMAIN}`}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
                     Phone
@@ -414,19 +492,54 @@ export function UserManagementPage() {
                     placeholder="9800000000"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
-                    Password {!editingId && "*"}
-                  </label>
-                  <input
-                    type="password"
-                    required={!editingId}
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
-                    placeholder={editingId ? "Leave blank to keep current" : "Enter password"}
-                  />
-                </div>
+                {editingId ? (
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
+                      Password
+                    </label>
+                    <div className="rounded-xl border border-[hsl(var(--ap-border))] bg-[hsl(var(--ap-surface))] p-3">
+                      <p className="text-[11px] text-[hsl(var(--ap-muted))] mb-2">
+                        Passwords can't be force-set from here — send the user a secure e-mail link
+                        to assign a new password.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleSendReset}
+                        disabled={resetting}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--ap-blue))] text-white text-xs font-semibold hover:bg-[hsl(var(--ap-blue-light))] disabled:opacity-50"
+                      >
+                        {resetting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        Send Password Reset Email
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-sm font-medium text-[hsl(var(--ap-ink))]">
+                        Password *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={generatePassword}
+                        className="text-xs font-semibold text-[hsl(var(--ap-blue))] hover:underline"
+                      >
+                        Generate strong password
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
+                      placeholder="Min 6 characters"
+                    />
+                    <p className="text-[11px] text-[hsl(var(--ap-muted))] mt-1">
+                      Hand this username &amp; password to the user — they sign in with either.
+                    </p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--ap-ink))] mb-1">
                     Role *
@@ -492,7 +605,7 @@ export function UserManagementPage() {
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[hsl(var(--ap-blue))] text-white text-sm font-semibold hover:bg-[hsl(var(--ap-blue-light))] disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingId ? "Update User" : "Create User"}
+                  {editingId ? "Update User" : "Create Account"}
                 </button>
               </div>
             </form>

@@ -17,7 +17,7 @@ const db = getFirestore(app);
 
 const role = process.argv[2] || "teacher";
 const email = `${role}@demo.starcoaching.edu.np`;
-const password = "Demo@2026!";
+const password = "Star#Demo2026!Kx7";
 
 try {
   let cred;

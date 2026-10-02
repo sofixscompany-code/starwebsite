@@ -11,20 +11,9 @@ export interface GalleryItem {
   active?: boolean;
 }
 
-const FALLBACK_GALLERY: GalleryItem[] = [
-  { id: "g1", url: "", title: "Nepal Police physical training", category: "Training", order: 1 },
-  { id: "g2", url: "", title: "Classroom in session", category: "Campus", order: 2 },
-  { id: "g3", url: "", title: "Loksewa mock test day", category: "Exams", order: 3 },
-  { id: "g4", url: "", title: "Staff Nurse practical", category: "Training", order: 4 },
-  { id: "g5", url: "", title: "Result celebration", category: "Events", order: 5 },
-  { id: "g6", url: "", title: "Faculty session", category: "Campus", order: 6 },
-  { id: "g7", url: "", title: "Hostel - Boys & Girls", category: "Campus", order: 7 },
-  { id: "g8", url: "", title: "Computer lab", category: "Campus", order: 8 },
-  { id: "g9", url: "", title: "SEE Preparation batch", category: "Training", order: 9 },
-];
-
 export function useGallery() {
-  const [items, setItems] = useState<GalleryItem[]>(FALLBACK_GALLERY);
+  // Admin uploads only (/admin/gallery) — no bundled/placeholder photos.
+  const [items, setItems] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;

@@ -63,6 +63,30 @@ export async function fetchUserRole(userId: string): Promise<Role> {
   }
 }
 
+export interface UserProfile {
+  role: Role;
+  fullName: string;
+  status: string;
+}
+
+/** Full profile lookup for login: role + display name + active status. */
+export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+  try {
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (!userDoc.exists()) return null;
+    const data = userDoc.data();
+    const rawRole = data.role as string;
+    if (!(rawRole in ROLE_LABELS)) return null;
+    return {
+      role: rawRole as Role,
+      fullName: (data.full_name as string) || "",
+      status: (data.status as string) || "active",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function routeForRole(role: Role): string {
   if (!role) return "/auth";
   return ROLE_DASHBOARD_ROUTES[role] || "/auth";

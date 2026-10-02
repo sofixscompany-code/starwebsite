@@ -15,17 +15,21 @@ export interface ModuleRecord {
   [key: string]: unknown;
 }
 
-function getActor(): { name: string; role: string } {
+function getActor(): { name: string; role: string; uid: string } {
   try {
     const raw = localStorage.getItem("auth_user");
     if (raw) {
       const u = JSON.parse(raw);
-      return { name: u?.name || u?.email || "Unknown user", role: u?.role || "" };
+      return {
+        name: u?.name || u?.email || "Unknown user",
+        role: u?.role || "",
+        uid: u?.uid || "",
+      };
     }
   } catch {
     // ignore
   }
-  return { name: localStorage.getItem("demo_role") || "Unknown user", role: "" };
+  return { name: "Unknown user", role: "", uid: "" };
 }
 
 async function logAudit(action: string, target: string) {
@@ -36,6 +40,7 @@ async function logAudit(action: string, target: string) {
     target,
     date: new Date().toISOString(),
     role: actor.role,
+    actorUid: actor.uid,
     createdAt: new Date().toISOString(),
   });
 }
@@ -43,22 +48,36 @@ async function logAudit(action: string, target: string) {
 export function useModuleData(collectionName: string) {
   const [rows, setRows] = useState<ModuleRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, collectionName),
       (snap) => {
+        setError(false);
         setRows(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ModuleRecord));
         setLoading(false);
       },
-      () => setLoading(false),
+      () => {
+        setError(true);
+        setLoading(false);
+      },
     );
     return unsub;
   }, [collectionName]);
 
   const create = useCallback(
     async (data: Record<string, unknown>) => {
+      const actor = getActor();
+      // Ownership stamps: dashboards filter records by these fields
+      // (e.g. useTeacherDashboard filters teacherId == uid), and Firestore
+      // rules rely on them too. An explicit form value always wins.
+      const stamp: Record<string, unknown> = {};
+      if (actor.uid) stamp.createdBy = actor.uid;
+      if (actor.role === "teacher" && !data.teacherId) stamp.teacherId = actor.uid;
+      if (actor.role === "student" && !data.studentId) stamp.studentId = actor.uid;
       const ref = await addDoc(collection(db, collectionName), {
+        ...stamp,
         ...data,
         createdAt: new Date().toISOString(),
       });
@@ -111,5 +130,5 @@ export function useModuleData(collectionName: string) {
     [collectionName],
   );
 
-  return { rows, loading, create, update, remove, bulkDelete, bulkUpdate };
+  return { rows, loading, error, create, update, remove, bulkDelete, bulkUpdate };
 }

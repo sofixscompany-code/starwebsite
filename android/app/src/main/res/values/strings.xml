@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Star Coaching Institute</string>
+    <string name="title_activity_main">Star Coaching Institute</string>
+    <string name="package_name">com.starcoaching.institute</string>
+    <string name="custom_url_scheme">com.starcoaching.institute</string>
+</resources>

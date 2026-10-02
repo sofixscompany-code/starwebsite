@@ -1,28 +1,44 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { Image as ImageIcon, Camera, Images, Eye } from "lucide-react";
+import { Camera, Images, Eye } from "lucide-react";
 
 export function GalleryManagerPage() {
   return (
     <FirestoreModulePage
       collectionName="gallery"
       title="Gallery"
-      subtitle="Photos shown on the public Photo Gallery page — paste image URLs"
+      subtitle="Photos shown on the public Photo Gallery page — upload from device or paste an image URL"
       stats={[
         { label: "Photos", value: 0, icon: Camera, tone: "purple" },
         { label: "Public Page", value: 1, icon: Eye, tone: "success" },
       ]}
       columns={[
-        { key: "title", label: "Title" },
+        {
+          key: "url",
+          label: "Image",
+          sortable: false,
+          render: (row) =>
+            row.url ? (
+              <img
+                src={row.url}
+                alt={row.title ?? ""}
+                className="w-14 h-10 rounded-md object-cover border"
+              />
+            ) : (
+              <Images className="w-5 h-5 text-gray-300" />
+            ),
+        },
+        { key: "title", label: "Caption" },
         { key: "category", label: "Category" },
         { key: "status", label: "Status" },
       ]}
       fields={[
         {
           key: "url",
-          label: "Image URL",
-          type: "text",
+          label: "Image",
+          type: "upload",
+          uploadFolder: "gallery",
           required: true,
-          placeholder: "https://... (paste a hosted image link)",
+          placeholder: "Upload or paste a hosted image URL",
         },
         {
           key: "title",

@@ -1,17 +1,40 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { Wallet, CheckCircle2, XCircle, TrendingDown } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { Wallet, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
 
 export function PaymentsPage() {
+  const { rows } = useModuleData("payments");
+
+  const isCompleted = (status: unknown) => {
+    const s = String(status ?? "").toLowerCase();
+    return s === "completed" || s === "paid";
+  };
+  const isFailed = (status: unknown) => String(status ?? "").toLowerCase() === "failed";
+
+  const total = rows.length;
+  const completed = rows.filter((r) => isCompleted(r.status)).length;
+  const failed = rows.filter((r) => isFailed(r.status)).length;
+  const collected = rows.reduce((sum, r) => {
+    if (!isCompleted(r.status)) return sum;
+    const amount = Number(r.amount);
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+
   return (
     <FirestoreModulePage
       collectionName="payments"
       title="Payments"
       subtitle="Track all fee collections, refunds and payment status"
       stats={[
-        { label: "Total Collected", value: "₹24.6L", icon: Wallet, tone: "purple" },
-        { label: "Successful", value: 842, icon: CheckCircle2, tone: "success" },
-        { label: "Failed", value: 18, icon: XCircle, tone: "danger" },
-        { label: "Refunds", value: "₹1.2L", icon: TrendingDown, tone: "warning" },
+        { label: "Total Payments", value: total, icon: Wallet, tone: "purple" },
+        { label: "Successful", value: completed, icon: CheckCircle2, tone: "success" },
+        { label: "Failed", value: failed, icon: XCircle, tone: "danger" },
+        {
+          label: "Collected",
+          value: `Rs ${collected.toLocaleString("en-IN")}`,
+          icon: TrendingUp,
+          tone: "info",
+        },
       ]}
       columns={[
         { key: "studentName", label: "Student" },

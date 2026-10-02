@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { ModulePage, type ModulePageProps } from "./ModulePage";
 import { useModuleData } from "@/hooks/use-module-data";
+import { canCreate, canManage } from "@/lib/access";
+import { getUserRole } from "@/lib/api-auth";
 import type { FieldDef } from "./ModulePage";
 
 type FirestoreModulePageProps = Omit<ModulePageProps, "rows"> & {
   collectionName: string;
-  /** Optional fallback/demo rows shown until Firestore data exists */
+  /** Optional dev-only fallback rows shown while Firestore data is empty */
   rows?: ModulePageProps["rows"];
 };
 
@@ -17,8 +19,11 @@ const SELECT_HINTS: Record<string, string[]> = {
 
 /**
  * Drop-in replacement for ModulePage backed by a Firestore collection.
- * Provides live rows + full CRUD (create / update / delete / bulk).
+ * Provides live rows + role-gated CRUD (create / update / delete / bulk —
+ * only offered when firestore.rules will accept the action for this role).
  * Form fields are auto-derived from columns unless overridden.
+ * Static `rows` fallbacks render only in dev builds; production shows live
+ * data (or an honest empty state).
  */
 export function FirestoreModulePage({
   collectionName,
@@ -26,7 +31,12 @@ export function FirestoreModulePage({
   fields,
   ...rest
 }: FirestoreModulePageProps) {
-  const { rows, create, update, remove, bulkDelete, bulkUpdate } = useModuleData(collectionName);
+  const { rows, error, create, update, remove, bulkDelete, bulkUpdate } =
+    useModuleData(collectionName);
+
+  const role = getUserRole();
+  const allowCreate = canCreate(collectionName, role);
+  const allowManage = canManage(collectionName, role);
 
   const effectiveFields = useMemo<FieldDef[]>(() => {
     if (fields && fields.length > 0) return fields;
@@ -46,7 +56,11 @@ export function FirestoreModulePage({
       });
   }, [fields, columns]);
 
-  const effectiveRows = rows.length ? rows : (rest.rows ?? []);
+  // Demo/fallback rows are a development aid only — production must never
+  // display them alongside (or instead of) real Firestore data.
+  const liveRows = rows;
+  const demoRows = import.meta.env.DEV ? (rest.rows ?? []) : [];
+  const effectiveRows = liveRows.length ? liveRows : demoRows;
 
   return (
     <ModulePage
@@ -54,11 +68,12 @@ export function FirestoreModulePage({
       columns={columns}
       fields={effectiveFields}
       rows={effectiveRows}
-      onCreate={async (data) => create(data)}
-      onUpdate={async (id, data) => update(id, data)}
-      onDelete={remove}
-      onBulkDelete={bulkDelete}
-      onBulkUpdate={bulkUpdate}
+      loadError={error}
+      onCreate={allowCreate ? async (data) => create(data) : undefined}
+      onUpdate={allowManage ? async (id, data) => update(id, data) : undefined}
+      onDelete={allowManage ? remove : undefined}
+      onBulkDelete={allowManage ? bulkDelete : undefined}
+      onBulkUpdate={allowManage ? bulkUpdate : undefined}
     />
   );
 }

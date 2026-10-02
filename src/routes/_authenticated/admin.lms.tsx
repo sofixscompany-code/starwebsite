@@ -78,11 +78,6 @@ export function LMSPage() {
       <PageHeader
         title="Learning Management System"
         subtitle="Manage courses, lessons, quizzes, enrollments & student progress."
-        actions={
-          <button className="ap-btn-ghost">
-            <Download className="w-4 h-4" /> Export
-          </button>
-        }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

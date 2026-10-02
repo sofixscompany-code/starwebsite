@@ -1,8 +1,8 @@
 ﻿import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ArrowRight, Pause, Play } from "lucide-react";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 import { Button } from "@/components/ui/button";
 
@@ -15,26 +15,47 @@ type Banner = {
   imageUrl: string;
 };
 
-export function HeroSlider() {
+type BannerDoc = Banner & { isActive?: boolean; sortOrder?: number; createdAt?: string };
+
+// Shown while the admin hasn't uploaded any banners yet (same artwork the
+// dashboards use), so the hero is never blank.
+const FALLBACK_BANNERS: Banner[] = [
+  {
+    id: "fallback-banner",
+    title: null,
+    subtitle: null,
+    ctaText: null,
+    ctaLink: null,
+    imageUrl: "/BANNER/BANNER%201.png",
+  },
+];
+
+// Composite-index-free: fetch all banners, filter/sort client-side so the
+// live query never requires a manual Firestore composite index.
+async function loadBanners(): Promise<Banner[]> {
+  const snap = await getDocs(collection(db, "banners"));
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as BannerDoc[];
+  return docs
+    .filter((b) => b.isActive !== false && !!b.imageUrl)
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
+        String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")),
+    );
+}
+
+export function HeroSlider({ compact = false }: { compact?: boolean }) {
   const { data: banners = [] } = useQuery({
     queryKey: ["hero-banners"],
-    queryFn: async () => {
-      const q = query(
-        collection(db, "banners"),
-        where("isActive", "==", true),
-        orderBy("sortOrder"),
-        orderBy("createdAt"),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Banner[];
-    },
+    queryFn: loadBanners,
   });
 
+  const slides = banners.length ? banners : FALLBACK_BANNERS;
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStart = useRef(0);
   const touchEnd = useRef(0);
-  const count = banners.length;
+  const count = slides.length;
 
   const go = useCallback(
     (n: number) => {
@@ -70,19 +91,21 @@ export function HeroSlider() {
     }
   };
 
-  if (count === 0) return null;
-
   return (
     <section className="relative bg-navy overflow-hidden">
       <div
-        className="relative w-full aspect-[16/7] md:aspect-[16/6] max-h-[600px]"
+        className={
+          compact
+            ? "relative w-full aspect-[16/6] md:aspect-[16/4] max-h-[240px]"
+            : "relative w-full aspect-[16/7] md:aspect-[16/6] max-h-[600px]"
+        }
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {banners.map((b, i) => {
+        {slides.map((b, i) => {
           const isCta = b.ctaLink && b.ctaLink.startsWith("/");
           return (
             <div
@@ -163,20 +186,13 @@ export function HeroSlider() {
             </button>
 
             <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex items-center justify-center gap-2.5">
-              <button
-                onClick={() => setPaused((p) => !p)}
-                aria-label={paused ? "Resume slideshow" : "Pause slideshow"}
-                className="bg-white/80 hover:bg-white text-navy rounded-full p-1.5 shadow transition"
-              >
-                {paused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-              </button>
-              {banners.map((_, i) => (
+              {slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => go(i)}
                   aria-label={`Go to slide ${i + 1}`}
                   className={`h-2.5 rounded-full transition-all duration-300 ${
-                    i === idx ? "w-8 bg-gold shadow-md" : "w-2.5 bg-white/50 hover:bg-white/80"
+                    i === idx ? "w-8 bg-brand-red shadow-md" : "w-2.5 bg-white/50 hover:bg-white/80"
                   }`}
                 />
               ))}

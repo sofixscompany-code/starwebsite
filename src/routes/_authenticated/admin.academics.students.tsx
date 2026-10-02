@@ -1,18 +1,25 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
+import { useModuleData } from "@/hooks/use-module-data";
 import { Users, School } from "lucide-react";
 
 export default function AcademicsStudentsPage() {
+  const { rows } = useModuleData("students");
+
+  const active = rows.filter((r) => String(r.status || "").toLowerCase() === "active").length;
+
   return (
     <FirestoreModulePage
       collectionName="students"
       title="Students"
       subtitle="Academic student management"
       stats={[
-        { label: "Students", value: 0, icon: Users, tone: "info" },
-        { label: "Section", value: "Academics", icon: School, tone: "success" },
+        { label: "Students", value: rows.length, icon: Users, tone: "info" },
+        { label: "Active", value: active, icon: School, tone: "success" },
       ]}
       columns={[
         { key: "fullName", label: "Name" },
+        { key: "studentId", label: "Login UID" },
+        { key: "parentEmail", label: "Parent Email" },
         { key: "course", label: "Course" },
         { key: "batch", label: "Batch" },
         { key: "status", label: "Status" },
@@ -24,6 +31,18 @@ export default function AcademicsStudentsPage() {
           type: "text",
           required: true,
           placeholder: "Aarav Sharma",
+        },
+        {
+          key: "studentId",
+          label: "Login UID",
+          type: "text",
+          placeholder: "Student login uid (students collection doc id)",
+        },
+        {
+          key: "parentEmail",
+          label: "Parent Email",
+          type: "text",
+          placeholder: "parent@demo.np",
         },
         { key: "email", label: "Email", type: "text", placeholder: "student@demo.np" },
         { key: "phone", label: "Phone", type: "text", placeholder: "+977 98XXXXXXXX" },

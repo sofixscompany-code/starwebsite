@@ -3,15 +3,14 @@ import {
   Trophy,
   TrendingUp,
   Award,
-  Clock,
   Download,
   Search,
-  Filter,
-  Eye,
-  Printer,
-  Share2,
   FileText,
   Medal,
+  Edit,
+  Trash2,
+  Save,
+  Loader2,
 } from "lucide-react";
 import {
   LineChart,
@@ -28,20 +27,110 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { StatCard, Panel, Badge, DataTable, Toolbar, Tabs } from "@/components/admin/ui";
+import { StatCard, Panel, DataTable, Toolbar, Tabs, Modal } from "@/components/admin/ui";
 import { useModuleData } from "@/hooks/use-module-data";
+import { toast } from "sonner";
 
-const scoreTrend = [
-  { exam: "Mock #10", avg: 68, pass: 72 },
-  { exam: "Mock #11", avg: 71, pass: 76 },
-  { exam: "Mock #12", avg: 74, pass: 80 },
-  { exam: "Mock #13", avg: 78, pass: 84 },
+type ResultForm = {
+  studentId: string;
+  subject: string;
+  exam: string;
+  score: string;
+  total: string;
+};
+
+/**
+ * `results` is written by `/admin/results`, the teacher gradebook and the
+ * teacher results page — keep this column/field set in sync with
+ * `admin.teacher.gradebook.tsx` and `admin.teacher.results.tsx`.
+ */
+const COLUMNS = [
+  { key: "studentId", label: "Student ID" },
+  { key: "subject", label: "Subject" },
+  { key: "exam", label: "Exam" },
+  { key: "score", label: "Score" },
+  { key: "total", label: "Total" },
 ];
+
+function exportCsv(
+  rows: Record<string, unknown>[],
+  keys: { key: string; label: string }[],
+  file: string,
+) {
+  if (!rows.length) return toast.error("No data to export");
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [
+    keys.map((k) => k.label).join(","),
+    ...rows.map((r) => keys.map((k) => esc(r[k.key])).join(",")),
+  ].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = file;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Exported successfully");
+}
 
 export function ResultsPage() {
   const [q, setQ] = useState("");
   const [activeTab, setActiveTab] = useState("results");
-  const { rows, remove } = useModuleData("results");
+  const { rows, create, update, remove } = useModuleData("results");
+
+  /* ---- Create / edit form ---- */
+  const emptyForm: ResultForm = { studentId: "", subject: "", exam: "", score: "", total: "" };
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState<ResultForm>(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const openCreate = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = (row: Record<string, unknown>) => {
+    setForm({
+      studentId: String(row.studentId ?? ""),
+      subject: String(row.subject ?? ""),
+      exam: String(row.exam ?? ""),
+      score: row.score != null ? String(row.score) : "",
+      total: row.total != null ? String(row.total) : "",
+    });
+    setEditingId(String(row.id));
+    setFormOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.studentId.trim() || !form.exam.trim()) {
+      toast.error("Student ID and exam are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        studentId: form.studentId.trim(),
+        subject: form.subject.trim(),
+        exam: form.exam.trim(),
+        score: form.score === "" ? "" : Number(form.score),
+        total: form.total === "" ? "" : Number(form.total),
+      };
+      if (editingId) {
+        await update(editingId, payload);
+        toast.success("Result updated");
+      } else {
+        await create(payload);
+        toast.success("Result published");
+      }
+      setFormOpen(false);
+      setEditingId(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save result");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -69,12 +158,42 @@ export function ResultsPage() {
     }));
   }, [rows]);
 
-  const filtered = rows.filter(
-    (r) =>
-      !q ||
-      (r.exam as string)?.toLowerCase().includes(q.toLowerCase()) ||
-      (r.subject as string)?.toLowerCase().includes(q.toLowerCase()) ||
-      (r.studentId as string)?.toLowerCase().includes(q.toLowerCase()),
+  /* ---- Score trend derived from live results, grouped by exam ---- */
+  const scoreTrend = useMemo(() => {
+    const order: string[] = [];
+    const map = new Map<string, { sum: number; passed: number; count: number }>();
+    rows.forEach((r) => {
+      const exam = (r.exam as string) || "Unknown";
+      if (!map.has(exam)) {
+        map.set(exam, { sum: 0, passed: 0, count: 0 });
+        order.push(exam);
+      }
+      const e = map.get(exam)!;
+      const pct = ((r.score as number) || 0) / ((r.total as number) || 100);
+      e.sum += pct * 100;
+      if (pct >= 0.4) e.passed += 1;
+      e.count += 1;
+    });
+    return order.slice(-6).map((exam) => {
+      const e = map.get(exam)!;
+      return {
+        exam,
+        avg: Math.round(e.sum / e.count),
+        pass: Math.round((e.passed / e.count) * 100),
+      };
+    });
+  }, [rows]);
+
+  const filtered = useMemo(
+    () =>
+      rows.filter(
+        (r) =>
+          !q ||
+          (r.exam as string)?.toLowerCase().includes(q.toLowerCase()) ||
+          (r.subject as string)?.toLowerCase().includes(q.toLowerCase()) ||
+          (r.studentId as string)?.toLowerCase().includes(q.toLowerCase()),
+      ),
+    [rows, q],
   );
 
   return (
@@ -84,10 +203,13 @@ export function ResultsPage() {
         subtitle="Merit lists, rank analysis, and result publications."
         actions={
           <>
-            <button className="ap-btn-ghost">
+            <button
+              className="ap-btn-ghost"
+              onClick={() => exportCsv(filtered, COLUMNS, "results-export.csv")}
+            >
               <Download className="w-4 h-4" /> Export
             </button>
-            <button className="ap-btn">
+            <button className="ap-btn" onClick={openCreate}>
               <FileText className="w-4 h-4" /> Publish Results
             </button>
           </>
@@ -124,9 +246,6 @@ export function ResultsPage() {
                   className="ap-input pl-9"
                 />
               </div>
-              <button className="ap-btn-ghost">
-                <Filter className="w-4 h-4" /> Filters
-              </button>
             </Toolbar>
 
             <DataTable
@@ -152,24 +271,35 @@ export function ResultsPage() {
                         <div
                           className="h-1.5 rounded-full ap-grad"
                           style={{
-                            width: `${(((r.score as number) || 0) / ((r.total as number) || 1)) * 100}%`,
+                            width: `${Math.min(100, (((r.score as number) || 0) / ((r.total as number) || 1)) * 100)}%`,
                           }}
                         />
                       </div>
-                      <span className="text-xs font-bold">
-                        {r.score as number}/{r.total as number}
-                      </span>
+                      <span className="text-xs font-bold">{(r.score as number) ?? "—"}</span>
                     </div>
                   ),
                 },
+                { key: "total", label: "Total" },
               ]}
               actions={(r) => (
                 <div className="flex gap-1">
                   <button
-                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
-                    onClick={() => remove(r.id)}
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]"
+                    onClick={() => openEdit(r)}
+                    title="Edit"
                   >
-                    <Share2 className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-danger)/0.1)]"
+                    onClick={() => {
+                      if (!confirm("Delete this result?")) return;
+                      remove(r.id);
+                      toast.success("Result deleted");
+                    }}
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--ap-danger))]" />
                   </button>
                 </div>
               )}
@@ -212,65 +342,77 @@ export function ResultsPage() {
 
         {activeTab === "analytics" && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <Panel title="Score Trend" subtitle="Average scores across mock tests">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={scoreTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
-                    <XAxis dataKey="exam" stroke="hsl(var(--ap-muted))" fontSize={11} />
-                    <YAxis domain={[60, 100]} stroke="hsl(var(--ap-muted))" fontSize={11} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--ap-panel))",
-                        border: "1px solid hsl(var(--ap-border))",
-                        borderRadius: 12,
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="avg"
-                      name="Average"
-                      stroke="hsl(262 83% 58%)"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="pass"
-                      name="Pass %"
-                      stroke="hsl(152 60% 42%)"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      strokeDasharray="5 5"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+            <Panel title="Score Trend" subtitle="Average scores per exam (latest 6)">
+              {scoreTrend.length === 0 ? (
+                <p className="h-64 flex items-center justify-center text-sm text-[hsl(var(--ap-muted))]">
+                  No results recorded yet.
+                </p>
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={scoreTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ap-border))" />
+                      <XAxis dataKey="exam" stroke="hsl(var(--ap-muted))" fontSize={11} />
+                      <YAxis domain={[0, 100]} stroke="hsl(var(--ap-muted))" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="avg"
+                        name="Average"
+                        stroke="hsl(262 83% 58%)"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="pass"
+                        name="Pass %"
+                        stroke="hsl(152 60% 42%)"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </Panel>
             <Panel title="Subject Performance" subtitle="Average scores by subject">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={subjectPerformance}>
-                    <PolarGrid stroke="hsl(var(--ap-border))" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                    <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <Radar
-                      name="Score"
-                      dataKey="score"
-                      stroke="hsl(262 83% 58%)"
-                      fill="hsl(262 83% 58%)"
-                      fillOpacity={0.3}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--ap-panel))",
-                        border: "1px solid hsl(var(--ap-border))",
-                        borderRadius: 12,
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+              {subjectPerformance.length === 0 ? (
+                <p className="h-64 flex items-center justify-center text-sm text-[hsl(var(--ap-muted))]">
+                  No results recorded yet.
+                </p>
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={subjectPerformance}>
+                      <PolarGrid stroke="hsl(var(--ap-border))" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
+                      <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                      <Radar
+                        name="Score"
+                        dataKey="score"
+                        stroke="hsl(262 83% 58%)"
+                        fill="hsl(262 83% 58%)"
+                        fillOpacity={0.3}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--ap-panel))",
+                          border: "1px solid hsl(var(--ap-border))",
+                          borderRadius: 12,
+                        }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </Panel>
           </div>
         )}
@@ -297,20 +439,89 @@ export function ResultsPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-3">
-                    <button className="ap-btn-ghost flex-1 text-xs">
-                      <Printer className="w-3.5 h-3.5" /> Print
-                    </button>
-                    <button className="ap-btn-ghost flex-1 text-xs">
-                      <Share2 className="w-3.5 h-3.5" /> Share
-                    </button>
-                  </div>
                 </div>
               ))}
             </div>
           </Panel>
         )}
       </div>
+
+      {/* Create / edit result */}
+      <Modal open={formOpen} onClose={() => setFormOpen(false)} size="md">
+        <h2 className="text-lg font-bold mb-4">{editingId ? "Edit Result" : "Publish Results"}</h2>
+        <div className="space-y-4">
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+              Student ID *
+            </span>
+            <input
+              value={form.studentId}
+              onChange={(e) => setForm({ ...form, studentId: e.target.value })}
+              placeholder="Student uid"
+              className="ap-input mt-1"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Subject
+              </span>
+              <input
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                placeholder="Mathematics"
+                className="ap-input mt-1"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Exam *
+              </span>
+              <input
+                value={form.exam}
+                onChange={(e) => setForm({ ...form, exam: e.target.value })}
+                placeholder="Unit Test 4"
+                className="ap-input mt-1"
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Score
+              </span>
+              <input
+                type="number"
+                value={form.score}
+                onChange={(e) => setForm({ ...form, score: e.target.value })}
+                placeholder="85"
+                className="ap-input mt-1"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Total
+              </span>
+              <input
+                type="number"
+                value={form.total}
+                onChange={(e) => setForm({ ...form, total: e.target.value })}
+                placeholder="100"
+                className="ap-input mt-1"
+              />
+            </label>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={() => setFormOpen(false)} className="ap-btn-ghost">
+            Cancel
+          </button>
+          <button onClick={handleSubmit} disabled={saving} className="ap-btn">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {editingId ? "Update" : "Publish"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

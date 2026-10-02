@@ -1,6 +1,7 @@
 import { lazy, Suspense, createElement } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { GlobalLoading } from "@/components/site/GlobalLoading";
+import { FloatingChat } from "@/components/site/FloatingChat";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SessionManager } from "@/components/auth/SessionManager";
 import { LanguageProvider } from "@/components/site/LanguageProvider";
@@ -18,9 +19,12 @@ import { AboutPage as About } from "./routes/about";
 import { CoursesPage as Courses } from "./routes/courses";
 import { FacultyPage as Faculty } from "./routes/faculty";
 import { ResultsPage as Results } from "./routes/results";
+import { NoticesPage as Notices } from "./routes/notices";
 import { GalleryPage as Gallery } from "./routes/gallery";
 import { ContactPage as Contact } from "./routes/contact";
+import { EnquiryPage } from "./routes/enquiry";
 import { AdmissionPage as Admission } from "./routes/admission";
+import { CareerDetailPage } from "./routes/career";
 
 // Dashboard pages - imported by admin.index, which routes by role
 
@@ -31,6 +35,19 @@ import { Dashboard } from "./routes/_authenticated/admin.index";
 // Admin child pages (lazy loaded)
 const AdmissionsPage = lazy(() =>
   import("./routes/_authenticated/admin.admissions").then((m) => ({ default: m.AdmissionsPage })),
+);
+const AdmissionPricingPage = lazy(() =>
+  import("./routes/_authenticated/admin.admission-pricing").then((m) => ({
+    default: m.AdmissionPricingPage,
+  })),
+);
+const PrepContentPage = lazy(() =>
+  import("./routes/_authenticated/admin.prep-content").then((m) => ({
+    default: m.PrepContentPage,
+  })),
+);
+const PrepPortalPage = lazy(() =>
+  import("./routes/prep/PrepPortal").then((m) => ({ default: m.PrepPortalPage })),
 );
 const StudentPortalPage = lazy(() =>
   import("./routes/_authenticated/admin.students").then((m) => ({ default: m.StudentPortalPage })),
@@ -126,6 +143,17 @@ const ProfilePage2 = lazy(() =>
 const BannersPage = lazy(() =>
   import("./routes/_authenticated/admin.banners").then((m) => ({ default: m.BannersPage })),
 );
+const CareerAdminPage = lazy(() =>
+  import("./routes/_authenticated/admin.career").then((m) => ({ default: m.CareerAdminPage })),
+);
+const HeroSlidesPage = lazy(() =>
+  import("./routes/_authenticated/admin.heroSlides").then((m) => ({ default: m.HeroSlidesPage })),
+);
+const SiteSettingsPage = lazy(() =>
+  import("./routes/_authenticated/admin.site-settings").then((m) => ({
+    default: m.SiteSettingsPage,
+  })),
+);
 const SelectionsPage = lazy(() =>
   import("./routes/_authenticated/admin.selections").then((m) => ({ default: m.SelectionsPage })),
 );
@@ -175,6 +203,21 @@ const ApiKeysPage = lazy(() =>
 );
 const BackupPage = lazy(() =>
   import("./routes/_authenticated/admin.backup").then((m) => ({ default: m.BackupPage })),
+);
+const AdvertisementsPage = lazy(() =>
+  import("./routes/_authenticated/admin.advertisements").then((m) => ({
+    default: m.AdvertisementsPage,
+  })),
+);
+const MediaLibraryPage = lazy(() =>
+  import("./routes/_authenticated/admin.mediaLibrary").then((m) => ({
+    default: m.MediaLibraryPage,
+  })),
+);
+const FeatureContentPage = lazy(() =>
+  import("./routes/_authenticated/admin.featureContent").then((m) => ({
+    default: m.FeatureContentPage,
+  })),
 );
 const IntegrationsPage = lazy(() =>
   import("./routes/_authenticated/admin.integrations").then((m) => ({
@@ -229,6 +272,10 @@ function LazyPage({ Component }: { Component: React.LazyExoticComponent<React.Co
 }
 
 export default function App() {
+  const location = useLocation();
+  const isPublicPage =
+    !location.pathname.startsWith("/admin") && !location.pathname.startsWith("/auth");
+
   return (
     <>
       <GlobalLoading />
@@ -244,9 +291,13 @@ export default function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/faculty" element={<Faculty />} />
           <Route path="/results" element={<Results />} />
+          <Route path="/notices" element={<Notices />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/enquiry" element={<EnquiryPage />} />
           <Route path="/admission" element={<Admission />} />
+          <Route path="/services/*" element={<LazyPage Component={PrepPortalPage} />} />
+          <Route path="/career/:slug" element={<CareerDetailPage />} />
 
           {/* Protected routes */}
           <Route element={<AuthGuard />}>
@@ -263,6 +314,11 @@ export default function App() {
             <Route path="/admin" element={<Admin />}>
               <Route index element={<Dashboard />} />
               <Route path="admissions" element={<LazyPage Component={AdmissionsPage} />} />
+              <Route
+                path="admission-pricing"
+                element={<LazyPage Component={AdmissionPricingPage} />}
+              />
+              <Route path="prep-content" element={<LazyPage Component={PrepContentPage} />} />
               <Route path="students" element={<LazyPage Component={StudentPortalPage} />} />
               <Route path="teachers" element={<LazyPage Component={TeacherPortalPage} />} />
               <Route path="parents" element={<LazyPage Component={ParentPortalPage} />} />
@@ -295,6 +351,8 @@ export default function App() {
               <Route path="support" element={<LazyPage Component={SupportPage} />} />
               <Route path="profile" element={<LazyPage Component={ProfilePage2} />} />
               <Route path="banners" element={<LazyPage Component={BannersPage} />} />
+              <Route path="hero-slides" element={<LazyPage Component={HeroSlidesPage} />} />
+              <Route path="site-settings" element={<LazyPage Component={SiteSettingsPage} />} />
               <Route path="selections" element={<LazyPage Component={SelectionsPage} />} />
               <Route path="homepage-stats" element={<LazyPage Component={HomepageStatsPage} />} />
               <Route
@@ -309,10 +367,14 @@ export default function App() {
               <Route path="md-message" element={<LazyPage Component={MdMessagePage} />} />
               <Route path="faculty" element={<LazyPage Component={FacultyPage} />} />
               <Route path="gallery" element={<LazyPage Component={GalleryManagerPage} />} />
+              <Route path="career" element={<LazyPage Component={CareerAdminPage} />} />
               <Route path="fee-structure" element={<LazyPage Component={FeeStructurePage} />} />
               <Route path="light" element={<LazyPage Component={LightManagerPage} />} />
               <Route path="api-keys" element={<LazyPage Component={ApiKeysPage} />} />
               <Route path="backup" element={<LazyPage Component={BackupPage} />} />
+              <Route path="advertisements" element={<LazyPage Component={AdvertisementsPage} />} />
+              <Route path="media-library" element={<LazyPage Component={MediaLibraryPage} />} />
+              <Route path="feature-content" element={<LazyPage Component={FeatureContentPage} />} />
               <Route path="integrations" element={<LazyPage Component={IntegrationsPage} />} />
               <Route path="permissions" element={<LazyPage Component={PermissionsPage} />} />
               {/* Teacher portal pages */}
@@ -365,6 +427,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </LanguageProvider>
+      {isPublicPage && <FloatingChat />}
     </>
   );
 }

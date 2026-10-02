@@ -1,365 +1,226 @@
-﻿import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  Menu,
-  Phone,
-  X,
-  LogOut,
-  LayoutDashboard,
-  Shield,
-  User,
-  Search,
-  Sun,
-  Moon,
-  Maximize,
-  Minimize,
-} from "lucide-react";
-import { StarLogo, StarWordmark } from "./StarLogo";
-import { Button } from "@/components/ui/button";
-import { site } from "@/lib/site-config";
-import { getUserRole, isAuthenticated, handleSignOut } from "@/lib/api-auth";
-import { ROLE_DASHBOARD_ROUTES } from "@/hooks/use-user-role";
+﻿import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { Menu, X, Phone, FileText, LogIn } from "lucide-react";
+import { StarLogo } from "./StarLogo";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import { useLanguage } from "@/hooks/use-language";
+import { whatsappHref } from "@/lib/links";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { cn } from "@/lib/utils";
 
-const NAV_ITEMS_PUBLIC = [
-  { to: "/", label: "Home" },
-  { to: "/about", label: "About" },
-  { to: "/courses", label: "Courses" },
-  { to: "/faculty", label: "Faculty" },
-  { to: "/results", label: "Results" },
-  { to: "/gallery", label: "Gallery" },
-  { to: "/contact", label: "Contact" },
+const NAV_ITEMS = [
+  { to: "/", labelKey: "Home" },
+  { to: "/courses", labelKey: "Courses" },
+  { to: "/services", labelKey: "Preparation Portal" },
+  { to: "/notices", labelKey: "Notices" },
+  { to: "/results", labelKey: "Results" },
+  { to: "/faculty", labelKey: "Faculty" },
+  { to: "/gallery", labelKey: "Gallery" },
+  { to: "/about", labelKey: "About" },
+  { to: "/enquiry", labelKey: "Enquiry" },
+  { to: "/contact", labelKey: "Contact" },
 ];
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [dark, setDark] = useState(() => localStorage.getItem("site-theme") === "dark");
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const navigate = useNavigate();
+  const site = useSiteSettings();
   const { t } = useLanguage();
-
-  const signedIn = isAuthenticated();
-  const role = getUserRole();
-  const isAdminRole = role === "super_admin";
-  const homeTarget = role ? ROLE_DASHBOARD_ROUTES[role] || "/auth" : "/auth";
-  const userName = signedIn
-    ? role
-      ? role.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      : "User"
-    : "";
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("site-theme", dark ? "dark" : "light");
-  }, [dark]);
-
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
-  }, []);
 
   return (
     <>
-      {/* Top contact strip */}
-      <div className="bg-navy text-navy-foreground text-xs">
-        <div className="max-w-6xl mx-auto px-4 py-2 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+      {/* STEP 1: Top Contact Bar */}
+      <div className="bg-navy text-white text-xs">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap justify-between items-center gap-2">
+          {/* Left: Phone + WhatsApp */}
+          <div className="flex items-center gap-3 flex-wrap">
             <a
               href={`tel:${site.phones[0]}`}
               className="flex items-center gap-1.5 hover:text-gold transition"
             >
-              <Phone className="w-3 h-3 text-brand-red" />
+              <Phone className="w-3 h-3 text-green-400" />
               <span className="font-semibold">{site.phones[0]}</span>
             </a>
-            <span className="hidden sm:inline text-white/40">|</span>
+            <span className="text-white/40">|</span>
             <a
-              href={`tel:${site.phones[1]}`}
-              className="hidden sm:inline hover:text-gold transition"
+              href={`tel:${site.phones[1] || site.phones[0]}`}
+              className="hover:text-gold transition"
             >
-              {site.phones[1]}
+              {site.phones[1] || site.phones[0]}
+            </a>
+            <a
+              href={whatsappHref(site.whatsapp)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-gold transition ml-2"
+            >
+              <svg className="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              <span className="font-semibold">WhatsApp</span>
             </a>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Right: Address + Social + Language */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="hidden sm:flex items-center gap-1 text-white/80">
+              📍 {t("address")}
+            </span>
+            <span className="hidden sm:inline text-white/40">|</span>
             <LanguageSwitcher />
-            <span className="hidden md:inline text-white/60">{site.location}</span>
-            {signedIn ? (
-              <div className="flex items-center gap-2">
-                <Link
-                  to={homeTarget}
-                  className="flex items-center gap-1 font-semibold hover:text-gold transition"
+            <span className="hidden sm:inline text-white/40">|</span>
+            <span className="text-white/70 font-semibold">{t("followUs")}:</span>
+            <div className="flex items-center gap-1.5">
+              {site.socials.facebook && (
+                <a
+                  href={site.socials.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition"
                 >
-                  {isAdminRole ? (
-                    <>
-                      <Shield className="w-3 h-3" /> {t("Dashboard")}
-                    </>
-                  ) : (
-                    <>
-                      <LayoutDashboard className="w-3 h-3" /> {t("Dashboard")}
-                    </>
-                  )}
-                </Link>
-                <button
-                  onClick={() => handleSignOut(navigate)}
-                  className="flex items-center gap-1 font-semibold hover:text-gold transition"
+                  <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </a>
+              )}
+              {site.socials.instagram && (
+                <a
+                  href={site.socials.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 hover:opacity-90 flex items-center justify-center transition"
                 >
-                  <LogOut className="w-3 h-3" /> {t("Sign out")}
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/auth"
-                className="bg-brand-red text-brand-red-foreground font-bold px-3 py-1 rounded-full hover:brightness-110 transition"
-              >
-                {t("Student Login")}
-              </Link>
-            )}
+                  <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                  </svg>
+                </a>
+              )}
+              {site.socials.tiktok && (
+                <a
+                  href={site.socials.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full bg-black hover:bg-gray-800 flex items-center justify-center transition"
+                >
+                  <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.11V9a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.93a8.16 8.16 0 004.76 1.52V7a4.85 4.85 0 01-1-.31z" />
+                  </svg>
+                </a>
+              )}
+              {site.socials.youtube && (
+                <a
+                  href={site.socials.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition"
+                >
+                  <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-border shadow-sm dark:bg-slate-900/95 dark:border-slate-700">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      {/* STEP 1: Header / Navigation */}
+      <header className="sticky top-0 z-40 bg-white shadow-md">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          {/* Logo + Name */}
           <Link to="/" className="flex items-center gap-3 shrink-0">
             <StarLogo size="sm" />
-            <StarWordmark />
+            <div>
+              <h1 className="font-display font-black text-sm md:text-base text-navy leading-tight">
+                STAR COACHING <span className="text-brand-red">INSTITUTE</span>
+              </h1>
+              <p className="text-[9px] md:text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                PVT. LTD. - JANAKPURDHAM
+              </p>
+              <p className="text-[9px] md:text-[10px] text-brand-red font-bold italic">
+                {t("preparationTodaySuccessTomorrow")}
+              </p>
+            </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {NAV_ITEMS_PUBLIC.map((n) => (
-              <NavLink key={n.to} to={n.to} label={t(n.label)} />
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            {NAV_ITEMS.map((n) => (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                end={n.to === "/"}
+                className={({ isActive }) =>
+                  `px-3 py-2 text-sm font-bold rounded-md transition ${
+                    isActive
+                      ? "text-brand-red bg-brand-red/5"
+                      : "text-navy hover:text-brand-red hover:bg-brand-red/5"
+                  }`
+                }
+              >
+                {t(n.labelKey)}
+              </NavLink>
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2">
-            {signedIn && (
-              <div className="relative">
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition relative"
-                  aria-label="Profile menu"
-                >
-                  <User className="w-4 h-4 text-navy dark:text-slate-300" />
-                </button>
-                {profileOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]">
-                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                        <p className="text-xs font-bold text-navy dark:text-slate-200">
-                          {userName}
-                        </p>
-                        <p className="text-[10px] text-slate-400">{role}</p>
-                      </div>
-                      <Link
-                        to="/profile"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      >
-                        My Profile
-                      </Link>
-                      <Link
-                        to={homeTarget}
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-1.5 text-xs font-semibold text-navy dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      >
-                        Dashboard
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setProfileOpen(false);
-                          handleSignOut(navigate);
-                        }}
-                        className="w-full text-left px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-slate-50 dark:hover:bg-slate-700"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Search */}
+          {/* Sign In + Apply Now + Language + Hamburger */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/auth"
+              className="hidden md:inline-flex items-center gap-1.5 border border-navy text-navy hover:bg-navy hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              {t("Sign In")}
+            </Link>
+            <Link
+              to="/admission"
+              className="hidden md:inline-flex items-center gap-1.5 bg-brand-red hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              {t("Apply Now")}
+            </Link>
             <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              aria-label="Search"
+              className="lg:hidden p-2 text-navy"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Toggle menu"
             >
-              <Search className="w-4 h-4 text-navy dark:text-slate-300" />
+              {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDark((v) => !v)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {dark ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-navy" />
-              )}
-            </button>
-
-            {/* Fullscreen Toggle */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize className="w-4 h-4 text-navy dark:text-slate-300" />
-              ) : (
-                <Maximize className="w-4 h-4 text-navy dark:text-slate-300" />
-              )}
-            </button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="border-navy text-navy font-bold dark:border-slate-400 dark:text-slate-300"
-            >
-              <Link to="/admission">{t("Apply Now")}</Link>
-            </Button>
           </div>
-
-          <button
-            className="lg:hidden p-2 text-navy dark:text-slate-300"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Menu */}
         {open && (
-          <div className="lg:hidden border-t border-border dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="lg:hidden border-t border-border bg-white">
             <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
-              {NAV_ITEMS_PUBLIC.map((n) => (
+              {NAV_ITEMS.map((n) => (
                 <Link
                   key={n.to}
                   to={n.to}
                   onClick={() => setOpen(false)}
-                  className="py-2.5 px-3 rounded-lg font-semibold text-navy dark:text-slate-300 hover:bg-secondary dark:hover:bg-slate-800"
+                  className="py-2.5 px-3 rounded-lg font-bold text-navy hover:bg-brand-red/5"
                 >
-                  {t(n.label)}
+                  {t(n.labelKey)}
                 </Link>
               ))}
-              {signedIn && (
-                <Link
-                  to={homeTarget}
-                  onClick={() => setOpen(false)}
-                  className="py-2.5 px-3 rounded-lg font-semibold text-navy dark:text-slate-300 hover:bg-secondary dark:hover:bg-slate-800"
-                >
-                  {t("Dashboard")}
-                </Link>
-              )}
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => setDark((v) => !v)}
-                  className="flex-1 py-2.5 px-3 rounded-lg font-semibold text-navy dark:text-slate-300 border border-border dark:border-slate-700 flex items-center justify-center gap-2"
-                >
-                  {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  {dark ? "Light" : "Dark"}
-                </button>
-                <button
-                  onClick={toggleFullscreen}
-                  className="flex-1 py-2.5 px-3 rounded-lg font-semibold text-navy dark:text-slate-300 border border-border dark:border-slate-700 flex items-center justify-center gap-2"
-                >
-                  {isFullscreen ? (
-                    <Minimize className="w-4 h-4" />
-                  ) : (
-                    <Maximize className="w-4 h-4" />
-                  )}
-                  {isFullscreen ? "Exit Full" : "Fullscreen"}
-                </button>
-              </div>
+              <Link
+                to="/auth"
+                onClick={() => setOpen(false)}
+                className="py-2.5 px-3 rounded-lg border border-navy text-navy font-bold text-center flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                {t("Sign In")}
+              </Link>
               <Link
                 to="/admission"
                 onClick={() => setOpen(false)}
-                className="mt-2 py-3 px-3 rounded-lg bg-brand-red text-brand-red-foreground font-bold text-center"
+                className="mt-2 py-3 px-3 rounded-lg bg-brand-red text-white font-bold text-center flex items-center justify-center gap-2"
               >
+                <FileText className="w-4 h-4" />
                 {t("Apply Now")}
               </Link>
             </nav>
           </div>
         )}
-
-        {/* Search overlay */}
-        {searchOpen && (
-          <div className="border-t border-border dark:border-slate-700 bg-white dark:bg-slate-900">
-            <div className="max-w-6xl mx-auto px-4 py-4">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Search courses, pages..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/20"
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setSearchOpen(false);
-                  }}
-                />
-              </div>
-              <div className="mt-3 flex gap-2 text-xs text-slate-400">
-                <span>Popular:</span>
-                <button
-                  className="hover:text-navy dark:hover:text-white"
-                  onClick={() => {
-                    navigate("/courses");
-                    setSearchOpen(false);
-                  }}
-                >
-                  Courses
-                </button>
-                <button
-                  className="hover:text-navy dark:hover:text-white"
-                  onClick={() => {
-                    navigate("/admission");
-                    setSearchOpen(false);
-                  }}
-                >
-                  Admission
-                </button>
-                <button
-                  className="hover:text-navy dark:hover:text-white"
-                  onClick={() => {
-                    navigate("/results");
-                    setSearchOpen(false);
-                  }}
-                >
-                  Results
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
     </>
-  );
-}
-
-function NavLink({ to, label }: { to: string; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-navy dark:hover:text-white rounded-md transition"
-    >
-      {label}
-    </Link>
   );
 }

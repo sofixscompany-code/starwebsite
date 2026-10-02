@@ -12,13 +12,37 @@ export function FacultyPage() {
         { label: "Public Page", value: 1, icon: GraduationCap, tone: "success" },
       ]}
       columns={[
+        {
+          key: "photoUrl",
+          label: "Photo",
+          sortable: false,
+          render: (row) =>
+            row.photoUrl ? (
+              <img
+                src={row.photoUrl}
+                alt={row.name ?? ""}
+                className="w-10 h-10 rounded-full object-cover border"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center text-xs font-bold text-navy">
+                {row.initials || (row.name ?? "").slice(0, 2).toUpperCase()}
+              </div>
+            ),
+        },
         { key: "name", label: "Name" },
         { key: "role", label: "Role" },
         { key: "subject", label: "Subject" },
-        { key: "initials", label: "Initials" },
         { key: "order", label: "Order" },
       ]}
       fields={[
+        {
+          key: "photoUrl",
+          label: "Photo",
+          type: "upload",
+          uploadFolder: "faculty",
+          required: false,
+          placeholder: "Upload a photo or paste an image URL",
+        },
         {
           key: "name",
           label: "Name",

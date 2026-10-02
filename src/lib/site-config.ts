@@ -15,12 +15,13 @@ export const site = {
   },
   established: 2015,
   tagline: "Nepal Police • Army • Loksewa • Medical • Technical • Tuition",
-} as const;
+};
+
+export type SiteConfig = typeof site;
 
 export const stats = [
   { value: "5,000+", label: "Students Trained" },
   { value: "800+", label: "Top Selections" },
-  { value: "40%", label: "Super 40 Scholarship" },
   { value: "10+", label: "Years of Trust" },
 ];
 

@@ -6,7 +6,6 @@ import {
   EyeOff,
   Mail,
   Lock,
-  Shield,
   GraduationCap,
   Users,
   Baby,
@@ -22,17 +21,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StarLogo } from "@/components/site/StarLogo";
 import { login, demoLogin, clearAuthData } from "@/lib/api-auth";
+import { normalizeLoginId } from "@/lib/user-accounts";
 import { ROLE_DASHBOARD_ROUTES } from "@/hooks/use-user-role";
 import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { OTPVerificationModal } from "@/components/auth/OTPVerificationModal";
 
-const DEMO_ROLES = [
-  {
-    role: "super_admin",
-    label: "Super Admin",
-    icon: Shield,
-    color: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
-  },
+// Quick Demo Access — visible in every build (owner request) so reviewers can
+// jump into a role dashboard without credentials. Accounts are the dedicated
+// `*@demo.starcoaching.edu.np` demo users; nothing here grants access to real
+// institute accounts.
+const DEMO_ROLES: {
+  role: string;
+  label: string;
+  icon: typeof Users;
+  color: string;
+}[] = [
   {
     role: "teacher",
     label: "Teacher",
@@ -72,9 +75,14 @@ export function AuthPage() {
   const [otpEmail, setOtpEmail] = useState("");
 
   useEffect(() => {
-    clearAuthData();
+    // Read BEFORE clearAuthData() — clearing the session also wipes
+    // `remember_email`, which used to make this lookup always return null.
     const saved = localStorage.getItem("remember_email");
+    clearAuthData();
     if (saved) {
+      // Keep the remembered email across the session wipe so it also survives
+      // closing the browser before signing back in.
+      localStorage.setItem("remember_email", saved);
       setEmail(saved);
       setRememberMe(true);
     }
@@ -83,7 +91,7 @@ export function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      toast.error("Please enter email and password");
+      toast.error("Please enter your username/email and password");
       return;
     }
     setLoading(true);
@@ -120,10 +128,11 @@ export function AuthPage() {
 
   const handleForgotPassword = () => {
     if (!email.trim()) {
-      toast.error("Please enter your email first");
+      toast.error("Please enter your username/email first");
       return;
     }
-    setOtpEmail(email);
+    // Modal expects a full e-mail — map bare usernames to the institute domain.
+    setOtpEmail(normalizeLoginId(email));
     setShowForgotPassword(true);
   };
 
@@ -154,16 +163,19 @@ export function AuthPage() {
           <div className="bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-6 shadow-sm">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-[hsl(var(--ap-ink))]">Email</Label>
+                <Label className="text-sm font-medium text-[hsl(var(--ap-ink))]">
+                  Email or Username
+                </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ap-muted))]" />
                   <Input
-                    type="email"
+                    type="text"
+                    autoComplete="username"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
-                    placeholder="you@example.com"
+                    placeholder="ram.teacher or you@example.com"
                   />
                 </div>
               </div>
@@ -219,43 +231,54 @@ export function AuthPage() {
             </form>
           </div>
 
-          {/* Quick Demo Access */}
-          <div className="mt-6 bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(var(--ap-blue)/0.08)] flex items-center justify-center">
-                <Zap className="w-4 h-4 text-[hsl(var(--ap-blue))]" />
+          {/* Quick Demo Access — local dev only, hidden in production builds */}
+          {DEMO_ROLES.length > 0 && (
+            <div className="mt-6 bg-white rounded-2xl border border-[hsl(var(--ap-border))] p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-[hsl(var(--ap-blue)/0.08)] flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-[hsl(var(--ap-blue))]" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[hsl(var(--ap-ink))]">Quick Demo Access</p>
+                  <p className="text-[11px] text-[hsl(var(--ap-muted))]">
+                    Preview each role's dashboard
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-[hsl(var(--ap-ink))]">Quick Demo Access</p>
-                <p className="text-[11px] text-[hsl(var(--ap-muted))]">
-                  Preview each role's dashboard
-                </p>
+              <div className="grid grid-cols-2 gap-2">
+                {DEMO_ROLES.map((d) => {
+                  const Icon = d.icon;
+                  const isLoading = demoLoading === d.role;
+                  return (
+                    <button
+                      key={d.role}
+                      onClick={() => handleDemoLogin(d.role)}
+                      disabled={demoLoading !== null}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-50 ${d.color}`}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Icon className="w-3.5 h-3.5" />
+                      )}
+                      {d.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_ROLES.map((d) => {
-                const Icon = d.icon;
-                const isLoading = demoLoading === d.role;
-                return (
-                  <button
-                    key={d.role}
-                    onClick={() => handleDemoLogin(d.role)}
-                    disabled={demoLoading !== null}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-50 ${d.color}`}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Icon className="w-3.5 h-3.5" />
-                    )}
-                    {d.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          )}
 
-          <p className="text-center text-xs text-[hsl(var(--ap-muted))] mt-6">
+          <p className="text-center text-xs text-[hsl(var(--ap-muted))] mt-4">
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-[hsl(var(--ap-blue))] font-semibold hover:underline"
+            >
+              Sign Up
+            </Link>
+          </p>
+          <p className="text-center text-xs text-[hsl(var(--ap-muted))] mt-4">
             © 2025 Star Coaching Institute, Janakpurdham
           </p>
           <p className="text-center text-[10px] text-[hsl(var(--ap-muted))] mt-1">

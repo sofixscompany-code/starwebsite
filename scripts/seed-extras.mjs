@@ -25,7 +25,11 @@ async function seed(name, docs) {
 }
 
 async function main() {
-  await signInWithEmailAndPassword(auth, "super_admin@demo.starcoaching.edu.np", "Demo@2026!");
+  await signInWithEmailAndPassword(
+    auth,
+    "super_admin@demo.starcoaching.edu.np",
+    "Star#Demo2026!Kx7",
+  );
   console.log("Signed in");
 
   await seed("live_classes", [

@@ -11,6 +11,8 @@ import {
   GripVertical,
   FileType,
   AlertCircle,
+  Pencil,
+  Save,
 } from "lucide-react";
 import {
   collection,
@@ -26,19 +28,69 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db } from "@/integrations/firebase/config";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { Panel, Badge } from "@/components/admin/ui";
+import { Panel, Badge, Modal } from "@/components/admin/ui";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_EMBED_LEN = 900_000; // stay safely under Firestore's 1MB/doc limit
+
+type BannerEdit = {
+  id: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  sortOrder: string;
+  isActive: boolean;
+};
+
+// Resize + JPEG-compress an image in the browser and return a data: URL.
+async function compressToDataUrl(file: File, maxWidth: number, quality: number): Promise<string> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const el = new Image();
+    el.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(el);
+    };
+    el.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read this image"));
+    };
+    el.src = url;
+  });
+  const scale = Math.min(1, maxWidth / img.naturalWidth);
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is not supported in this browser");
+  ctx.fillStyle = "#ffffff"; // JPEG has no alpha — avoid black PNG backgrounds
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
 
 export function BannersPage() {
   const qc = useQueryClient();
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-banners"],
     queryFn: async () => {
-      const q = query(collection(db, "banners"), orderBy("sortOrder"), orderBy("createdAt"));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Composite-index-free: fetch all banners, sort client-side.
+      const snap = await getDocs(collection(db, "banners"));
+      const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Array<{
+        id: string;
+        sortOrder?: number;
+        createdAt?: string;
+        [key: string]: unknown;
+      }>;
+      return docs.sort(
+        (a, b) =>
+          Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0) ||
+          String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")),
+      );
     },
   });
 
@@ -53,6 +105,8 @@ export function BannersPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [editing, setEditing] = useState<BannerEdit | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (f: File): boolean => {
@@ -94,14 +148,33 @@ export function BannersPage() {
   const addBanner = async () => {
     if (!file) return toast.error("Please choose an image.");
     setUploading(true);
+    let imageUrl = "";
+    let storagePath: string | null = null;
+    let storedIn = "Firebase Storage";
     try {
       const storage = getStorage();
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const storageRef = ref(storage, path);
+      storagePath = `banners/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const storageRef = ref(storage, storagePath);
       await uploadBytes(storageRef, file, { contentType: file.type });
-      const imageUrl = await getDownloadURL(storageRef);
-
+      imageUrl = await getDownloadURL(storageRef);
+    } catch {
+      // Firebase Storage isn't enabled (or unreachable) — embed a
+      // compressed copy inside the Firestore doc so uploads still work.
+      storagePath = null;
+      storedIn = "Firestore (Storage disabled)";
+      try {
+        imageUrl = await compressToDataUrl(file, 1920, 0.82);
+        if (imageUrl.length > MAX_EMBED_LEN) imageUrl = await compressToDataUrl(file, 1600, 0.6);
+        if (imageUrl.length > MAX_EMBED_LEN)
+          throw new Error("Image is too large even after compression — try a smaller image");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not process this image");
+        setUploading(false);
+        return;
+      }
+    }
+    try {
       await addDoc(collection(db, "banners"), {
         title: form.title || null,
         subtitle: form.subtitle || null,
@@ -109,12 +182,12 @@ export function BannersPage() {
         ctaLink: form.ctaLink || null,
         sortOrder: Number(form.sortOrder) || 0,
         imageUrl,
-        storagePath: path,
+        ...(storagePath ? { storagePath } : {}),
         isActive: true,
         createdAt: serverTimestamp(),
       });
 
-      toast.success("Banner added successfully");
+      toast.success(`Banner added — image stored in ${storedIn}`);
       setForm({ title: "", subtitle: "", ctaText: "", ctaLink: "", sortOrder: "0" });
       setFile(null);
       setPreview(null);
@@ -131,6 +204,46 @@ export function BannersPage() {
     await updateDoc(doc(db, "banners", id), { isActive: !isActive });
     qc.invalidateQueries({ queryKey: ["admin-banners"] });
     qc.invalidateQueries({ queryKey: ["hero-banners"] });
+  };
+
+  const openEdit = (b: any) => {
+    setEditing({
+      id: b.id,
+      title: b.title ?? "",
+      subtitle: b.subtitle ?? "",
+      ctaText: b.ctaText ?? "",
+      ctaLink: b.ctaLink ?? "",
+      sortOrder: String(b.sortOrder ?? 0),
+      isActive: Boolean(b.isActive),
+    });
+  };
+
+  const patchEdit = (patch: Partial<BannerEdit>) =>
+    setEditing((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    if (!editing.title.trim()) return toast.error("Title is required");
+    setSavingEdit(true);
+    try {
+      await updateDoc(doc(db, "banners", editing.id), {
+        title: editing.title.trim() || null,
+        subtitle: editing.subtitle.trim() || null,
+        ctaText: editing.ctaText.trim() || null,
+        ctaLink: editing.ctaLink.trim() || null,
+        sortOrder: Number(editing.sortOrder) || 0,
+        isActive: editing.isActive,
+        updatedAt: new Date().toISOString(),
+      });
+      toast.success("Banner updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["admin-banners"] });
+      qc.invalidateQueries({ queryKey: ["hero-banners"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update banner");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const del = async (id: string, storagePath: string | null) => {
@@ -158,7 +271,7 @@ export function BannersPage() {
     <div>
       <PageHeader
         title="Feature Slides / Banners"
-        subtitle="Image slides shown on the homepage hero. Supported: JPEG, PNG, WebP. Max 10MB."
+        subtitle="Image slides shown on the website homepage hero AND every admin dashboard. If Firebase Storage isn't enabled, images are compressed and stored inside Firestore automatically. Supported: JPEG, PNG, WebP. Max 10MB."
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Panel */}
@@ -288,6 +401,11 @@ export function BannersPage() {
                           WebP
                         </span>
                       )}
+                      {!b.storagePath && (
+                        <span className="bg-sky-100 text-sky-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                          Firestore
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="p-4 space-y-2">
@@ -323,6 +441,13 @@ export function BannersPage() {
                         {b.isActive ? "Hide" : "Show"}
                       </button>
                       <button
+                        onClick={() => openEdit(b)}
+                        className="ap-btn-ghost flex-1 justify-center text-xs"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit
+                      </button>
+                      <button
                         onClick={() => del(b.id, b.storagePath)}
                         className="ap-btn-ghost text-xs"
                       >
@@ -337,6 +462,98 @@ export function BannersPage() {
           )}
         </Panel>
       </div>
+
+      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit banner">
+        {editing && (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Title
+              </span>
+              <input
+                value={editing.title}
+                onChange={(e) => patchEdit({ title: e.target.value })}
+                className="ap-input mt-1"
+                placeholder="Title"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                Subtitle
+              </span>
+              <input
+                value={editing.subtitle}
+                onChange={(e) => patchEdit({ subtitle: e.target.value })}
+                className="ap-input mt-1"
+                placeholder="Subtitle"
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                  Button text
+                </span>
+                <input
+                  value={editing.ctaText}
+                  onChange={(e) => patchEdit({ ctaText: e.target.value })}
+                  className="ap-input mt-1"
+                  placeholder="Button text"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                  Button link
+                </span>
+                <input
+                  value={editing.ctaLink}
+                  onChange={(e) => patchEdit({ ctaLink: e.target.value })}
+                  className="ap-input mt-1"
+                  placeholder="/admissions"
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-4 items-end">
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]">
+                  Sort order
+                </span>
+                <input
+                  type="number"
+                  value={editing.sortOrder}
+                  onChange={(e) => patchEdit({ sortOrder: e.target.value })}
+                  className="ap-input mt-1"
+                />
+              </label>
+              <label className="flex items-center gap-2 pb-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editing.isActive}
+                  onChange={(e) => patchEdit({ isActive: e.target.checked })}
+                  className="w-4 h-4 accent-[hsl(var(--ap-purple))]"
+                />
+                <span className="text-sm">Visible on site</span>
+              </label>
+            </div>
+            <p className="text-[11px] text-[hsl(var(--ap-muted))]">
+              The slide image itself is unchanged by this form — delete and re-add the slide to
+              replace its image.
+            </p>
+            <div className="flex justify-end gap-3 pt-3 border-t border-[hsl(var(--ap-border))]">
+              <button className="ap-btn-ghost" onClick={() => setEditing(null)}>
+                Cancel
+              </button>
+              <button className="ap-btn" onClick={saveEdit} disabled={savingEdit}>
+                {savingEdit ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save changes
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

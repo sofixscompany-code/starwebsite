@@ -11,7 +11,11 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 async function main() {
-  await signInWithEmailAndPassword(auth, "super_admin@demo.starcoaching.edu.np", "Demo@2026!");
+  await signInWithEmailAndPassword(
+    auth,
+    "super_admin@demo.starcoaching.edu.np",
+    "Star#Demo2026!Kx7",
+  );
   console.log("Signed in");
 
   // why_choose_us
@@ -22,7 +26,6 @@ async function main() {
       "Daily physical + written training",
       "Regular mock tests & OMR-based practice",
       "Hostel for both boys and girls",
-      "Super 40 Scholarship — up to 40% off",
     ];
     let i = 1;
     for (const text of items) {

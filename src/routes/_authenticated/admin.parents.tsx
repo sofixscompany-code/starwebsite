@@ -1,4 +1,3 @@
-﻿import {} from "react-router-dom";
 import { useState, useMemo } from "react";
 import {
   Baby,
@@ -33,13 +32,21 @@ import {
   useChildGrades,
   useChildFees,
   useChildAssignments,
+  useParentChildrenByEmail,
 } from "@/hooks/use-parent";
+import { getStoredAuthUser } from "@/hooks/use-dashboard-data";
 
-const DEMO_PARENT_ID = "demo_parent_001";
+const DEMO_PARENT_EMAIL = "parent@demo.starcoaching.edu.np";
+
+/** Resolve the logged-in parent's email from auth, falling back to the demo parent. */
+function currentParentEmail(): string {
+  return getStoredAuthUser()?.email || DEMO_PARENT_EMAIL;
+}
 
 export function ParentPortalPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: children, isLoading: childrenLoading } = useParentChildren(DEMO_PARENT_ID);
+  const { data: children, isLoading: childrenLoading } =
+    useParentChildrenByEmail(currentParentEmail());
   const [selectedChild, setSelectedChild] = useState<string>("");
 
   const tabs = [
@@ -151,7 +158,7 @@ export function OverviewTab({ childId }: { childId?: string }) {
       />
       <StatCard
         label="Pending Fees"
-        prefix="₹"
+        prefix="Rs"
         value={pendingFees}
         icon={CreditCard}
         tone={pendingFees > 0 ? "danger" : "success"}
@@ -390,11 +397,13 @@ export function FeesTab({ childId }: { childId?: string }) {
       <div className="flex items-center gap-6 mb-4 text-sm">
         <span>
           Pending:{" "}
-          <strong className="text-[hsl(var(--ap-danger))]">₹{totalPending.toLocaleString()}</strong>
+          <strong className="text-[hsl(var(--ap-danger))]">
+            Rs {totalPending.toLocaleString()}
+          </strong>
         </span>
         <span>
           Paid:{" "}
-          <strong className="text-[hsl(var(--ap-success))]">₹{totalPaid.toLocaleString()}</strong>
+          <strong className="text-[hsl(var(--ap-success))]">Rs {totalPaid.toLocaleString()}</strong>
         </span>
       </div>
       {isLoading ? (
@@ -415,7 +424,7 @@ export function FeesTab({ childId }: { childId?: string }) {
             {
               key: "amount",
               label: "Amount",
-              render: (r) => <span className="font-bold">₹{r.amount?.toLocaleString()}</span>,
+              render: (r) => <span className="font-bold">Rs {r.amount?.toLocaleString()}</span>,
             },
             { key: "dueDate", label: "Due Date" },
             {

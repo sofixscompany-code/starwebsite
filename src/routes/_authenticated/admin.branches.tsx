@@ -1,17 +1,26 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { GitBranch, Building, GraduationCap, Wallet } from "lucide-react";
+import { useModuleData } from "@/hooks/use-module-data";
+import { GitBranch, Building, GraduationCap } from "lucide-react";
 
 export function BranchesPage() {
+  const { rows } = useModuleData("branches");
+
+  const total = rows.length;
+  const active = rows.filter((r) => String(r.status ?? "") === "Active").length;
+  const students = rows.reduce((sum, r) => {
+    const n = Number(r.students);
+    return sum + (Number.isFinite(n) ? n : 0);
+  }, 0);
+
   return (
     <FirestoreModulePage
       collectionName="branches"
       title="Branches"
       subtitle="Manage coaching centre locations and their details"
       stats={[
-        { label: "Total Branches", value: 5, icon: GitBranch, tone: "purple" },
-        { label: "Classrooms", value: 32, icon: Building, tone: "info" },
-        { label: "Students", value: 1240, icon: GraduationCap, tone: "success" },
-        { label: "Monthly Revenue", value: "₹8.4L", icon: Wallet, tone: "warning" },
+        { label: "Total Branches", value: total, icon: GitBranch, tone: "purple" },
+        { label: "Active", value: active, icon: Building, tone: "info" },
+        { label: "Students", value: students, icon: GraduationCap, tone: "success" },
       ]}
       columns={[
         { key: "name", label: "Branch Name" },

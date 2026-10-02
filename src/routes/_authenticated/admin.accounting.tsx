@@ -1,4 +1,4 @@
-﻿import {} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
 import {
   Wallet,
@@ -90,6 +90,7 @@ const EXPENSE_COLORS: Record<string, string> = {
 };
 
 export function AccountingPage() {
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("transactions");
@@ -187,6 +188,38 @@ export function AccountingPage() {
     });
   }, [allTransactions, q, typeFilter]);
 
+  const exportCsv = () => {
+    if (filtered.length === 0) {
+      toast.error("No transactions to export");
+      return;
+    }
+    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = [
+      "Reference",
+      "Student",
+      "Description",
+      "Amount",
+      "Method",
+      "Date",
+      "Status",
+      "Type",
+    ];
+    const lines = [
+      header.map(escape).join(","),
+      ...filtered.map((t) =>
+        [t.inv, t.name, t.desc, t.amount, t.method, t.date, t.status, t.type].map(escape).join(","),
+      ),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `accounting-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filtered.length} transactions`);
+  };
+
   return (
     <div>
       <PageHeader
@@ -194,10 +227,10 @@ export function AccountingPage() {
         subtitle="Fees, revenue, expenses & complete financial ledger."
         actions={
           <>
-            <button className="ap-btn-ghost">
-              <Download className="w-4 h-4" /> Export
+            <button onClick={exportCsv} className="ap-btn-ghost">
+              <Download className="w-4 h-4" /> Export CSV
             </button>
-            <button className="ap-btn-ghost">
+            <button onClick={() => window.print()} className="ap-btn-ghost">
               <Printer className="w-4 h-4" /> Print Report
             </button>
           </>
@@ -216,22 +249,21 @@ export function AccountingPage() {
           <>
             <StatCard
               label="Total Revenue"
-              prefix="₹"
+              prefix="Rs"
               value={stats?.totalRevenue ?? 0}
-              delta={18}
               icon={Wallet}
               tone="success"
             />
             <StatCard
               label="Collected"
-              prefix="₹"
+              prefix="Rs"
               value={stats?.totalCollected ?? 0}
               icon={CheckCircle2}
               tone="info"
             />
             <StatCard
               label="Pending"
-              prefix="₹"
+              prefix="Rs"
               value={stats?.pendingAmount ?? 0}
               icon={AlertCircle}
               tone="danger"
@@ -239,7 +271,6 @@ export function AccountingPage() {
             <StatCard
               label="Collection Rate"
               value={`${stats?.collectionRate ?? 0}%`}
-              delta={12}
               icon={TrendingUp}
               tone="success"
             />
@@ -250,7 +281,7 @@ export function AccountingPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
         <Panel
           title="Income vs Expenses"
-          subtitle="Monthly comparison · in ₹"
+          subtitle="Monthly comparison · in Rs"
           className="xl:col-span-2"
         >
           <div className="h-64">
@@ -265,7 +296,7 @@ export function AccountingPage() {
                     border: "1px solid hsl(var(--ap-border))",
                     borderRadius: 12,
                   }}
-                  formatter={(v: number) => `₹${v.toLocaleString()}`}
+                  formatter={(v: number) => `Rs ${v.toLocaleString()}`}
                 />
                 <Legend />
                 <Bar dataKey="income" name="Income" radius={[6, 6, 0, 0]} fill="hsl(262 83% 58%)" />
@@ -394,7 +425,7 @@ export function AccountingPage() {
                       <span
                         className={`font-bold ${r.type === "Income" ? "text-[hsl(var(--ap-success))]" : "text-[hsl(var(--ap-info))]"}`}
                       >
-                        ₹{r.amount?.toLocaleString()}
+                        Rs {r.amount?.toLocaleString()}
                       </span>
                     ),
                   },
@@ -422,16 +453,6 @@ export function AccountingPage() {
                     ),
                   },
                 ]}
-                actions={() => (
-                  <div className="flex gap-1">
-                    <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-                      <Printer className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
               />
             )}
           </>
@@ -442,32 +463,71 @@ export function AccountingPage() {
         {activeTab === "expenses" && <ExpensesTab />}
         {activeTab === "structure" && <FeeStructureTab />}
         {activeTab === "reports" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              { icon: BarChart3, title: "Revenue Report", desc: "Monthly income analysis" },
-              { icon: PieChartIcon, title: "Expense Breakdown", desc: "Category-wise spending" },
-              { icon: DollarSign, title: "Profit & Loss", desc: "Net financial position" },
-              { icon: Receipt, title: "Fee Collection", desc: "Student-wise fee status" },
-              { icon: Calendar, title: "Annual Summary", desc: "Year-end financial report" },
-              { icon: TrendingUp, title: "Growth Analysis", desc: "Revenue trends & forecast" },
-            ].map((r) => {
-              const Icon = r.icon;
-              return (
-                <div
-                  key={r.title}
-                  className="ap-card p-4 flex items-start gap-3 hover:shadow-lg transition cursor-pointer"
-                >
-                  <div className="w-11 h-11 rounded-xl ap-grad flex items-center justify-center text-white">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-bold">{r.title}</p>
-                    <p className="text-xs text-[hsl(var(--ap-muted))] mt-0.5">{r.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  icon: BarChart3,
+                  title: "Revenue Report",
+                  desc: "Monthly income analysis",
+                  to: "/admin/reports",
+                },
+                {
+                  icon: PieChartIcon,
+                  title: "Expense Breakdown",
+                  desc: "Category-wise spending",
+                  tab: "expenses",
+                },
+                {
+                  icon: DollarSign,
+                  title: "Profit & Loss",
+                  desc: "Net financial position",
+                  to: "/admin/reports",
+                },
+                {
+                  icon: Receipt,
+                  title: "Fee Collection",
+                  desc: "Student-wise fee status",
+                  to: "/admin/payments",
+                },
+                {
+                  icon: Calendar,
+                  title: "Annual Summary",
+                  desc: "Year-end financial report",
+                  to: "/admin/reports",
+                },
+                {
+                  icon: TrendingUp,
+                  title: "Growth Analysis",
+                  desc: "Revenue trends & forecast",
+                  to: "/admin/analytics",
+                },
+              ].map((r) => {
+                const Icon = r.icon;
+                return (
+                  <button
+                    key={r.title}
+                    onClick={() => (r.to ? navigate(r.to) : r.tab && setActiveTab(r.tab))}
+                    className="ap-card p-4 flex items-start gap-3 hover:shadow-lg transition cursor-pointer text-left"
+                  >
+                    <div className="w-11 h-11 rounded-xl ap-grad flex items-center justify-center text-white shrink-0">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold flex items-center gap-1">
+                        {r.title}
+                        <ArrowUpRight className="w-3.5 h-3.5 text-[hsl(var(--ap-muted))]" />
+                      </p>
+                      <p className="text-xs text-[hsl(var(--ap-muted))] mt-0.5">{r.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-[hsl(var(--ap-muted))] mt-3">
+              Cards open the matching live report page — nothing here is pre-computed.
+            </p>
+          </>
         )}
       </div>
     </div>
@@ -581,7 +641,9 @@ export function InvoicesTab() {
             {
               key: "totalAmount",
               label: "Amount",
-              render: (r) => <span className="font-bold">₹{r.totalAmount?.toLocaleString()}</span>,
+              render: (r) => (
+                <span className="font-bold">Rs {r.totalAmount?.toLocaleString()}</span>
+              ),
             },
             { key: "dueDate", label: "Due Date" },
             {
@@ -685,7 +747,7 @@ export function InvoicesTab() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
+                <label className="text-sm font-medium mb-1 block">Amount (Rs)</label>
                 <input
                   type="number"
                   value={editing.amount || 0}
@@ -694,7 +756,7 @@ export function InvoicesTab() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Discount (₹)</label>
+                <label className="text-sm font-medium mb-1 block">Discount (Rs)</label>
                 <input
                   type="number"
                   value={editing.discount || 0}
@@ -703,7 +765,7 @@ export function InvoicesTab() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Tax (₹)</label>
+                <label className="text-sm font-medium mb-1 block">Tax (Rs)</label>
                 <input
                   type="number"
                   value={editing.tax || 0}
@@ -714,7 +776,7 @@ export function InvoicesTab() {
             </div>
             <div className="p-3 rounded-xl bg-[hsl(var(--ap-blue)/0.04)] border border-[hsl(var(--ap-blue)/0.1)]">
               <span className="text-sm font-bold">
-                Total: ₹
+                Total: Rs
                 {(
                   (editing.amount || 0) -
                   (editing.discount || 0) +
@@ -835,7 +897,7 @@ export function PaymentsTab() {
               label: "Amount",
               render: (r) => (
                 <span className="font-bold text-[hsl(var(--ap-success))]">
-                  ₹{r.amount?.toLocaleString()}
+                  Rs {r.amount?.toLocaleString()}
                 </span>
               ),
             },
@@ -847,11 +909,6 @@ export function PaymentsTab() {
             { key: "paymentDate", label: "Date" },
             { key: "reference", label: "Reference" },
           ]}
-          actions={() => (
-            <button className="p-1.5 rounded-lg hover:bg-[hsl(var(--ap-border)/0.5)]">
-              <Printer className="w-3.5 h-3.5" />
-            </button>
-          )}
         />
       )}
 
@@ -879,14 +936,14 @@ export function PaymentsTab() {
                 .filter((i) => i.status !== "paid")
                 .map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.invoiceNumber} - {i.studentName} (₹{i.totalAmount})
+                    {i.invoiceNumber} - {i.studentName} (Rs {i.totalAmount})
                   </option>
                 ))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
+              <label className="text-sm font-medium mb-1 block">Amount (Rs)</label>
               <input
                 type="number"
                 value={newPayment.amount}
@@ -1000,7 +1057,7 @@ export function ExpensesTab() {
         <div className="ml-auto">
           <StatCard
             label="Total Expenses"
-            prefix="₹"
+            prefix="Rs"
             value={totalExpenses}
             icon={TrendingDown}
             tone="danger"
@@ -1041,7 +1098,7 @@ export function ExpensesTab() {
               label: "Amount",
               render: (r) => (
                 <span className="font-bold text-[hsl(var(--ap-danger))]">
-                  ₹{Number((r as any).amount || 0).toLocaleString()}
+                  Rs {Number((r as any).amount || 0).toLocaleString()}
                 </span>
               ),
             },
@@ -1113,7 +1170,7 @@ export function ExpensesTab() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
+                <label className="text-sm font-medium mb-1 block">Amount (Rs)</label>
                 <input
                   type="number"
                   value={editing.amount || 0}
@@ -1227,7 +1284,7 @@ export function FeeStructureTab() {
             {
               key: "amount",
               label: "Amount",
-              render: (r) => <span className="font-bold">₹{r.amount?.toLocaleString()}</span>,
+              render: (r) => <span className="font-bold">Rs {r.amount?.toLocaleString()}</span>,
             },
             {
               key: "frequency",
@@ -1329,7 +1386,7 @@ export function FeeStructureTab() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Amount (₹)</label>
+              <label className="text-sm font-medium mb-1 block">Amount (Rs)</label>
               <input
                 type="number"
                 value={editing.amount || 0}

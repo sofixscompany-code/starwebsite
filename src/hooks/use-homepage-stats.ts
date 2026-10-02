@@ -12,7 +12,6 @@ export interface HomepageStat {
 const FALLBACK_STATS: HomepageStat[] = [
   { id: "fb-1", value: "5,000+", label: "Students Trained" },
   { id: "fb-2", value: "800+", label: "Top Selections" },
-  { id: "fb-3", value: "40%", label: "Super 40 Scholarship" },
   { id: "fb-4", value: "10+", label: "Years of Trust" },
 ];
 

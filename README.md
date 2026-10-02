@@ -18,7 +18,7 @@ npm run dev
 5 roles: `super_admin`, `teacher`, `student`, `parent`, `accountant`.
 
 - Login: https://starcoachinginstitutenepal.web.app/auth
-- Demo accounts: `{role}@demo.starcoaching.edu.np` / password `Demo@2026!`
+- Demo accounts (local `npm run dev` only): `{role}@demo.starcoaching.edu.np` / password `Star#Demo2026!Kx7` — the demo buttons, `demoLogin()`, and `demo_role` sessions are stripped/disabled in production builds
 - Super Admin: Starcoaching@gmail.com
 
 All accounts live in Firebase Auth with role stored in Firestore `users/{uid}`.

@@ -1,12 +1,8 @@
-﻿import { useEffect, useState } from "react";
+﻿import { Fragment } from "react";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel } from "@/components/admin/ui";
-import { Loader2, ShieldCheck, Save } from "lucide-react";
-import { toast } from "sonner";
-import { db } from "@/integrations/firebase/config";
-import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
-
-const ROLES = ["super_admin", "teacher", "student", "parent", "accountant"] as const;
+import { ShieldCheck, Info, Check, Minus } from "lucide-react";
+import { NAV_SECTIONS, ALL_ROLES, type NavItem } from "@/components/admin/nav";
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -16,139 +12,114 @@ const ROLE_LABELS: Record<string, string> = {
   accountant: "Accountant",
 };
 
-const MODULES = [
-  "dashboard",
-  "students",
-  "teachers",
-  "classes",
-  "attendance",
-  "homework",
-  "assignments",
-  "exams",
-  "results",
-  "fees",
-  "payments",
-  "notices",
-  "messages",
-  "admissions",
-  "reports",
-];
-
-interface PermissionRow {
-  id: string;
-  roles?: Record<string, boolean>;
-}
-
+/**
+ * Read-only capability matrix derived from the real navigation config
+ * (`src/components/admin/nav.ts`) — the single source of truth the Sidebar
+ * uses to filter menu items per role.
+ *
+ * Rules mirrored from `getNavSectionsForRole()`:
+ *  - missing `roles` on an item/section ⇒ visible to EVERY role
+ *  - `roles` present ⇒ only those roles see it
+ */
 export function PermissionsPage() {
-  const [rows, setRows] = useState<PermissionRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, "permissions"),
-      (snap) => {
-        setRows(snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as PermissionRow[]);
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
-    return unsub;
-  }, []);
-
-  const hasAccess = (moduleId: string, role: string): boolean => {
-    if (role === "super_admin") return true;
-    const row = rows.find((r) => r.id === moduleId);
-    if (!row?.roles) return moduleId === "dashboard";
-    return !!row.roles[role];
+  const canSee = (sectionRoles: string[] | undefined, item: NavItem, role: string): boolean => {
+    if (sectionRoles && !sectionRoles.includes(role)) return false;
+    return !item.roles || item.roles.includes(role);
   };
 
-  const toggle = async (moduleId: string, role: string) => {
-    if (role === "super_admin") {
-      toast.info("Super Admin always has full access");
-      return;
-    }
-    setSavingId(moduleId);
-    try {
-      const current = { ...rows.find((r) => r.id === moduleId)?.roles };
-      current[role] = !hasAccess(moduleId, role);
-      await setDoc(
-        doc(db, "permissions", moduleId),
-        { roles: current, updatedAt: new Date().toISOString() },
-        { merge: true },
-      );
-    } catch {
-      toast.error("Failed to update permission");
-    } finally {
-      setSavingId(null);
-    }
-  };
+  const totalItems = NAV_SECTIONS.reduce((s, sec) => s + sec.items.length, 0);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Permissions" subtitle="Control which modules each role can access" />
+      <PageHeader
+        title="Permissions"
+        subtitle="Which sidebar pages each role can see, read straight from the navigation config"
+      />
+
+      <div className="flex items-start gap-2 rounded-xl border border-[hsl(var(--ap-border))] bg-[hsl(var(--ap-surface))] px-4 py-3">
+        <Info className="w-4 h-4 text-[hsl(var(--ap-muted))] mt-0.5 shrink-0" />
+        <p className="text-xs text-[hsl(var(--ap-muted))]">
+          Reflects live sidebar access — navigation is enforced centrally. Read-only: this matrix is
+          derived from <span className="font-semibold">nav.ts</span> and cannot be edited here. A ✓
+          means the role sees that page; a — means it is hidden from the sidebar.
+        </p>
+      </div>
+
       <Panel
-        title="Role Permission Matrix"
-        subtitle="Toggle module access per role — changes save instantly to Firebase"
+        title="Role Capability Matrix"
+        subtitle={`${NAV_SECTIONS.length} sections · ${totalItems} menu items · ${ALL_ROLES.length} roles`}
       >
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--ap-muted))]" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[hsl(var(--ap-border))]">
-                  <th className="text-left py-3 px-3 font-semibold">Module</th>
-                  {ROLES.map((r) => (
-                    <th key={r} className="py-3 px-2 font-semibold text-center min-w-[90px]">
-                      {ROLE_LABELS[r]}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MODULES.map((m) => (
-                  <tr
-                    key={m}
-                    className="border-b border-[hsl(var(--ap-border)/0.5)] hover:bg-[hsl(var(--ap-bg))] transition-colors"
-                  >
-                    <td className="py-2.5 px-3 font-medium capitalize flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[hsl(var(--ap-purple))]" />
-                      {m}
-                    </td>
-                    {ROLES.map((r) => {
-                      const active = hasAccess(m, r);
-                      return (
-                        <td key={r} className="py-2.5 px-2 text-center">
-                          <button
-                            onClick={() => toggle(m, r)}
-                            disabled={savingId === m}
-                            className={`w-11 h-6 rounded-full relative transition-colors disabled:opacity-50 ${
-                              active ? "bg-[hsl(var(--ap-success))]" : "bg-[hsl(var(--ap-border))]"
-                            } ${r === "super_admin" ? "opacity-60 cursor-not-allowed" : ""}`}
-                            aria-label={`${m} - ${ROLE_LABELS[r]}`}
-                          >
-                            <span
-                              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
-                                active ? "left-[22px]" : "left-0.5"
-                              }`}
-                            />
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[hsl(var(--ap-border))]">
+                <th className="text-left py-3 px-3 font-semibold min-w-[220px]">Menu item</th>
+                <th className="text-left py-3 px-3 font-semibold min-w-[180px]">Route</th>
+                {ALL_ROLES.map((r) => (
+                  <th key={r} className="py-3 px-2 font-semibold text-center min-w-[96px]">
+                    {ROLE_LABELS[r] ?? r}
+                  </th>
                 ))}
-              </tbody>
-            </table>
-            <p className="text-xs text-[hsl(var(--ap-muted))] mt-3 flex items-center gap-1.5">
-              <Save className="w-3.5 h-3.5" />
-              Changes are saved to Firestore in real time. Super Admin always has full access.
-            </p>
-          </div>
-        )}
+              </tr>
+            </thead>
+            <tbody>
+              {NAV_SECTIONS.map((section, si) => (
+                <Fragment key={`${si}-${section.header}`}>
+                  <tr className="bg-[hsl(var(--ap-surface))]">
+                    <td
+                      colSpan={2 + ALL_ROLES.length}
+                      className="py-2 px-3 text-[11px] font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))]"
+                    >
+                      {section.header}
+                      {section.roles && (
+                        <span className="ml-2 font-normal normal-case tracking-normal">
+                          · restricted to {section.roles.map((r) => ROLE_LABELS[r] ?? r).join(", ")}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  {section.items.map((item) => (
+                    <tr
+                      key={`${section.header}-${item.label}-${item.to ?? item.label}`}
+                      className="border-b border-[hsl(var(--ap-border)/0.5)] hover:bg-[hsl(var(--ap-bg))] transition-colors"
+                    >
+                      <td className="py-2.5 px-3 font-medium flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[hsl(var(--ap-purple))] shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        {!item.roles && !section.roles && (
+                          <span className="text-[10px] font-bold uppercase text-[hsl(var(--ap-muted))]">
+                            all
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-xs text-[hsl(var(--ap-muted))] truncate">
+                        {item.to ?? "—"}
+                      </td>
+                      {ALL_ROLES.map((role) => {
+                        const allowed = canSee(section.roles, item, role);
+                        return (
+                          <td key={role} className="py-2.5 px-2 text-center">
+                            {allowed ? (
+                              <Check
+                                className="w-4 h-4 mx-auto text-[hsl(var(--ap-success))]"
+                                aria-label="visible"
+                              />
+                            ) : (
+                              <Minus
+                                className="w-4 h-4 mx-auto text-[hsl(var(--ap-muted))] opacity-50"
+                                aria-label="hidden"
+                              />
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Panel>
     </div>
   );

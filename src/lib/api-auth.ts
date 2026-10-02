@@ -1,9 +1,11 @@
-import { fetchUserRole, ROLE_DASHBOARD_ROUTES, ROLE_LABELS } from "@/hooks/use-user-role";
+import {
+  fetchUserRole,
+  fetchUserProfile,
+  ROLE_DASHBOARD_ROUTES,
+  ROLE_LABELS,
+} from "@/hooks/use-user-role";
 import { firebaseAuth } from "@/integrations/firebase/auth";
-
-// Super Admin credentials (use env vars in production)
-const SUPER_ADMIN_EMAIL = "Starcoaching@gmail.com";
-const SUPER_ADMIN_PASSWORD = "Star2026@$";
+import { normalizeLoginId } from "@/lib/user-accounts";
 
 export interface AuthUser {
   uid: string;
@@ -64,15 +66,21 @@ export function clearToken(): void {
 
 export function getUserRole(): string | null {
   const storedUser = getStoredUser();
-  return storedUser?.role || localStorage.getItem("demo_role");
+  return storedUser?.role || (import.meta.env.DEV ? localStorage.getItem("demo_role") : null);
 }
 
 export function isAuthenticated(): boolean {
-  return !!getToken() || !!getStoredUser() || !!localStorage.getItem("demo_role");
+  return (
+    !!getToken() ||
+    !!getStoredUser() ||
+    (import.meta.env.DEV && !!localStorage.getItem("demo_role"))
+  );
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const cleanEmail = email.trim().toLowerCase();
+export async function login(emailOrUsername: string, password: string): Promise<AuthResponse> {
+  // Accepts a full e-mail or an admin-assigned username (`ram.teacher` →
+  // ram.teacher@starcoaching.edu.np — see src/lib/user-accounts.ts).
+  const cleanEmail = normalizeLoginId(emailOrUsername);
   const cleanPassword = password.trim();
 
   // Primary path: Firebase Auth + Firestore role lookup (all roles live in the database)
@@ -82,14 +90,22 @@ export async function login(email: string, password: string): Promise<AuthRespon
       password: cleanPassword,
     });
     if (!error && data?.user) {
-      const role = await fetchUserRole(data.user.uid);
-      if (!role) throw new Error("No role assigned. Contact administrator.");
+      const profile = await fetchUserProfile(data.user.uid);
+      if (!profile?.role) throw new Error("No role assigned. Contact administrator.");
+      if (profile.status === "inactive") {
+        throw new Error("This account is disabled. Contact administrator.");
+      }
+      const role = profile.role;
 
       const user: AuthUser = {
         uid: data.user.uid,
-        email: data.user.email || email,
+        email: data.user.email || cleanEmail,
         role,
-        name: data.user.displayName || ROLE_LABELS[role] || email.split("@")[0],
+        name:
+          profile.fullName ||
+          data.user.displayName ||
+          ROLE_LABELS[role] ||
+          cleanEmail.split("@")[0],
         dashboard: ROLE_DASHBOARD_ROUTES[role] || "/auth",
       };
       setToken("firebase-session");
@@ -97,28 +113,22 @@ export async function login(email: string, password: string): Promise<AuthRespon
       return { token: "firebase-session", user };
     }
   } catch (err) {
-    if (err instanceof Error && err.message.includes("No role assigned")) throw err;
-    // Fall through to offline fallback below
+    if (
+      err instanceof Error &&
+      (err.message.includes("No role assigned") || err.message.includes("account is disabled"))
+    ) {
+      throw err;
+    }
+    // Every login is validated against Firebase Auth — no offline fallback.
   }
 
-  // Fallback: Super Admin hardcoded credentials (offline / DB unavailable)
-  if (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() && cleanPassword === SUPER_ADMIN_PASSWORD) {
-    const user: AuthUser = {
-      uid: "super-admin-hardcoded",
-      email: SUPER_ADMIN_EMAIL,
-      role: "super_admin",
-      name: "Super Admin",
-      dashboard: ROLE_DASHBOARD_ROUTES.super_admin,
-    };
-    setToken("super-admin-token");
-    setStoredUser(user);
-    return { token: "super-admin-token", user };
-  }
-
-  throw new Error("Invalid email or password");
+  throw new Error("Invalid username/email or password");
 }
 
-const DEMO_PASSWORD = "Demo@2026!";
+// Quick-demo credentials for the dedicated `*@demo.starcoaching.edu.np`
+// accounts (owner request: demo buttons stay clickable in production). These
+// accounts exist only for demos — they are not real institute users.
+const DEMO_PASSWORD = "Star#Demo2026!Kx7";
 
 async function ensureDemoFirebaseUser(
   role: string,
@@ -187,11 +197,13 @@ export async function demoLogin(role: string): Promise<AuthResponse> {
 }
 
 export async function verifyToken(): Promise<VerifyResponse> {
-  // Check demo role
-  const demoRole = localStorage.getItem("demo_role");
   const storedUser = getStoredUser();
 
-  if (demoRole && storedUser) {
+  // Dev-only: honor a locally-crafted demo session. Production builds strip
+  // this branch, so a tampered localStorage `demo_role` can never mint a
+  // session there (the hardcoded super-admin fallback was removed as well —
+  // nothing in the app ever set that uid).
+  if (import.meta.env.DEV && localStorage.getItem("demo_role") && storedUser) {
     return {
       valid: true,
       user: {
@@ -204,23 +216,10 @@ export async function verifyToken(): Promise<VerifyResponse> {
     };
   }
 
-  // Check Super Admin
-  if (storedUser?.uid === "super-admin-hardcoded") {
-    return {
-      valid: true,
-      user: {
-        uid: storedUser.uid,
-        email: storedUser.email,
-        role: storedUser.role,
-        name: storedUser.name,
-      },
-      dashboard: storedUser.dashboard,
-    };
-  }
-
-  // Check Firebase session
+  // Check Firebase session (waitForUser handles cold-reload init — a plain
+  // currentUser read can briefly be null right after a hard refresh).
   try {
-    const fbUser = await firebaseAuth.getUser();
+    const fbUser = await firebaseAuth.waitForUser();
     if (fbUser.data?.user) {
       const role = await fetchUserRole(fbUser.data.user.uid);
       if (role) {
@@ -245,7 +244,7 @@ export async function verifyToken(): Promise<VerifyResponse> {
 
 export function getStoredRole(): string | null {
   const user = getStoredUser();
-  return user?.role || localStorage.getItem("demo_role");
+  return user?.role || (import.meta.env.DEV ? localStorage.getItem("demo_role") : null);
 }
 
 export async function handleSignOut(navigate: (to: string) => void): Promise<void> {

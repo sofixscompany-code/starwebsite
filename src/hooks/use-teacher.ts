@@ -2,7 +2,6 @@
 import {
   collection,
   query,
-  orderBy,
   getDocs,
   addDoc,
   updateDoc,
@@ -12,6 +11,17 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
+
+/** Normalize Firestore Timestamps / ISO strings / numbers to epoch ms (client-side sorting). */
+const toMs = (v: unknown): number => {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return Date.parse(v) || 0;
+  const t = v as { toMillis?: () => number; seconds?: number };
+  if (typeof t.toMillis === "function") return t.toMillis();
+  if (typeof t.seconds === "number") return t.seconds * 1000;
+  return 0;
+};
 
 /* -------------------- TYPES -------------------- */
 export interface TeacherClass {
@@ -64,14 +74,14 @@ export function useTeacherClasses(teacherId?: string) {
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["teacher", "classes", teacherId],
     queryFn: async () => {
-      let q: any = collection(db, "teacher_classes");
-      if (teacherId) {
-        q = query(q, where("teacherId", "==", teacherId), orderBy("day", "asc"));
-      } else {
-        q = query(q, orderBy("day", "asc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as TeacherClass[];
+      // Index-free: single equality `where` (no orderBy after where) —
+      // sorted client-side by day (same field, same direction).
+      const constraints: any[] = [];
+      if (teacherId) constraints.push(where("teacherId", "==", teacherId));
+      const snap = await getDocs(query(collection(db, "teacher_classes"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as TeacherClass)
+        .sort((a, b) => String(a.day ?? "").localeCompare(String(b.day ?? "")));
     },
   });
 
@@ -135,14 +145,14 @@ export function useTeacherContent(teacherId?: string) {
   const { data: content = [], isLoading } = useQuery({
     queryKey: ["teacher", "content", teacherId],
     queryFn: async () => {
-      let q: any = collection(db, "teacher_content");
-      if (teacherId) {
-        q = query(q, where("teacherId", "==", teacherId), orderBy("createdAt", "desc"));
-      } else {
-        q = query(q, orderBy("createdAt", "desc"));
-      }
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ContentItem[];
+      // Index-free: single equality `where` (no orderBy after where) —
+      // sorted client-side by createdAt (newest first).
+      const constraints: any[] = [];
+      if (teacherId) constraints.push(where("teacherId", "==", teacherId));
+      const snap = await getDocs(query(collection(db, "teacher_content"), ...constraints));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as ContentItem)
+        .sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
     },
   });
 

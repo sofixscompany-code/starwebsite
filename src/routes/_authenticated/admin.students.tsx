@@ -1,4 +1,3 @@
-﻿import {} from "react-router-dom";
 import { useState, useMemo } from "react";
 import {
   CalendarCheck,
@@ -41,12 +40,18 @@ import {
   useStudentStats,
 } from "@/hooks/use-student";
 import { useCourses } from "@/hooks/use-lms";
+import { getStoredAuthUser } from "@/hooks/use-dashboard-data";
 
 const DEMO_STUDENT_ID = "demo_student_001";
 
+/** Resolve the logged-in student's UID from auth, falling back to the demo student. */
+function currentStudentId(): string {
+  return getStoredAuthUser()?.uid || DEMO_STUDENT_ID;
+}
+
 export function StudentPortalPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: stats, isLoading: statsLoading } = useStudentStats(DEMO_STUDENT_ID);
+  const { data: stats, isLoading: statsLoading } = useStudentStats(currentStudentId());
 
   const tabs = [
     { label: "Overview", value: "overview" },
@@ -120,9 +125,9 @@ export function StudentPortalPage() {
 /*  OVERVIEW TAB                                                    */
 /* ================================================================ */
 export function OverviewTab() {
-  const { attendance, isLoading: attLoading } = useStudentAttendance(DEMO_STUDENT_ID);
-  const { grades, isLoading: gradesLoading } = useStudentGrades(DEMO_STUDENT_ID);
-  const { assignments, isLoading: assignmentsLoading } = useStudentAssignments(DEMO_STUDENT_ID);
+  const { attendance, isLoading: attLoading } = useStudentAttendance(currentStudentId());
+  const { grades, isLoading: gradesLoading } = useStudentGrades(currentStudentId());
+  const { assignments, isLoading: assignmentsLoading } = useStudentAssignments(currentStudentId());
   const { schedule, getTodaySchedule, isLoading: schedLoading } = useStudentSchedule();
 
   const todaySchedule = getTodaySchedule();
@@ -306,7 +311,7 @@ export function OverviewTab() {
 /*  ATTENDANCE TAB                                                  */
 /* ================================================================ */
 export function AttendanceTab() {
-  const { attendance, isLoading } = useStudentAttendance(DEMO_STUDENT_ID);
+  const { attendance, isLoading } = useStudentAttendance(currentStudentId());
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const filtered = useMemo(() => {
@@ -411,7 +416,7 @@ export function AttendanceTab() {
 /*  GRADES TAB                                                      */
 /* ================================================================ */
 export function GradesTab() {
-  const { grades, isLoading, getGPA } = useStudentGrades(DEMO_STUDENT_ID);
+  const { grades, isLoading, getGPA } = useStudentGrades(currentStudentId());
   const [filterCourse, setFilterCourse] = useState("all");
 
   const courses = useMemo(() => {
@@ -613,7 +618,7 @@ export function ScheduleTab() {
 /*  ASSIGNMENTS TAB                                                 */
 /* ================================================================ */
 export function AssignmentsTab() {
-  const { assignments, isLoading, submitAssignment } = useStudentAssignments(DEMO_STUDENT_ID);
+  const { assignments, isLoading, submitAssignment } = useStudentAssignments(currentStudentId());
   const [statusFilter, setStatusFilter] = useState("all");
 
   const filtered = useMemo(() => {

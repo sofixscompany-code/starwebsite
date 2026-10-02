@@ -3,40 +3,227 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- User profiles ----
-    // Signed-in users can read any profile (role lookup).
-    // Users manage their own doc; super_admin manages all.
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update, delete: if request.auth != null &&
-        (request.auth.uid == userId ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin');
+    // ── Role helpers ────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isSuperAdmin() {
+      return isSignedIn() && role() == 'super_admin';
+    }
+    // Teachers + super admin manage academic/student data.
+    function isStaff() {
+      return isSignedIn() && role() in ['super_admin', 'teacher'];
+    }
+    // Accountants + super admin manage finance data.
+    function isAccountant() {
+      return isSignedIn() && role() in ['super_admin', 'accountant'];
     }
 
-    // ---- Public website content: anyone reads, staff writes ----
-    match /notices/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /events/{doc}    { allow read: if true; allow write: if request.auth != null; }
-    match /blogs/{doc}     { allow read: if true; allow write: if request.auth != null; }
-    match /courses/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /banners/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /gallery/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /faculty/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /teachers/{doc}  { allow read: if true; allow write: if request.auth != null; }
-    match /results/{doc}   { allow read: if true; allow write: if request.auth != null; }
-    match /settings/{doc}  { allow read: if true; allow write: if request.auth != null; }
-    match /calendar/{doc}  { allow read: if true; allow write: if request.auth != null; }
-    match /slides/{doc}    { allow read: if true; allow write: if request.auth != null; }
-    match /selections/{doc} { allow read: if true; allow write: if request.auth != null; }
-    match /homepage_stats/{doc} { allow read: if true; allow write: if request.auth != null; }
-    match /homepage_categories/{doc} { allow read: if true; allow write: if request.auth != null; }
-    match /homepage_testimonials/{doc} { allow read: if true; allow write: if request.auth != null; }
-    match /why_choose_us/{doc} { allow read: if true; allow write: if request.auth != null; }
-    match /homepage_settings/{doc} { allow read: if true; allow write: if request.auth != null; }
+    // ── User profiles ───────────────────────────────────────────────
+    // Only a super admin reads profiles of others (user management); everyone
+    // reads their own. Self-registration may only mint a NON-privileged role
+    // (the public /register page offers "student" only) — this blocks crafted
+    // requests from self-assigning teacher/accountant/super_admin.
+    // A user can never change their own role; only a super admin can.
+    match /users/{userId} {
+      allow read: if isSuperAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow create: if isSuperAdmin()
+        || (isSignedIn() && request.auth.uid == userId
+          && request.resource.data.role in ['student', 'parent']);
+      allow update: if isSuperAdmin()
+        || (request.auth.uid == userId && request.resource.data.role == resource.data.role);
+      allow delete: if isSuperAdmin();
+    }
 
-    // ---- Everything else: signed-in users only ----
+    // ── Public website content: anyone reads, super admin writes ────
+    match /events/{doc}         { allow read: if true; allow write: if isSuperAdmin(); }
+    match /blogs/{doc}          { allow read: if true; allow write: if isSuperAdmin(); }
+    match /courses/{doc}        { allow read: if true; allow write: if isSuperAdmin(); }
+
+    // Admission Class/Course/Package pricing — public read (form needs live
+    // prices), only super admin manages.
+    match /admission_courses/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+
+    // Preparation Portal (Service → Course → Post → Syllabus/Notes/Model Set).
+    // Structure is public; only super admin edits it.
+    match /prep_services/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /prep_courses/{doc}  { allow read: if true; allow write: if isSuperAdmin(); }
+    match /prep_posts/{doc}    { allow read: if true; allow write: if isSuperAdmin(); }
+    // Study material: only published documents are publicly readable.
+    match /prep_notes/{doc}      { allow read: if resource.data.isPublished == true || isSuperAdmin(); allow write: if isSuperAdmin(); }
+    match /prep_model_sets/{doc} { allow read: if resource.data.isPublished == true || isSuperAdmin(); allow write: if isSuperAdmin(); }
+    match /banners/{doc}        { allow read: if true; allow write: if isSuperAdmin(); }
+    match /hero_slides/{doc}    { allow read: if true; allow write: if isSuperAdmin(); }
+    match /site_settings/{doc}  { allow read: if true; allow write: if isSuperAdmin(); }
+    match /advertisements/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /media_library/{doc}  { allow read: if true; allow write: if isSuperAdmin(); }
+    match /feature_content/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /gallery/{doc}        { allow read: if true; allow write: if isSuperAdmin(); }
+    match /career/{doc}         { allow read: if true; allow write: if isSuperAdmin(); }
+    match /career_sections/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /faculty/{doc}        { allow read: if true; allow write: if isSuperAdmin(); }
+    match /settings/{doc}       { allow read: if true; allow write: if isSuperAdmin(); }
+    match /calendar/{doc}       { allow read: if true; allow write: if isSuperAdmin(); }
+    match /slides/{doc}         { allow read: if true; allow write: if isSuperAdmin(); }
+    match /selections/{doc}     { allow read: if true; allow write: if isSuperAdmin(); }
+    match /homepage_stats/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /homepage_categories/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /homepage_testimonials/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+    match /why_choose_us/{doc}  { allow read: if true; allow write: if isSuperAdmin(); }
+    match /homepage_settings/{doc} { allow read: if true; allow write: if isSuperAdmin(); }
+
+    // Branches are read by the PUBLIC register/admission forms (anonymous).
+    match /branches/{doc}       { allow read: if true; allow write: if isSuperAdmin(); }
+
+    // Notices: teachers manage them from the mobile app as well.
+    match /notices/{doc} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Teacher directory is public; only super admin edits it.
+    match /teachers/{doc} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Published results are publicly readable (institute publishes scores),
+    // but staff (teacher gradebook + admin) write them.
+    match /results/{doc} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // ── Academic data: signed-in users read, staff manage ───────────
+    match /students/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /homework/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /exams/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /assignments/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /attendance/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /calendar/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /classes/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /student_attendance/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /student_grades/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /student_assignments/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /student_schedule/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /teacher_classes/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /teacher_content/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /teacher_student_progress/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    match /certificates/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // ── LMS: everyone signed-in reads; staff manage courses/lessons;
+    // students may enrol and submit quiz attempts for themselves. ─────
+    match /lms_courses/{doc}    { allow read: if isSignedIn(); allow write: if isStaff(); }
+    match /lms_lessons/{doc}    { allow read: if isSignedIn(); allow write: if isStaff(); }
+    match /lms_quizzes/{doc}    { allow read: if isSignedIn(); allow write: if isStaff(); }
+    match /lms_materials/{doc}  { allow read: if isSignedIn(); allow write: if isStaff(); }
+    match /lms_enrollments/{doc} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
+    }
+    match /lms_quiz_attempts/{doc} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff();
+    }
+
+    // ── Finance: signed-in users read, accountants/admin manage ─────
+    match /payments/{doc}       { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /expenses/{doc}       { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /fees/{doc}           { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /fee_invoices/{doc}   { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /fee_payments/{doc}   { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /fee_structure/{doc}  { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /collections/{doc}    { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /dues/{doc}           { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /transactions/{doc}   { allow read: if isSignedIn(); allow write: if isAccountant(); }
+
+    // ── Messaging & support: any signed-in user reads/creates; only
+    // super admin moderates (edit/delete). ────────────────────────────
+    match /messages/{doc} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+    match /support_tickets/{doc} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ── Public forms: anyone may submit, only super admin manages ───
+    match /inquiries/{doc} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+    match /admissions/{doc} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // ── Audit logs: appends are attributed to the signed-in caller;
+    // only super admin reads, and logs are immutable. ────────────────
+    match /audit_logs/{doc} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['user', 'action', 'date']);
+      allow read: if isSuperAdmin();
+      allow update, delete: if false;
+    }
+
+    // ── Everything else (hostel, api keys, backups, integrations, …):
+    // signed-in users may read; only super admin writes.
     match /{collection}/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
   }
 }

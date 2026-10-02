@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ArrowRight, Pause, Play } from "lucide-react";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 
 type Slide = {
@@ -14,19 +14,25 @@ type Slide = {
   imageUrl: string;
 };
 
+type SlideDoc = Slide & { isActive?: boolean; sortOrder?: number; createdAt?: string };
+
+// Same composite-index-free loader as HeroSlider (shares the banners collection).
+async function loadFeatureSlides(): Promise<Slide[]> {
+  const snap = await getDocs(collection(db, "banners"));
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as SlideDoc[];
+  return docs
+    .filter((b) => b.isActive !== false)
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
+        String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")),
+    );
+}
+
 export function FeatureSlider() {
   const { data: slides = [] } = useQuery({
     queryKey: ["hero-banners"],
-    queryFn: async () => {
-      const q = query(
-        collection(db, "banners"),
-        where("isActive", "==", true),
-        orderBy("sortOrder"),
-        orderBy("createdAt"),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Slide[];
-    },
+    queryFn: loadFeatureSlides,
   });
 
   const [idx, setIdx] = useState(0);
