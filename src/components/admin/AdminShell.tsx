@@ -6,6 +6,9 @@ import { handleSignOut, getUserRole } from "@/lib/api-auth";
 import { ROLE_LABELS } from "@/hooks/use-user-role";
 import { Sidebar } from "./Sidebar";
 import { NAV_ITEMS, getNavItemsForRole } from "./nav";
+import { LiveClock, LangSwitcher } from "./TopBarWidgets";
+import { StarLogo } from "@/components/site/StarLogo";
+import { useAdminT, shortDate } from "@/lib/admin-i18n";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/config";
 import {
@@ -47,6 +50,9 @@ export function AdminShell() {
   const denied =
     !!allowedPaths && currentPath.startsWith("/admin") && !allowedPaths.has(currentPath);
 
+  const { t } = useAdminT();
+  const pageName = pageNameFor(currentPath);
+
   useEffect(() => {
     const saved = localStorage.getItem("admin-theme");
     if (saved === "dark") setDark(true);
@@ -76,36 +82,37 @@ export function AdminShell() {
     <div className={`admin-shell ${dark ? "dark" : ""} font-sans`}>
       {/* Fixed Header */}
       <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between px-6 md:px-8 py-3">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-3 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label={t("menu")}
             >
               <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
-            <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                {new Date().getHours() < 12
-                  ? "Good morning"
-                  : new Date().getHours() < 17
-                    ? "Good afternoon"
-                    : "Good evening"}
+            <StarLogo size="sm" className="h-8 w-8 shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                {pageName}
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                {role ? ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role : "Loading..."}{" "}
-                Dashboard
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {t(role ? ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role : t("loading"))} ·
+                Star Coaching Centre
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <LiveClock />
+            <LangSwitcher />
+
             <button
               onClick={() => setCmdOpen(true)}
               className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <Search className="w-3.5 h-3.5" />
-              <span>Search...</span>
+              <span>{t("search")}</span>
               <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold text-gray-400">
                 K
               </kbd>
@@ -122,7 +129,8 @@ export function AdminShell() {
             <button
               onClick={() => setRightOpen((v) => !v)}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
-              aria-label="Notifications"
+              aria-label={t("notifications")}
+              title={t("notifications")}
             >
               <Bell className="w-4 h-4" />
             </button>
@@ -130,8 +138,8 @@ export function AdminShell() {
             <button
               onClick={() => navigate("/admin/profile")}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
-              aria-label="Profile"
-              title="Profile"
+              aria-label={t("profile")}
+              title={t("profile")}
             >
               <User className="w-4 h-4" />
             </button>
@@ -139,7 +147,8 @@ export function AdminShell() {
             <button
               onClick={signOut}
               className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-500"
-              aria-label="Sign out"
+              aria-label={t("signOut")}
+              title={t("signOut")}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -163,16 +172,17 @@ export function AdminShell() {
           <HeroSlider compact />
           {denied ? (
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Access denied</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t("accessDenied")}
+              </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                This page isn&apos;t available for your role. If you think this is a mistake,
-                contact the administrator.
+                {t("accessDeniedBody")}
               </p>
               <button
                 onClick={() => navigate("/admin")}
                 className="mt-5 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
               >
-                Back to dashboard
+                {t("backToDashboard")}
               </button>
             </div>
           ) : (
@@ -207,6 +217,7 @@ export function AdminShell() {
 }
 
 function RightPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useAdminT();
   const [items, setItems] = useState<{ title: string; desc: string; time: string }[]>([]);
   const [pendingAdmissions, setPendingAdmissions] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -224,9 +235,9 @@ function RightPanel({ onClose }: { onClose: () => void }) {
           .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
           .slice(0, 5)
           .map((q) => ({
-            title: `New inquiry from ${String(q.name || q.fullName || "someone")}`,
+            title: `${t("Inquiries")}: ${String(q.name || q.fullName || "—")}`,
             desc: String(q.message || q.email || q.phone || "").slice(0, 120),
-            time: String(q.createdAt || "").slice(0, 10),
+            time: shortDate(q.createdAt as string | number | undefined),
           }));
         setItems(list);
       } catch {
@@ -274,7 +285,7 @@ function RightPanel({ onClose }: { onClose: () => void }) {
       className="fixed right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-40"
     >
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-        <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">{t("notifications")}</h3>
         <button
           onClick={onClose}
           className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400"
@@ -284,9 +295,9 @@ function RightPanel({ onClose }: { onClose: () => void }) {
       </div>
       <div className="overflow-y-auto h-[calc(100%-60px)]">
         {!loaded ? (
-          <p className="px-5 py-6 text-sm text-gray-400 text-center">Loading…</p>
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">{t("loading")}</p>
         ) : notifications.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-gray-400 text-center">You&apos;re all caught up.</p>
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">{t("caughtUp")}</p>
         ) : (
           notifications.map((n, i) => (
             <div
@@ -404,20 +415,30 @@ function CommandPalette({
 }) {
   const [query, setQuery] = useState("");
   const role = getUserRole();
+  const { t } = useAdminT();
 
   const items = useMemo(() => {
     const seen = new Set<string>();
-    const base: { title: string; path: string }[] = [{ title: "Dashboard", path: "/admin" }];
+    const base: { title: string; key: string; path: string }[] = [
+      { title: t("Dashboard"), key: "Dashboard", path: "/admin" },
+    ];
     if (role) {
       getNavItemsForRole(role).forEach((item) => {
         if (item.to && !seen.has(item.to)) {
           seen.add(item.to);
-          base.push({ title: item.label, path: item.to });
+          base.push({ title: t(item.label), key: item.label, path: item.to });
         }
       });
     }
-    return base.filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
-  }, [role, query]);
+    const q = query.toLowerCase().trim();
+    return base.filter(
+      (i) =>
+        !q ||
+        i.title.toLowerCase().includes(q) ||
+        i.key.toLowerCase().includes(q) ||
+        i.path.includes(q),
+    );
+  }, [role, query, t]);
 
   return (
     <motion.div
@@ -440,7 +461,7 @@ function CommandPalette({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pages, actions..."
+            placeholder={t("commandSearch")}
             className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none"
           />
           <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-400">
@@ -449,7 +470,7 @@ function CommandPalette({
         </div>
         <div className="max-h-64 overflow-y-auto">
           {items.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-gray-400 text-center">No results found</p>
+            <p className="px-5 py-6 text-sm text-gray-400 text-center">{t("noResultsFound")}</p>
           ) : (
             items.map((item) => (
               <button
@@ -523,8 +544,17 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   admissions: "Admissions",
 };
 
+/** Human page name for the top bar (derived from the last URL segment). */
+function pageNameFor(path: string): string {
+  const parts = path.split("/").filter(Boolean);
+  if (parts.length < 2) return "Dashboard";
+  const last = parts[parts.length - 1];
+  return BREADCRUMB_LABELS[last] || last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
+}
+
 function Breadcrumbs() {
   const location = useLocation();
+  const { t } = useAdminT();
   const parts = location.pathname.split("/").filter(Boolean);
 
   if (parts.length < 2) return null;
@@ -539,9 +569,10 @@ function Breadcrumbs() {
   return (
     <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-4">
       {parts.map((part, i) => {
-        const label =
+        const label = t(
           BREADCRUMB_LABELS[part] ||
-          part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " ");
+            part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "),
+        );
         const href = "/" + parts.slice(0, i + 1).join("/");
         const isLast = i === parts.length - 1;
         return (

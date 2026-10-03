@@ -31,6 +31,10 @@ import {
   CalendarDays,
   Eye,
   Target,
+  Dumbbell,
+  ClipboardList,
+  TrendingUp,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -47,6 +51,8 @@ import { useHomepageTestimonials } from "@/hooks/use-homepage-testimonials";
 import { useWhyChooseUs, useMdMessage } from "@/hooks/use-homepage-settings";
 import { useSelections } from "@/hooks/use-selections";
 import { useFaculty } from "@/hooks/use-faculty";
+import { usePhysicalTraining } from "@/hooks/use-physical-training";
+import { ProgressCard, SAMPLE_CARD } from "@/components/cards/student-cards";
 import { useGallery } from "@/hooks/use-gallery";
 import { useHomepageCategories, getIcon as getCategoryIcon } from "@/hooks/use-homepage-categories";
 import { useLiveNotices, isNewNotice, noticeTimeAgo } from "@/hooks/use-live-notices";
@@ -175,6 +181,156 @@ const FAQS = [
   { qKey: "faq4Q", aKey: "faq4A" },
   { qKey: "faq5Q", aKey: "faq5A" },
 ];
+
+/* ────────────────────────────────────────────────────
+   Physical Training — homepage preview (full page at /physical-training)
+   ──────────────────────────────────────────────────── */
+function PhysicalTrainingPreview() {
+  const { t } = useLanguage();
+  const { data } = usePhysicalTraining();
+
+  return (
+    <section className="py-14 bg-gradient-to-b from-white to-slate-50">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-red flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> {t("dailyPhysicalTraining")}
+            </p>
+            <h2 className="font-display font-black text-2xl md:text-3xl text-navy mt-2">
+              {data.title}
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mt-2 text-sm leading-relaxed">
+              {data.lead}
+            </p>
+          </div>
+          <Link
+            to="/physical-training"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-brand-red hover:underline"
+          >
+            {t("explorePhysicalTraining")} <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Routine table */}
+          <div className="lg:col-span-2 rounded-2xl border border-border bg-white overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-border bg-secondary/50">
+              <Clock className="w-5 h-5 text-brand-red" />
+              <h3 className="font-display font-black text-lg text-navy">{data.routineTitle}</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-widest text-muted-foreground">
+                    <th className="px-5 py-3 font-bold">समय</th>
+                    <th className="px-5 py-3 font-bold">गतिविधि</th>
+                    <th className="px-5 py-3 font-bold text-right">अवधि</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.routine.map((r) => (
+                    <tr key={r.id} className="border-t border-border last:border-0">
+                      <td className="px-5 py-2.5 whitespace-nowrap font-mono font-bold text-navy">
+                        {r.time}
+                      </td>
+                      <td className="px-5 py-2.5 text-foreground/90">{r.activity}</td>
+                      <td className="px-5 py-2.5 text-right text-muted-foreground whitespace-nowrap">
+                        {r.note}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Responsibility card + photo */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border-2 border-brand-red/30 bg-white overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 bg-brand-red/5 border-b border-brand-red/20">
+                <ShieldCheck className="w-5 h-5 text-brand-red" />
+                <h3 className="font-display font-black text-base text-navy">
+                  {data.responsibilityTitle}
+                </h3>
+              </div>
+              <ul className="p-5 space-y-2.5">
+                {data.responsibilities.slice(0, 4).map((line, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/85">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-red" />
+                    <span className="leading-relaxed">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <img
+              src={data.photoUrl}
+              alt={data.title}
+              loading="lazy"
+              className="w-full h-36 rounded-2xl border border-border object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Register buttons */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 max-w-xl">
+          <Link
+            to="/admin/attendance"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-red px-5 py-3 text-sm font-bold text-white hover:bg-red-600 transition"
+          >
+            <ClipboardList className="w-4 h-4" /> {data.attendanceRegisterLabel}
+          </Link>
+          <Link
+            to="/admin/results"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-navy/30 bg-white px-5 py-3 text-sm font-bold text-navy hover:border-brand-red hover:text-brand-red transition"
+          >
+            <TrendingUp className="w-4 h-4" /> {data.progressRegisterLabel}
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────
+   Progress Card — homepage preview (admin: /admin/student-cards)
+   ──────────────────────────────────────────────────── */
+function ProgressCardPreview() {
+  const { t } = useLanguage();
+
+  return (
+    <section className="py-14 bg-navy text-navy-foreground relative overflow-hidden">
+      <div
+        className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-brand-red/15 blur-3xl"
+        aria-hidden="true"
+      />
+      <div className="max-w-6xl mx-auto px-4 relative">
+        <div className="text-center mb-8">
+          <p className="text-xs font-bold uppercase tracking-widest text-gold">{t("Results")}</p>
+          <h2 className="font-display font-black text-2xl md:text-3xl mt-2">
+            {t("progressCardTitle")}
+          </h2>
+          <p className="text-white/70 max-w-2xl mx-auto mt-2 text-sm leading-relaxed">
+            {t("progressCardSub")}
+          </p>
+        </div>
+
+        <div className="sc-print-root overflow-x-auto pb-2">
+          <ProgressCard data={SAMPLE_CARD} />
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            to="/results"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-red px-5 py-3 text-sm font-bold text-white hover:bg-red-600 transition"
+          >
+            {t("Results")} <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function Index() {
   const site = useSiteSettings();
@@ -555,7 +711,7 @@ export function Index() {
                 <p className="text-xs text-white/70 mb-2">{t("runningPushupSitup")}</p>
                 <p className="text-sm text-white/80 mb-3">{t("physicalPrepAsPerStandard")}</p>
                 <Link
-                  to="/courses"
+                  to="/physical-training"
                   className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-xs font-bold transition backdrop-blur-sm"
                 >
                   {t("explorePhysicalTraining")} <ArrowRight className="w-3 h-3" />
@@ -601,6 +757,12 @@ export function Index() {
           </div>
         </div>
       </section>
+
+      {/* STEP 4.2 — Physical Training (full page at /physical-training) */}
+      <PhysicalTrainingPreview />
+
+      {/* STEP 4.3 — Student Progress Card preview (admin: /admin/student-cards) */}
+      <ProgressCardPreview />
 
       {/* ════════════════════════════════════════════
           STEP 4.5 — About the Institute (short version; full page at /about)

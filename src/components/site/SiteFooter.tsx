@@ -10,7 +10,7 @@ const COURSE_LINKS: Array<{ labelKey: string; to: string }> = [
   { labelKey: "nepalPolice", to: "/career/nepal-police" },
   { labelKey: "apf", to: "/career/apf" },
   { labelKey: "forestGuard", to: "/career/forest-guard" },
-  { labelKey: "physicalTrainingDetail", to: "/courses" },
+  { labelKey: "physicalTrainingDetail", to: "/physical-training" },
 ];
 
 export function SiteFooter() {

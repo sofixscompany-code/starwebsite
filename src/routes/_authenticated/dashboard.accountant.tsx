@@ -20,9 +20,11 @@ import {
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAccountantDashboard } from "@/hooks/use-dashboard-data";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export function AccountantDashboard() {
   const { data: fin } = useAccountantDashboard();
+  const { t } = useAdminT();
   const hasData = !!fin?.hasData;
 
   const fmt = (n: number) =>
@@ -30,29 +32,29 @@ export function AccountantDashboard() {
 
   const statCards = [
     {
-      label: "Today's Collection",
-      value: hasData && fin ? fmt(fin.todayCollection) : "No data yet",
+      label: t("todaysCollection"),
+      value: hasData && fin ? fmt(fin.todayCollection) : "Rs 0",
       icon: Wallet,
       color: "from-emerald-500 to-emerald-600",
       bg: "bg-emerald-50",
     },
     {
-      label: "Pending Dues",
-      value: hasData && fin ? fmt(fin.pendingDues) : "No data yet",
+      label: t("pendingDuesLabel"),
+      value: hasData && fin ? fmt(fin.pendingDues) : "Rs 0",
       icon: Clock,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
     },
     {
-      label: "Monthly Rev.",
-      value: hasData && fin ? fmt(fin.monthRevenue) : "No data yet",
+      label: t("monthlyRev"),
+      value: hasData && fin ? fmt(fin.monthRevenue) : "Rs 0",
       icon: TrendingUp,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
     },
     {
-      label: "Monthly Exp.",
-      value: hasData && fin ? fmt(fin.monthExpense) : "No data yet",
+      label: t("monthlyExp"),
+      value: hasData && fin ? fmt(fin.monthExpense) : "Rs 0",
       icon: TrendingDown,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
@@ -91,9 +93,11 @@ export function AccountantDashboard() {
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm text-gold font-medium">Accountant Dashboard</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">Financial Overview</h1>
-          <p className="text-white/70 mt-1 text-sm">Track income, expenses, and fee collections</p>
+          <p className="text-sm text-gold font-medium">{t("accountantDashboard")}</p>
+          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
+            {t("financialOverview")}
+          </h1>
+          <p className="text-white/70 mt-1 text-sm">{t("accountantIntro")}</p>
         </div>
       </motion.div>
 
@@ -132,20 +136,20 @@ export function AccountantDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                  Income vs Expense
+                  {t("incomeVsExpense")}
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5">Monthly comparison</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t("monthlyComparison")}</p>
               </div>
               {netBalance !== null && (
                 <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Net: {fmt(netBalance)}
+                  <TrendingUp className="w-3 h-3" /> {t("net")}: {fmt(netBalance)}
                 </span>
               )}
             </div>
             <div className="h-64">
               {chartRows.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -190,16 +194,16 @@ export function AccountantDashboard() {
         <div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Recent Transactions
+              {t("recentTxns")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Latest financial activities</p>
+            <p className="text-xs text-gray-400 mb-4">{t("recentTxnsSub")}</p>
             {txnRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No transactions yet
+                {t("noTxns")}
               </p>
             ) : (
               <div className="space-y-1">
-                {txnRows.map((t, i) => (
+                {txnRows.map((txn, i) => (
                   <div
                     key={i}
                     className="flex items-start gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
@@ -207,11 +211,11 @@ export function AccountantDashboard() {
                     <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                        {t.title}
+                        {txn.title}
                       </p>
-                      <p className="text-[11px] text-gray-500">{t.desc}</p>
+                      <p className="text-[11px] text-gray-500">{txn.desc}</p>
                     </div>
-                    <p className="text-[11px] text-gray-400 shrink-0">{t.date}</p>
+                    <p className="text-[11px] text-gray-400 shrink-0">{txn.date}</p>
                   </div>
                 ))}
               </div>
@@ -224,11 +228,11 @@ export function AccountantDashboard() {
         <div className="xl:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">
-              Fee Collection Status
+              {t("feeCollectionStatus")}
             </h3>
             {feeRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No fee data yet
+                {t("noFeeData")}
               </p>
             ) : (
               <div className="space-y-4">
@@ -241,7 +245,7 @@ export function AccountantDashboard() {
                           {f.label}
                         </p>
                         <p className="text-xs text-gray-400">
-                          {f.collected}/{f.target} paid
+                          {f.collected}/{f.target} {t("paidSuffix")}
                         </p>
                       </div>
                       <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -251,7 +255,7 @@ export function AccountantDashboard() {
                         />
                       </div>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Rs {f.amount.toLocaleString()} target
+                        Rs {f.amount.toLocaleString()} {t("targetSuffix")}
                       </p>
                     </div>
                   );
@@ -263,13 +267,15 @@ export function AccountantDashboard() {
 
         <div className="xl:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
+              {t("quickActions")}
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Record Payment", icon: CreditCard, to: "/admin/payments" },
-                { label: "Invoice", icon: FileText, to: "/admin/accounting" },
-                { label: "Add Expense", icon: DollarSign, to: "/admin/accounting" },
-                { label: "Reports", icon: BarChart3, to: "/admin/reports" },
+                { label: t("recordPayment"), icon: CreditCard, to: "/admin/payments" },
+                { label: t("invoice"), icon: FileText, to: "/admin/accounting" },
+                { label: t("addExpense"), icon: DollarSign, to: "/admin/accounting" },
+                { label: t("Reports"), icon: BarChart3, to: "/admin/reports" },
               ].map((a) => {
                 const Icon = a.icon;
                 return (

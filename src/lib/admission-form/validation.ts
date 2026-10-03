@@ -34,7 +34,11 @@ export function validateAdmissionForm(f: AdmissionFormData): Record<string, stri
     "organization",
     "Select one organization (Nepal Police / Nepal Army / APF).",
   );
-  req(!!f.appliedPost, "appliedPost", "Select one post (Inspector / Sub-Inspector / Jawan).");
+  req(
+    !!f.appliedPost,
+    "appliedPost",
+    "Select one post (Inspector / Sub-Inspector / Jawan / Research Assistant).",
+  );
   req(!!f.courseId, "courseId", "Select the Course / Class applied for.");
 
   // — Mobile —
@@ -62,6 +66,44 @@ export function validateAdmissionForm(f: AdmissionFormData): Record<string, stri
   if (f.motherMobile && !isValidNepaliMobile(f.motherMobile)) {
     e.motherMobile = "Enter a valid 10-digit mobile number.";
   }
+
+  // — अभिभावक (paper form §4) —
+  req(
+    f.guardianName.trim().length >= 2,
+    "guardianName",
+    "Guardian's name is required (आपतकालीन अभिभावक).",
+  );
+  req(!!f.guardianRelation.trim(), "guardianRelation", "Relation with student is required.");
+  if (f.guardianMobile && !isValidNepaliMobile(f.guardianMobile)) {
+    e.guardianMobile = "Enter a valid 10-digit mobile number.";
+  }
+
+  // — शैक्षिक विवरण (paper form §3) —
+  req(
+    f.schoolName.trim().length >= 2,
+    "schoolName",
+    "Last attended school / college name is required.",
+  );
+  req(!!f.lastExamPassed.trim(), "lastExamPassed", "Last exam / class passed is required.");
+  if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) {
+    e.email = "Enter a valid email address.";
+  }
+
+  // — स्वास्थ्य विवरण (paper form §5) —
+  req(!!f.bloodGroup, "bloodGroup", "Select a blood group.");
+  req(
+    f.physicalDisability === "Yes" || f.physicalDisability === "No",
+    "physicalDisability",
+    "Select Yes / No for physical disability.",
+  );
+  if (f.physicalDisability === "Yes") {
+    req(
+      f.disabilityDetail.trim().length >= 2,
+      "disabilityDetail",
+      "Please describe the disability.",
+    );
+  }
+  req(!!f.nationality.trim(), "nationality", "Nationality is required.");
 
   // — Address (dependent dropdowns) —
   req(!!f.province, "province", "Select a province.");

@@ -12,6 +12,7 @@ import {
   POSTS,
   PACKAGE_TYPES,
   MUNICIPALITY_TYPES,
+  BLOOD_GROUPS,
 } from "@/lib/admission-form/types";
 import { applicableCourses } from "@/lib/admission-form/defaults";
 import {
@@ -26,6 +27,10 @@ import {
   RULE_SECTIONS,
   AGREEMENT_NOTE,
   AGREEMENT_EN,
+  DECLARATION_HEADING_NP,
+  DECLARATION_HEADING_EN,
+  DECLARATION_NP,
+  DECLARATION_EN,
 } from "@/lib/admission-form/rules";
 import {
   BlueCheck,
@@ -670,8 +675,243 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
         </div>
       </section>
 
-      {/* ═══════════════ PAGE 2 ═══════════════ */}
-      <section className="sci-page page-2" aria-label="Rules and agreement page 2">
+      {/* ═══════════════ PAGE 2 — paper form §§1–5 + 7 ═══════════════ */}
+      <section
+        className="sci-page page-2"
+        aria-label="Education, guardian, health and declaration page 2"
+      >
+        <div className="sci-watermark" aria-hidden="true">
+          <img src="/favicon-180x180.jpg" alt="" />
+          <span>
+            Star Coaching Institute Pvt. Ltd.
+            <br />
+            Janakpurdham
+          </span>
+        </div>
+
+        <DocumentHeader />
+
+        <h2 className="sci-sec-heading">
+          <Bullet /> विद्यार्थीको व्यक्तिगत तथा सम्पर्क विवरण (थप)
+        </h2>
+
+        {/* Nationality + Email — paper form §1–2 */}
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">राष्ट्रियता (Nationality):</span>
+          <input
+            className={cn("sci-line-input", err("nationality") && "sci-input-error")}
+            value={data.nationality}
+            disabled={!edit}
+            aria-label="Nationality"
+            onChange={(e) => onChange({ nationality: e.target.value })}
+          />
+          <span className="sci-label sci-label-gap">ईमेल (Email):</span>
+          <input
+            className={cn("sci-line-input", err("email") && "sci-input-error")}
+            value={data.email}
+            disabled={!edit}
+            type="email"
+            aria-label="Email address"
+            onChange={(e) => onChange({ email: e.target.value })}
+          />
+          {err("nationality") && <FieldError msg={err("nationality")!} />}
+          {err("email") && <FieldError msg={err("email")!} />}
+        </div>
+
+        {/* ── शैक्षिक विवरण — paper form §3 ── */}
+        <h2 className="sci-sec-heading">
+          <Bullet /> शैक्षिक विवरण
+        </h2>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">विद्यालय / कलेजको नाम:</span>
+          <input
+            className={cn("sci-line-input", err("schoolName") && "sci-input-error")}
+            value={data.schoolName}
+            disabled={!edit}
+            aria-label="School or college name"
+            onChange={(e) => onChange({ schoolName: e.target.value })}
+          />
+          {err("schoolName") && <FieldError msg={err("schoolName")!} />}
+        </div>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">अन्तिम उत्तीर्ण परीक्षा / कक्षा:</span>
+          <input
+            className={cn("sci-line-input", err("lastExamPassed") && "sci-input-error")}
+            value={data.lastExamPassed}
+            disabled={!edit}
+            placeholder="SLC / SEE / +2"
+            aria-label="Last exam passed"
+            onChange={(e) => onChange({ lastExamPassed: e.target.value })}
+          />
+          <span className="sci-label sci-label-gap">बोर्ड / विश्वविद्यालय:</span>
+          <input
+            className="sci-line-input"
+            value={data.educationBoard}
+            disabled={!edit}
+            aria-label="Board or university"
+            onChange={(e) => onChange({ educationBoard: e.target.value })}
+          />
+          {err("lastExamPassed") && <FieldError msg={err("lastExamPassed")!} />}
+        </div>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">GPA / प्राप्त अङ्क:</span>
+          <input
+            className="sci-line-input"
+            value={data.gpa}
+            disabled={!edit}
+            aria-label="GPA or grades obtained"
+            onChange={(e) => onChange({ gpa: e.target.value })}
+          />
+        </div>
+
+        {/* ── अभिभावकसम्बन्धी विवरण — paper form §4 ── */}
+        <h2 className="sci-sec-heading">
+          <Bullet /> अभिभावकसम्बन्धी विवरण
+        </h2>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">अभिभावकको नाम:</span>
+          <input
+            className={cn("sci-line-input", err("guardianName") && "sci-input-error")}
+            value={data.guardianName}
+            disabled={!edit}
+            aria-label="Guardian name"
+            onChange={(e) => onChange({ guardianName: e.target.value })}
+          />
+          <span className="sci-label sci-label-gap">विद्यार्थीसँगको सम्बन्ध:</span>
+          <input
+            className={cn("sci-line-input", err("guardianRelation") && "sci-input-error")}
+            value={data.guardianRelation}
+            disabled={!edit}
+            placeholder="बुवा / आमा / दाजु"
+            aria-label="Relation with student"
+            onChange={(e) => onChange({ guardianRelation: e.target.value })}
+          />
+          {err("guardianName") && <FieldError msg={err("guardianName")!} />}
+          {err("guardianRelation") && <FieldError msg={err("guardianRelation")!} />}
+        </div>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">अभिभावकको मोबाइल:</span>
+          <input
+            className={cn("sci-line-input", err("guardianMobile") && "sci-input-error")}
+            value={data.guardianMobile}
+            disabled={!edit}
+            inputMode="numeric"
+            maxLength={10}
+            aria-label="Guardian mobile number"
+            onChange={(e) =>
+              onChange({ guardianMobile: e.target.value.replace(/\D/g, "").slice(0, 10) })
+            }
+          />
+          <span className="sci-label sci-label-gap">ठेगाना:</span>
+          <input
+            className="sci-line-input"
+            value={data.tol}
+            disabled
+            aria-label="Address (from page 1)"
+          />
+          {err("guardianMobile") && <FieldError msg={err("guardianMobile")!} />}
+        </div>
+
+        {/* ── स्वास्थ्य सम्बन्धी विवरण — paper form §5 ── */}
+        <h2 className="sci-sec-heading">
+          <Bullet /> स्वास्थ्य सम्बन्धी विवरण
+        </h2>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">रक्तसमूह:</span>
+          <div className="sci-checks">
+            {BLOOD_GROUPS.map((b) => (
+              <BlueCheck
+                key={b}
+                type="radio"
+                name="bloodGroup"
+                checked={data.bloodGroup === b}
+                disabled={!edit}
+                error={!!err("bloodGroup") && !data.bloodGroup}
+                ariaLabel={`Blood group: ${b}`}
+                label={b}
+                onChange={() => onChange({ bloodGroup: b })}
+              />
+            ))}
+          </div>
+          {err("bloodGroup") && <FieldError msg={err("bloodGroup")!} />}
+        </div>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">शारीरिक अपाङ्गता:</span>
+          <div className="sci-checks">
+            {(["Yes", "No"] as const).map((v) => (
+              <BlueCheck
+                key={v}
+                type="radio"
+                name="physicalDisability"
+                checked={data.physicalDisability === v}
+                disabled={!edit}
+                error={!!err("physicalDisability") && !data.physicalDisability}
+                ariaLabel={`Physical disability: ${v}`}
+                label={v}
+                onChange={() => onChange({ physicalDisability: v })}
+              />
+            ))}
+          </div>
+          <span className="sci-label sci-label-gap">उचाइ / तौल:</span>
+          <input
+            className="sci-line-input"
+            value={data.heightWeight}
+            disabled={!edit}
+            placeholder="5′6″ / 62 kg"
+            aria-label="Height and weight"
+            onChange={(e) => onChange({ heightWeight: e.target.value })}
+          />
+          {err("physicalDisability") && <FieldError msg={err("physicalDisability")!} />}
+        </div>
+
+        <div className="sci-row">
+          <Bullet />
+          <span className="sci-label">अपाङ्गताको विवरण:</span>
+          <input
+            className={cn("sci-line-input", err("disabilityDetail") && "sci-input-error")}
+            value={data.disabilityDetail}
+            disabled={!edit || data.physicalDisability !== "Yes"}
+            aria-label="Disability details"
+            onChange={(e) => onChange({ disabilityDetail: e.target.value })}
+          />
+          {err("disabilityDetail") && <FieldError msg={err("disabilityDetail")!} />}
+        </div>
+
+        {/* ── विधिक तथा प्रावधानिक — paper form §7 ── */}
+        <h2 className="sci-sec-heading">
+          <Bullet /> {DECLARATION_HEADING_NP}{" "}
+          <span className="sci-sec-sub">{DECLARATION_HEADING_EN}</span>
+        </h2>
+
+        <div className="sci-declaration">
+          {DECLARATION_NP.map((p, i) => (
+            <p key={`np-${i}`}>{p}</p>
+          ))}
+          <p className="sci-declaration-en">
+            {DECLARATION_EN.map((p, i) => (
+              <span key={`en-${i}`}>{p}</span>
+            ))}
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════════ PAGE 3 ═══════════════ */}
+      <section className="sci-page page-3" aria-label="Rules and agreement page 3">
         <div className="sci-watermark" aria-hidden="true">
           <img src="/favicon-180x180.jpg" alt="" />
           <span>

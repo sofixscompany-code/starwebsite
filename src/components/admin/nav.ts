@@ -26,6 +26,7 @@ import {
   Shield,
   MessageSquareQuote,
   Sparkles,
+  Dumbbell,
   Newspaper,
   FolderOpen,
   Briefcase,
@@ -80,6 +81,12 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["teacher"],
       },
       { label: "Gradebook", to: "/admin/teacher/gradebook", icon: Trophy, roles: ["teacher"] },
+      {
+        label: "My Students",
+        to: "/admin/teacher/students",
+        icon: GraduationCap,
+        roles: ["teacher"],
+      },
       { label: "Resources", to: "/admin/teacher/resources", icon: BookOpen, roles: ["teacher"] },
       {
         label: "Learning Materials",
@@ -97,12 +104,9 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    header: "People & Communication",
+    header: "Communication",
     roles: ["teacher"],
     items: [
-      { label: "Students", to: "/admin/teacher/students", icon: GraduationCap, roles: ["teacher"] },
-      { label: "Parents", to: "/admin/teacher/parents", icon: Baby, roles: ["teacher"] },
-      { label: "Messaging", to: "/admin/messages", icon: MessageSquare, roles: ["teacher"] },
       {
         label: "Notices & Events",
         to: "/admin/communication/notices",
@@ -140,10 +144,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     header: "Finance",
     roles: ["student"],
-    items: [
-      { label: "Fee Structure", to: "/admin/fee-structure", icon: Receipt, roles: ["student"] },
-      { label: "Payments", to: "/admin/payments", icon: CreditCard, roles: ["student"] },
-    ],
+    items: [{ label: "Payments", to: "/admin/payments", icon: CreditCard, roles: ["student"] }],
   },
   {
     header: "Communication",
@@ -208,12 +209,6 @@ export const NAV_SECTIONS: NavSection[] = [
     roles: ["super_admin"],
     items: [
       {
-        label: "Students",
-        to: "/admin/academics/students",
-        icon: GraduationCap,
-        roles: ["super_admin"],
-      },
-      {
         label: "Admissions",
         to: "/admin/admissions",
         icon: FileText,
@@ -235,6 +230,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Certificates",
         to: "/admin/certificates",
         icon: Award,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Student Cards",
+        to: "/admin/student-cards",
+        icon: CreditCard,
         roles: ["super_admin"],
       },
     ],
@@ -291,15 +292,9 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    header: "Communication",
+    header: "Website Content",
     roles: ["super_admin"],
     items: [
-      {
-        label: "Notices & Events",
-        to: "/admin/communication/notices",
-        icon: Bell,
-        roles: ["super_admin"],
-      },
       {
         label: "Hero Slides",
         to: "/admin/hero-slides",
@@ -310,6 +305,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Feature Slides / Banners",
         to: "/admin/banners",
         icon: Images,
+        roles: ["super_admin"],
+      },
+      {
+        label: "Feature Slides",
+        to: "/admin/light",
+        icon: Image,
         roles: ["super_admin"],
       },
       {
@@ -337,9 +338,9 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["super_admin"],
       },
       {
-        label: "Site Settings",
-        to: "/admin/site-settings",
-        icon: Settings,
+        label: "Physical Training",
+        to: "/admin/physical-training",
+        icon: Dumbbell,
         roles: ["super_admin"],
       },
       {
@@ -356,7 +357,6 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       { label: "Faculty", to: "/admin/faculty", icon: GraduationCap, roles: ["super_admin"] },
       { label: "Gallery", to: "/admin/gallery", icon: Images, roles: ["super_admin"] },
-      { label: "Messages", to: "/admin/messages", icon: MessageSquare, roles: ["super_admin"] },
       {
         label: "Career Services",
         to: "/admin/career",
@@ -381,6 +381,25 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: FolderOpen,
         roles: ["super_admin"],
       },
+      {
+        label: "Site Settings",
+        to: "/admin/site-settings",
+        icon: Settings,
+        roles: ["super_admin"],
+      },
+    ],
+  },
+  {
+    header: "Communication",
+    roles: ["super_admin"],
+    items: [
+      {
+        label: "Notices & Events",
+        to: "/admin/communication/notices",
+        icon: Bell,
+        roles: ["super_admin"],
+      },
+      { label: "Messages", to: "/admin/messages", icon: MessageSquare, roles: ["super_admin"] },
       { label: "Support / Help", to: "/admin/support", icon: LifeBuoy, roles: ["super_admin"] },
     ],
   },
@@ -434,19 +453,17 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Roles", to: "/admin/roles", icon: Shield, roles: ["super_admin"] },
       { label: "Permissions", to: "/admin/permissions", icon: Shield, roles: ["super_admin"] },
       { label: "Settings", to: "/admin/settings", icon: Settings, roles: ["super_admin"] },
-      { label: "AI Assistant", to: "/admin/ai", icon: Trophy, roles: ["super_admin"] },
+      { label: "AI Assistant", to: "/admin/ai", icon: Sparkles, roles: ["super_admin"] },
       {
         label: "Backup",
         to: "/admin/backup",
         icon: FileText,
-        badge: "New",
         roles: ["super_admin"],
       },
       { label: "Branches", to: "/admin/branches", icon: Building2, roles: ["super_admin"] },
       { label: "Audit Logs", to: "/admin/audit", icon: History, roles: ["super_admin"] },
       { label: "API Keys", to: "/admin/api-keys", icon: Key, roles: ["super_admin"] },
       { label: "Integrations", to: "/admin/integrations", icon: Plug, roles: ["super_admin"] },
-      { label: "Feature Slides", to: "/admin/light", icon: Image, roles: ["super_admin"] },
     ],
   },
   {

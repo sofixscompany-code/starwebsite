@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 const NAV_ITEMS = [
   { to: "/", labelKey: "Home" },
   { to: "/courses", labelKey: "Courses" },
+  { to: "/physical-training", labelKey: "physicalTrainingDetail" },
   { to: "/services", labelKey: "Preparation Portal" },
   { to: "/notices", labelKey: "Notices" },
   { to: "/results", labelKey: "Results" },

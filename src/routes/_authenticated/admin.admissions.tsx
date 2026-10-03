@@ -64,7 +64,7 @@ const paymentState = (method: string, status: string) =>
 
 /* ══════════════════════════════════════════════════════════════
    Normalization — the `admissions` collection holds BOTH the new
-   2-page digital form records (AdmissionRecord) and legacy wizard
+   3-page digital form records (AdmissionRecord) and legacy wizard
    documents (fullName/phone/address/…). mapToDocShape() folds them
    into a single view model for the table, filters and detail view.
    ══════════════════════════════════════════════════════════════ */
@@ -200,6 +200,22 @@ function mapToDocShape(raw: RawAdmission): AdmissionRow {
     motherName: str(raw.motherName),
     motherOccupation: str(raw.motherOccupation),
     motherMobile: str(raw.motherMobile),
+    guardianName: str(raw.guardianName),
+    guardianRelation: str(raw.guardianRelation),
+    guardianMobile: str(raw.guardianMobile),
+    schoolName: str(raw.schoolName),
+    lastExamPassed: str(raw.lastExamPassed),
+    educationBoard: str(raw.educationBoard),
+    gpa: str(raw.gpa),
+    bloodGroup: str(raw.bloodGroup),
+    physicalDisability:
+      raw.physicalDisability === "Yes" || raw.physicalDisability === "No"
+        ? raw.physicalDisability
+        : "",
+    disabilityDetail: str(raw.disabilityDetail),
+    heightWeight: str(raw.heightWeight),
+    nationality: str(raw.nationality) || "नेपाली",
+    email: str(raw.email),
     province,
     district,
     municipality,
@@ -257,7 +273,7 @@ function mapToDocShape(raw: RawAdmission): AdmissionRow {
 /* ════════════════════════════ PRINT ════════════════════════════
    Print contract (src/components/admission/admission-print.css):
    <body class="sci-printing"> hides everything except content inside
-   .sci-print-isolated (the real 2-page document). The detail view
+   .sci-print-isolated (the real 3-page document). The detail view
    containing `.sci-print-root .sci-print-isolated` must be mounted
    before calling this.
    ═══════════════════════════════════════════════════════════════ */
@@ -400,7 +416,7 @@ const EMPTY_OFFICE_FORM: OfficeForm = {
   paymentStatus: "",
 };
 
-/* ══════════════════════ DETAIL (2-page document) ═══════════════ */
+/* ══════════════════════ DETAIL (3-page document) ═══════════════ */
 
 function AdmissionDetailOverlay({
   row,
@@ -518,7 +534,7 @@ function AdmissionDetailOverlay({
           <FeeBreakdown pricing={row.formData.pricingSnapshot} />
         </div>
 
-        {/* The real 2-page document (photo + signatures render here) */}
+        {/* The real 3-page document (photo + signatures render here) */}
         <div className="sci-paper-scroll">
           <div className="sci-print-root sci-print-isolated">
             <AdmissionDocument
@@ -1112,7 +1128,7 @@ export function AdmissionsPage() {
 
       {tableContent}
 
-      {/* Detail: the real 2-page admission document (print target) */}
+      {/* Detail: the real 3-page admission document (print target) */}
       {detailRow &&
         createPortal(
           <AdmissionDetailOverlay

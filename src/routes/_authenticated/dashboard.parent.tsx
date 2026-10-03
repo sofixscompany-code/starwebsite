@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { useParentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export function ParentDashboard() {
   const [mounted, setMounted] = useState(false);
+  const { t } = useAdminT();
   useEffect(() => {
     if (getUserRole() === "parent") {
       setMounted(true);
@@ -23,7 +25,7 @@ export function ParentDashboard() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-navy" />
-          <p className="text-sm text-gray-400 mt-3">Loading dashboard...</p>
+          <p className="text-sm text-gray-400 mt-3">{t("loadingDashboard")}</p>
         </div>
       </div>
     );
@@ -57,11 +59,9 @@ export function ParentDashboard() {
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm text-gold font-medium">Parent Dashboard</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">Welcome, Parent</h1>
-          <p className="text-white/70 mt-1 text-sm">
-            Monitor your child's progress and school activities
-          </p>
+          <p className="text-sm text-gold font-medium">{t("parentDashboard")}</p>
+          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">{t("welcomeParent")}</h1>
+          <p className="text-white/70 mt-1 text-sm">{t("parentIntro")}</p>
         </div>
       </motion.div>
 
@@ -72,29 +72,29 @@ export function ParentDashboard() {
       >
         {[
           {
-            label: "Attendance",
-            value: attPercent === null ? "No data yet" : attPercent + "%",
+            label: t("attendanceLabel"),
+            value: attPercent === null ? "0%" : attPercent + "%",
             icon: CalendarCheck,
             color: "from-emerald-500 to-emerald-600",
             bg: "bg-emerald-50",
           },
           {
-            label: "Avg. Results",
-            value: avgScore === null ? "No data yet" : avgScore + "%",
+            label: t("myResults"),
+            value: avgScore === null ? "0%" : avgScore + "%",
             icon: Trophy,
             color: "from-navy to-navy/80",
             bg: "bg-navy/5",
           },
           {
-            label: "Homework Pend.",
-            value: hasData ? String(pendingHw) : "No data yet",
+            label: t("homeworkPend"),
+            value: hasData ? String(pendingHw) : "0",
             icon: FileText,
             color: "from-gold to-gold/80",
             bg: "bg-gold/5",
           },
           {
-            label: "Notices",
-            value: hasData ? String(stats?.notices?.length ?? 0) : "No data yet",
+            label: t("notices"),
+            value: hasData ? String(stats?.notices?.length ?? 0) : "0",
             icon: Bell,
             color: "from-brand-red to-brand-red/80",
             bg: "bg-brand-red/5",
@@ -127,12 +127,12 @@ export function ParentDashboard() {
         <div className="xl:col-span-2 space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Children Overview
+              {t("childrenOverview")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Academic status of your children</p>
+            <p className="text-xs text-gray-400 mb-4">{t("childrenOverviewSub")}</p>
             {childRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No children linked to this account yet
+                {t("noChildrenLinked")}
               </p>
             ) : (
               <div className="space-y-4">
@@ -166,7 +166,7 @@ export function ParentDashboard() {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-xs text-gray-400">Attendance</p>
+                        <p className="text-xs text-gray-400">{t("attendanceLabel")}</p>
                         <p className="text-lg font-bold text-emerald-600">{child.attendance}%</p>
                         <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
                           <div
@@ -176,7 +176,7 @@ export function ParentDashboard() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400">Avg. Score</p>
+                        <p className="text-xs text-gray-400">{t("avgScoreLabel")}</p>
                         <p className="text-lg font-bold text-navy">{child.avgScore}%</p>
                         <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1">
                           <div
@@ -190,7 +190,7 @@ export function ParentDashboard() {
                           to="/admin/results"
                           className="text-xs font-semibold text-navy hover:text-navy/80 transition"
                         >
-                          View Full Report →
+                          {t("viewFullReport")}
                         </Link>
                       </div>
                     </div>
@@ -201,11 +201,13 @@ export function ParentDashboard() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Updates</h3>
-            <p className="text-xs text-gray-400 mb-4">Your child's activity feed</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              {t("recentUpdates")}
+            </h3>
+            <p className="text-xs text-gray-400 mb-4">{t("recentUpdatesSub")}</p>
             {activityRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No activity yet
+                {t("noActivity")}
               </p>
             ) : (
               <div className="space-y-1">
@@ -229,13 +231,15 @@ export function ParentDashboard() {
 
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
+              {t("quickActions")}
+            </h3>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "View Results", icon: Trophy, to: "/admin/results" },
-                { label: "Notices", icon: Bell, to: "/admin/communication/notices" },
-                { label: "Pay Fees", icon: Wallet, to: "/admin/payments" },
-                { label: "Attendance", icon: CalendarCheck, to: "/admin/attendance" },
+                { label: t("viewResults"), icon: Trophy, to: "/admin/results" },
+                { label: t("notices"), icon: Bell, to: "/admin/communication/notices" },
+                { label: t("payFees"), icon: Wallet, to: "/admin/payments" },
+                { label: t("Attendance"), icon: CalendarCheck, to: "/admin/attendance" },
               ].map((a) => {
                 const Icon = a.icon;
                 return (

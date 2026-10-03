@@ -13,6 +13,7 @@ interface SitemapEntry {
 const PUBLIC_ROUTES: SitemapEntry[] = [
   { path: "/", changefreq: "daily", priority: 1.0 },
   { path: "/about", changefreq: "monthly", priority: 0.8 },
+  { path: "/physical-training", changefreq: "monthly", priority: 0.7 },
   { path: "/courses", changefreq: "weekly", priority: 0.9 },
   { path: "/faculty", changefreq: "monthly", priority: 0.7 },
   { path: "/results", changefreq: "weekly", priority: 0.8 },

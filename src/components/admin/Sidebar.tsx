@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { StarLogo } from "@/components/site/StarLogo";
 import { getUserRole, handleSignOut } from "@/lib/api-auth";
+import { useAdminT, type AdminLang } from "@/lib/admin-i18n";
 import { getNavSectionsForRole, type NavItem, type NavSection } from "./nav";
 
 interface SidebarProps {
@@ -30,6 +31,7 @@ export function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = getUserRole() as string | null;
+  const { t, lang, setLang } = useAdminT();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
@@ -44,10 +46,12 @@ export function Sidebar({
     return navSections
       .map((section) => ({
         ...section,
-        items: section.items.filter((item) => item.label.toLowerCase().includes(q)),
+        items: section.items.filter(
+          (item) => item.label.toLowerCase().includes(q) || t(item.label).toLowerCase().includes(q),
+        ),
       }))
       .filter((section) => section.items.length > 0);
-  }, [searchQuery, navSections]);
+  }, [searchQuery, navSections, t]);
 
   useEffect(() => {
     const newExpanded: Record<string, boolean> = {};
@@ -93,7 +97,7 @@ export function Sidebar({
         }`}
       >
         <Icon className={`w-4 h-4 shrink-0 ${active ? "text-white" : ""}`} />
-        <span className="flex-1 truncate">{item.label}</span>
+        <span className="flex-1 truncate">{t(item.label)}</span>
         {item.badge && (
           <span
             className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap ${
@@ -121,7 +125,7 @@ export function Sidebar({
           <ChevronDown
             className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
           />
-          {!collapsed && <span>{section.header}</span>}
+          {!collapsed && <span>{t(section.header)}</span>}
         </button>
         <AnimatePresence initial={false}>
           {isExpanded && (
@@ -165,7 +169,12 @@ export function Sidebar({
           {!collapsed ? (
             <Link to="/" className="flex items-center gap-3">
               <StarLogo size="sm" />
-              <span className="font-bold text-base text-gray-900 dark:text-white">Star ERP</span>
+              <span className="font-bold text-base text-gray-900 dark:text-white leading-tight">
+                Star Coaching
+                <span className="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Centre
+                </span>
+              </span>
             </Link>
           ) : (
             <StarLogo size="sm" />
@@ -186,7 +195,7 @@ export function Sidebar({
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search pages..."
+                placeholder={t("searchPages")}
                 className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-navy/20 transition-all"
               />
             </div>
@@ -216,7 +225,7 @@ export function Sidebar({
                           ? "bg-navy text-white shadow-sm"
                           : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
-                      title={item.label}
+                      title={t(item.label)}
                     >
                       <Icon className="w-5 h-5" />
                     </Link>
@@ -226,7 +235,7 @@ export function Sidebar({
           ) : (
             <div>
               {filteredSections.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-8">No results match</p>
+                <p className="text-xs text-gray-400 text-center py-8">{t("noResultsMatch")}</p>
               ) : (
                 filteredSections.map(renderSection)
               )}
@@ -234,14 +243,36 @@ export function Sidebar({
           )}
         </nav>
 
-        {/* Footer - Sign Out Only */}
-        <div className="border-t border-gray-200 dark:border-gray-800 p-3 shrink-0">
+        {/* Footer - language + sign out */}
+        <div className="border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2">
+          {!collapsed && (
+            <div className="flex items-center gap-2 px-3 py-1.5" aria-label={t("language")}>
+              <span className="text-[11px] text-gray-400 dark:text-gray-500">{t("language")}</span>
+              <div className="ml-auto flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
+                {(["en", "ne"] as AdminLang[]).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLang(l)}
+                    aria-pressed={lang === l}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
+                      lang === l
+                        ? "bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    {l === "en" ? "EN" : "नेपाली"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <button
             onClick={handleSignOutClick}
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            {!collapsed && <span>Sign out</span>}
+            {!collapsed && <span>{t("signOut")}</span>}
           </button>
         </div>
       </motion.aside>

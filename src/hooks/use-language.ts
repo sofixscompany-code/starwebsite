@@ -371,6 +371,21 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
       "A blend of experienced faculty from real service backgrounds, dedicated coordinators, and physical trainers.",
     viewAllFaculty: "View all faculty",
 
+    // About page (paper-style: hero → breadcrumb → introduction → goals)
+    aboutPageTitle: "About Us",
+    breadcrumbHome: "Home",
+    aboutIntroTitle: "Our Introduction",
+    aboutIntroBody:
+      "Star Coaching Institute Pvt. Ltd. is an experienced and trusted training institute established in Janakpurdham. Running preparatory classes for Nepal Police, Nepal Army, Armed Police Force, Lok Service Commission, Medical and Technical careers, we prepare students for success on the foundation of discipline, quality and hard work. Located at Zeromile Chowk, Janakpurdham-7, our institute has experienced trainers, modern study material, a library, a computer lab and full physical-training facilities. Hostel and meal arrangements are also available for students.",
+    aboutGoalsTitle: "Our Goals",
+    aboutGoal1: "Quality education and excellent training",
+    aboutGoal2: "Dedicated and experienced trainers",
+    aboutGoal3: "A bright future for every student",
+    registerTitle: "Registers",
+    progressCardTitle: "Student Progress Card",
+    progressCardSub:
+      "Every admitted student receives a printed progress report card with subject-wise marks, grade, attendance and the class teacher's remarks.",
+
     // Faculty Page
     facultyHeroTitle: "Learn from real experts",
     facultyHeroSub:
@@ -722,6 +737,21 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     teamSubtext:
       "वास्तविक सेवा पृष्ठभूमिका भएका अनुभवी शिक्षकहरू, समर्पित समन्वयकहरू र शारीरिक प्रशिक्षकहरूको मिश्रण।",
     viewAllFaculty: "सबै शिक्षकहरू हेर्नुहोस्",
+
+    // About page (hero → breadcrumb → परिचय → लक्ष्य, per owner reference)
+    aboutPageTitle: "हाम्रो बारेमा",
+    breadcrumbHome: "मुख्य पृष्ठ",
+    aboutIntroTitle: "हाम्रो परिचय",
+    aboutIntroBody:
+      "Star Coaching Institute Pvt. Ltd. जनकपुरधाममा स्थापित एक अनुभवी र विश्वसनीय प्रशिक्षण संस्था हो। नेपाल प्रहरी, नेपाल सेना, सशस्त्र प्रहरी बल, लोक सेवा आयोग, स्वास्थ्य तथा प्राविधिक तर्फका विभिन्न तयारी कक्षाहरू सञ्चालन गर्दै हामी विद्यार्थीहरूलाई अनुशासन, गुणस्तर र परिश्रमका आधारमा सफलतात्मक तयारी दिइरहेका छौं। जनकपुरधाम-७, जिरोमाइल चोकमा अवस्थित हाम्रो संस्थामा अनुभवी प्रशिक्षक, आधुनिक अध्ययन सामग्री, पुस्तकालय, कम्प्युटरल्याब र शारीरिक प्रशिक्षणको पूर्ण व्यवस्था छ। विद्यार्थीहरूका लागि छात्रावास तथा खानाको व्यवस्था पनि उपलब्ध छ।",
+    aboutGoalsTitle: "हाम्रो लक्ष्य",
+    aboutGoal1: "गुणस्तरीय शिक्षा र उत्कृष्ट प्रशिक्षण",
+    aboutGoal2: "समर्पित र अनुभवी प्रशिक्षकहरू",
+    aboutGoal3: "विद्यार्थीको उज्ज्वल भविष्य",
+    registerTitle: "रजिस्टर",
+    progressCardTitle: "विद्यार्थी प्रगतिरिपोर्ट कार्ड",
+    progressCardSub:
+      "भर्ना भएका प्रत्येक विद्यार्थीलाई विषयगत अङ्क, ग्रेड, उपस्थिति र कक्षा शिक्षकको टिप्पणी सहितको प्रगतिरिपोर्ट कार्ड छापिएर दिइन्छ।",
 
     // Faculty Page
     facultyHeroTitle: "वास्तविक विशेषज्ञहरूबाट सिक्नुहोस्",
@@ -1086,6 +1116,21 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     teamSubtext:
       "वास्तविक सेवा पृष्ठभूमि वाले अनुभवी शिक्षक, समर्पित समन्वयक और शारीरिक प्रशिक्षकों का मिश्रण।",
     viewAllFaculty: "सभी शिक्षक देखें",
+
+    // About page (hero → breadcrumb → परिचय → लक्ष्य)
+    aboutPageTitle: "हमारे बारे में",
+    breadcrumbHome: "मुख पृष्ठ",
+    aboutIntroTitle: "हमारा परिचय",
+    aboutIntroBody:
+      "Star Coaching Institute Pvt. Ltd. जनकपुरधाम में स्थापित एक अनुभवी और भरोसेमंद प्रशिक्षण संस्था है। नेपाल पुलिस, नेपाल सेना, सशस्त्र पुलिस बल, लोक सेवा आयोग, चिकित्सा तथा प्राविधिक तैयारी कक्षाएँ चलाकर हम अनुशासन, गुणवत्ता और परिश्रम के आधार पर विद्यार्थियों को सफलता की तैयारी दे रहे हैं। जनकपुरधाम-७, जीरोमाइल चौक में स्थित हमारे संस्थान में अनुभवी प्रशिक्षक, आधुनिक अध्ययन सामग्री, पुस्तकालय, कंप्यूटर लैब और शारीरिक प्रशिक्षण की पूर्ण व्यवस्था है। विद्यार्थियों के लिए छात्रावास तथा भोजन की व्यवस्था भी उपलब्ध है।",
+    aboutGoalsTitle: "हमारा लक्ष्य",
+    aboutGoal1: "गुणवत्तापूर्ण शिक्षा और उत्कृष्ट प्रशिक्षण",
+    aboutGoal2: "समर्पित और अनुभवी प्रशिक्षक",
+    aboutGoal3: "विद्यार्थी का उज्ज्वल भविष्य",
+    registerTitle: "रजिस्टर",
+    progressCardTitle: "छात्र प्रगति कार्ड",
+    progressCardSub:
+      "प्रवेश पाए हर छात्र को विषयवार अंक, ग्रेड, उपस्थिति और कक्षा शिक्षक की टिप्पणी सहित प्रगति रिपोर्ट कार्ड छापा जाता है।",
 
     // Faculty Page
     facultyHeroTitle: "वास्तविक विशेषज्ञों से सीखें",

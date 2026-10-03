@@ -20,9 +20,11 @@ import {
 } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export function StudentDashboard() {
   const [mounted, setMounted] = useState(false);
+  const { t } = useAdminT();
   useEffect(() => {
     if (getUserRole() === "student") {
       setMounted(true);
@@ -38,7 +40,7 @@ export function StudentDashboard() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-navy" />
-          <p className="text-sm text-gray-400 mt-3">Loading dashboard...</p>
+          <p className="text-sm text-gray-400 mt-3">{t("loadingDashboard")}</p>
         </div>
       </div>
     );
@@ -74,29 +76,29 @@ export function StudentDashboard() {
 
   const statCards = [
     {
-      label: "Enrolled Courses",
-      value: hasData ? (stats?.enrollments?.length ?? 0) : "No data yet",
+      label: t("enrolledCourses"),
+      value: hasData ? String(stats?.enrollments?.length ?? 0) : "0",
       icon: GraduationCap,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
     },
     {
-      label: "Attendance",
-      value: attPercent === null ? "No data yet" : attPercent + "%",
+      label: t("Attendance"),
+      value: attPercent === null ? "0%" : attPercent + "%",
       icon: CalendarCheck,
       color: attColor,
       bg: attBg,
     },
     {
-      label: "Homework",
-      value: hasData ? (stats?.homework?.length ?? 0) : "No data yet",
+      label: t("Homework"),
+      value: hasData ? String(stats?.homework?.length ?? 0) : "0",
       icon: FileText,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
     },
     {
-      label: "Results",
-      value: hasData ? (stats?.results?.length ?? 0) : "No data yet",
+      label: t("Results"),
+      value: hasData ? String(stats?.results?.length ?? 0) : "0",
       icon: Trophy,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
@@ -113,9 +115,11 @@ export function StudentDashboard() {
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm text-gold font-medium">Student Dashboard</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">Welcome back, Student</h1>
-          <p className="text-white/70 mt-1 text-sm">Track your courses, attendance, and progress</p>
+          <p className="text-sm text-gold font-medium">{t("studentDashboard")}</p>
+          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
+            {t("welcomeBackStudent")}
+          </h1>
+          <p className="text-white/70 mt-1 text-sm">{t("studentIntro")}</p>
         </div>
       </motion.div>
 
@@ -152,12 +156,12 @@ export function StudentDashboard() {
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Today's Classes
+              {t("todaysClasses")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Your schedule for today</p>
+            <p className="text-xs text-gray-400 mb-4">{t("todaysClassesSub")}</p>
             {classRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No upcoming classes
+                {t("noUpcomingClasses")}
               </p>
             ) : (
               <div className="space-y-2">
@@ -185,11 +189,13 @@ export function StudentDashboard() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Recent Scores</h3>
-            <p className="text-xs text-gray-400 mb-4">Your latest exam results</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              {t("recentScores")}
+            </h3>
+            <p className="text-xs text-gray-400 mb-4">{t("recentScoresSub")}</p>
             {scoreRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No results yet
+                {t("noResultsYet")}
               </p>
             ) : (
               <div className="space-y-3">
@@ -222,27 +228,34 @@ export function StudentDashboard() {
 
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Access</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
+              {t("quickAccess")}
+            </h3>
             <div className="space-y-2">
               {[
                 {
-                  label: "Study Materials",
+                  label: t("studyMaterials"),
                   icon: Download,
                   to: "/admin/courses",
-                  desc: "Notes & videos",
+                  desc: t("studyMaterialsDesc"),
                 },
                 {
-                  label: "Homework",
+                  label: t("Homework"),
                   icon: Upload,
                   to: "/admin/homework",
-                  desc: "Pending submissions",
+                  desc: t("homeworkPendingDesc"),
                 },
-                { label: "View Results", icon: Trophy, to: "/admin/results", desc: "Exam scores" },
                 {
-                  label: "Pay Fees",
+                  label: t("viewResults"),
+                  icon: Trophy,
+                  to: "/admin/results",
+                  desc: t("examScores"),
+                },
+                {
+                  label: t("payFees"),
                   icon: CreditCard,
                   to: "/admin/payments",
-                  desc: "Online payment",
+                  desc: t("payFeesDesc"),
                 },
               ].map((a) => {
                 const Icon = a.icon;
@@ -268,11 +281,13 @@ export function StudentDashboard() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Exams</h3>
-            <p className="text-xs text-gray-400 mb-3">Next tests scheduled</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              {t("upcomingExams")}
+            </h3>
+            <p className="text-xs text-gray-400 mb-3">{t("nextTests")}</p>
             {examRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                Nothing to show
+                {t("nothingToShow")}
               </p>
             ) : (
               <div className="space-y-3">

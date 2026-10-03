@@ -24,12 +24,19 @@ const EMPTY = {
   tiktok: "",
 };
 
-type QrKey = "esewa" | "khalti" | "fonepay";
+type QrKey = "esewa" | "khalti" | "fonepay" | "citizens";
 const EMPTY_QR: Record<QrKey, string> & { bankDetails: string } = {
   esewa: "",
   khalti: "",
   fonepay: "",
+  citizens: "",
   bankDetails: "",
+};
+const QR_LABEL: Record<QrKey, string> = {
+  esewa: "eSewa",
+  khalti: "Khalti",
+  fonepay: "FonePay",
+  citizens: "Citizens Bank",
 };
 
 export function SiteSettingsPage() {
@@ -80,6 +87,7 @@ export function SiteSettingsPage() {
           esewa: typeof data.esewa === "string" ? data.esewa : "",
           khalti: typeof data.khalti === "string" ? data.khalti : "",
           fonepay: typeof data.fonepay === "string" ? data.fonepay : "",
+          citizens: typeof data.citizens === "string" ? data.citizens : "",
           bankDetails: typeof data.bankDetails === "string" ? data.bankDetails : "",
         });
       })
@@ -119,6 +127,7 @@ export function SiteSettingsPage() {
         esewa: pay.esewa,
         khalti: pay.khalti,
         fonepay: pay.fonepay,
+        citizens: pay.citizens,
         bankDetails: pay.bankDetails.trim(),
         updatedAt: new Date().toISOString(),
       });
@@ -258,7 +267,7 @@ export function SiteSettingsPage() {
 
         <Panel
           title="Payment Settings — Admission QR"
-          subtitle="QR codes shown on the admission form. Applicants scan to pay; COD (cash at office) always stays available."
+          subtitle="QR codes shown on the admission form. Leave empty to use the bundled QR shipped with the site; upload to override. COD (cash at office) always stays available."
           className="lg:col-span-2"
           actions={
             <button onClick={savePayments} disabled={savingPay} className="ap-btn">
@@ -274,24 +283,24 @@ export function SiteSettingsPage() {
             </button>
           }
         >
-          <div className="grid gap-4 sm:grid-cols-3">
-            {(["esewa", "khalti", "fonepay"] as QrKey[]).map((key) => (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {(["esewa", "khalti", "fonepay", "citizens"] as QrKey[]).map((key) => (
               <div
                 key={key}
                 className="rounded-xl border border-[hsl(var(--ap-border))] bg-[hsl(var(--ap-surface))] p-3"
               >
                 <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--ap-muted))] mb-2">
-                  {key === "esewa" ? "eSewa" : key === "khalti" ? "Khalti" : "FonePay"} QR
+                  {QR_LABEL[key]} QR
                 </p>
                 {pay[key] ? (
                   <img
                     src={pay[key]}
-                    alt={`${key} QR`}
+                    alt={`${QR_LABEL[key]} QR`}
                     className="mb-2 h-32 w-32 rounded-lg border border-[hsl(var(--ap-border))] bg-white object-contain p-1"
                   />
                 ) : (
                   <div className="mb-2 grid h-32 w-32 place-items-center rounded-lg border border-dashed border-[hsl(var(--ap-border))] px-2 text-center text-[10px] font-semibold text-[hsl(var(--ap-muted))]">
-                    No QR uploaded
+                    Bundled QR in use
                   </div>
                 )}
                 <div className="flex gap-2">

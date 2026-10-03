@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    STAR COACHING INSTITUTE — DIGITAL ADMISSION FORM
-   2-page A4 document styling (screen + print).
-   Print: A4 portrait, margin 0, page-1 always breaks to page 2.
+   3-page A4 document styling (screen + print).
+   Print: A4 portrait, margin 0, every page breaks to the next.
    ═══════════════════════════════════════════════════════════ */
 
 @page {
@@ -43,6 +43,11 @@
 }
 
 .page-2 {
+  page-break-after: always;
+  break-after: page;
+}
+
+.page-3 {
   page-break-after: auto;
   break-after: auto;
 }
@@ -541,7 +546,64 @@
   color: var(--sci-red);
 }
 
-/* ── Page 2: rules ──────────────────────────────────────── */
+/* ── Page 2: paper-form section headings ────────────────── */
+.sci-sec-heading {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  color: var(--sci-red);
+  font-size: 13.5px;
+  font-weight: 800;
+  margin: 4.5mm 0 2.6mm;
+  padding-bottom: 1.2mm;
+  border-bottom: 1.2px solid rgba(193, 18, 31, 0.45);
+}
+
+.sci-sec-heading .sci-bullet {
+  color: var(--sci-red);
+}
+
+.sci-sec-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--sci-ink);
+  font-style: italic;
+}
+
+/* Declaration & Undertaking (paper form §7) */
+.sci-declaration {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2mm;
+  border: 1.4px solid var(--sci-rule);
+  border-radius: 2mm;
+  padding: 3mm 4mm;
+}
+
+.sci-declaration p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: justify;
+}
+
+.sci-declaration-en {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6mm;
+  padding-top: 2mm;
+  border-top: 1.2px dashed #9ca3af;
+  color: #374151;
+}
+
+.sci-declaration-en span {
+  font-size: 11.5px;
+  font-style: italic;
+  line-height: 1.45;
+  text-align: justify;
+}
+
+/* ── Page 3: rules ──────────────────────────────────────── */
 .sci-rules-heading {
   color: var(--sci-red);
   font-size: 15.5px;
@@ -949,7 +1011,7 @@
     border-radius: 0 !important;
   }
 
-  /* Hide site chrome + workspace chrome (only the 2-page document prints) */
+  /* Hide site chrome + workspace chrome (only the 3-page document prints) */
   .sci-print-root header.sticky,
   .sci-print-root footer {
     display: none !important;
@@ -985,6 +1047,11 @@
   }
 
   .page-2 {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .page-3 {
     page-break-after: auto;
     break-after: auto;
   }
@@ -1046,8 +1113,14 @@
     background: #fff !important;
   }
 
-  body.sci-printing .sci-print-isolated .page-1 {
+  body.sci-printing .sci-print-isolated .page-1,
+  body.sci-printing .sci-print-isolated .page-2 {
     page-break-after: always;
     break-after: page;
+  }
+
+  body.sci-printing .sci-print-isolated .page-3 {
+    page-break-after: auto;
+    break-after: auto;
   }
 }

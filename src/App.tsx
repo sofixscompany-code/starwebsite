@@ -16,6 +16,7 @@ import { ProfilePage } from "./routes/profile";
 // Public pages
 import { Index } from "./routes/index";
 import { AboutPage as About } from "./routes/about";
+import { PhysicalTrainingPage as PhysicalTraining } from "./routes/physical-training";
 import { CoursesPage as Courses } from "./routes/courses";
 import { FacultyPage as Faculty } from "./routes/faculty";
 import { ResultsPage as Results } from "./routes/results";
@@ -182,6 +183,16 @@ const MdMessagePage = lazy(() =>
     default: m.MdMessagePage,
   })),
 );
+const PhysicalTrainingAdminPage = lazy(() =>
+  import("./routes/_authenticated/admin.physical-training").then((m) => ({
+    default: m.PhysicalTrainingPageAdmin,
+  })),
+);
+const StudentCardsPage = lazy(() =>
+  import("./routes/_authenticated/admin.student-cards").then((m) => ({
+    default: m.StudentCardsPage,
+  })),
+);
 const FacultyPage = lazy(() =>
   import("./routes/_authenticated/admin.faculty").then((m) => ({ default: m.FacultyPage })),
 );
@@ -288,6 +299,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/403" element={<AccessDeniedPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/physical-training" element={<PhysicalTraining />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/faculty" element={<Faculty />} />
           <Route path="/results" element={<Results />} />
@@ -365,6 +377,11 @@ export default function App() {
               />
               <Route path="why-choose-us" element={<LazyPage Component={WhyChooseUsPage} />} />
               <Route path="md-message" element={<LazyPage Component={MdMessagePage} />} />
+              <Route
+                path="physical-training"
+                element={<LazyPage Component={PhysicalTrainingAdminPage} />}
+              />
+              <Route path="student-cards" element={<LazyPage Component={StudentCardsPage} />} />
               <Route path="faculty" element={<LazyPage Component={FacultyPage} />} />
               <Route path="gallery" element={<LazyPage Component={GalleryManagerPage} />} />
               <Route path="career" element={<LazyPage Component={CareerAdminPage} />} />

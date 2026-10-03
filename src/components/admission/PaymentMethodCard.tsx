@@ -19,10 +19,36 @@ export interface PaymentQrSettings {
   esewa: string;
   khalti: string;
   fonepay: string;
+  /** Citizens Bank QR (bank-transfer scan) — bundled in /public/Payment. */
+  citizens: string;
   bankDetails: string;
 }
 
-const EMPTY_QR: PaymentQrSettings = { esewa: "", khalti: "", fonepay: "", bankDetails: "" };
+/**
+ * Bundled QR images shipped in `public/Payment/` — used as the default until
+ * an admin uploads its own QR in Admin → Site Settings → Payment Settings.
+ */
+export const DEFAULT_QR: Omit<PaymentQrSettings, "bankDetails"> = {
+  esewa: "/Payment/esewa.jpeg",
+  khalti: "/Payment/Khalti.jpeg",
+  fonepay: "/Payment/fonepay.jpeg",
+  citizens: "/Payment/citizens.jpeg",
+};
+
+const EMPTY_QR: PaymentQrSettings = { ...DEFAULT_QR, bankDetails: "" };
+
+const pickQr = (d: Record<string, unknown>, key: keyof typeof DEFAULT_QR): string =>
+  typeof d[key] === "string" && d[key] ? (d[key] as string) : DEFAULT_QR[key];
+
+/**
+ * Which QR image a chosen payment method should show. `bank` uses the Citizens
+ * Bank QR (it is not a separate radio option — it lives inside the bank branch).
+ */
+export function qrKeyForMethod(method: PaymentMethod | ""): keyof typeof DEFAULT_QR {
+  if (method === "bank") return "citizens";
+  if (method === "esewa" || method === "khalti" || method === "fonepay") return method;
+  return "esewa";
+}
 
 export function usePaymentQrSettings() {
   return useQuery({
@@ -30,11 +56,12 @@ export function usePaymentQrSettings() {
     queryFn: async (): Promise<PaymentQrSettings> => {
       try {
         const snap = await getDoc(doc(db, "site_settings", "payment_qr"));
-        const d = snap.data() ?? {};
+        const d = (snap.data() ?? {}) as Record<string, unknown>;
         return {
-          esewa: typeof d.esewa === "string" ? d.esewa : "",
-          khalti: typeof d.khalti === "string" ? d.khalti : "",
-          fonepay: typeof d.fonepay === "string" ? d.fonepay : "",
+          esewa: pickQr(d, "esewa"),
+          khalti: pickQr(d, "khalti"),
+          fonepay: pickQr(d, "fonepay"),
+          citizens: pickQr(d, "citizens"),
           bankDetails: typeof d.bankDetails === "string" ? d.bankDetails : "",
         };
       } catch {
@@ -80,8 +107,7 @@ export function PaymentMethodCard({
   const { data: qr, isLoading } = usePaymentQrSettings();
   const selected = PAYMENT_METHODS.find((m) => m.value === value);
   const isQr = selected?.kind === "qr";
-  const qrSrc =
-    isQr && selected ? (qr?.[selected.value as "esewa" | "khalti" | "fonepay"] ?? "") : "";
+  const qrSrc = isQr && selected && qr ? (qr[qrKeyForMethod(selected.value)] ?? "") : "";
   const amountLabel = amount ? `Rs. ${amount.toLocaleString("en-IN")}` : "";
 
   const waContact = (
@@ -181,10 +207,29 @@ export function PaymentMethodCard({
 
           {selected.kind === "bank" && (
             <>
+              {!isLoading && qr?.citizens && (
+                <div className="text-center">
+                  <img
+                    src={qr.citizens}
+                    alt="Citizens Bank payment QR"
+                    className="mx-auto h-40 w-40 rounded-lg border bg-white object-contain p-1"
+                  />
+                  <p className="mt-1.5">
+                    <b>Citizens Bank QR</b> स्क्यान गरी भुक्तानी गर्नुहोस्
+                    {amountLabel && (
+                      <>
+                        {" "}
+                        (<b>{amountLabel}</b>)
+                      </>
+                    )}
+                    ।
+                  </p>
+                </div>
+              )}
               {qr?.bankDetails ? (
-                <p className="whitespace-pre-wrap text-gray-700">{qr.bankDetails}</p>
+                <p className="mt-2 whitespace-pre-wrap text-gray-700">{qr.bankDetails}</p>
               ) : (
-                <p className="text-center">
+                <p className="mt-2 text-center">
                   बैंक विवरण अहिले उपलब्ध छैन — {waContact} मार्फत बैंक खाता जान्नुहोस् वा अफिसमा
                   सोध्नुहोस्।
                 </p>

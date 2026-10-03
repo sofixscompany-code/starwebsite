@@ -11,6 +11,7 @@ import {
   Phone,
   Loader2,
   X,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/integrations/firebase/config";
@@ -64,7 +65,8 @@ const emptyForm: FormData = {
   full_name: "",
   email: "",
   phone: "",
-  password: "",
+  // Default password handed to new users (mobile app sign-in default).
+  password: "123456",
   role: "student",
   branch: "Main Branch",
   status: "active",
@@ -468,7 +470,8 @@ export function UserManagementPage() {
                       value={form.username}
                       onChange={(e) => setForm({ ...form, username: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
-                      placeholder="ram.teacher"
+                      placeholder="9804899123 (mobile number)"
+                      autoComplete="off"
                     />
                     <p className="text-[11px] text-[hsl(var(--ap-muted))] mt-1">
                       Login as{" "}
@@ -477,6 +480,11 @@ export function UserManagementPage() {
                           ? usernameToLoginEmail(form.username)
                           : `yourname@${LOGIN_EMAIL_DOMAIN}`}
                       </span>
+                    </p>
+                    <p className="text-[11px] text-[hsl(var(--ap-blue))] mt-1">
+                      <Smartphone className="inline h-3 w-3 -mt-0.5 mr-1" />
+                      Mobile app: use the mobile number as the username, then sign in with the
+                      default password.
                     </p>
                   </div>
                 )}
@@ -519,13 +527,22 @@ export function UserManagementPage() {
                       <label className="block text-sm font-medium text-[hsl(var(--ap-ink))]">
                         Password *
                       </label>
-                      <button
-                        type="button"
-                        onClick={generatePassword}
-                        className="text-xs font-semibold text-[hsl(var(--ap-blue))] hover:underline"
-                      >
-                        Generate strong password
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, password: "123456" })}
+                          className="text-xs font-semibold text-[hsl(var(--ap-muted))] hover:underline"
+                        >
+                          Use 123456
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generatePassword}
+                          className="text-xs font-semibold text-[hsl(var(--ap-blue))] hover:underline"
+                        >
+                          Generate strong password
+                        </button>
+                      </div>
                     </div>
                     <input
                       type="text"
@@ -533,10 +550,15 @@ export function UserManagementPage() {
                       value={form.password}
                       onChange={(e) => setForm({ ...form, password: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-[hsl(var(--ap-border))] text-sm focus:outline-none focus:border-[hsl(var(--ap-blue))]"
-                      placeholder="Min 6 characters"
+                      placeholder="123456 (default)"
+                      autoComplete="new-password"
                     />
                     <p className="text-[11px] text-[hsl(var(--ap-muted))] mt-1">
                       Hand this username &amp; password to the user — they sign in with either.
+                      <span className="text-[hsl(var(--ap-blue))]">
+                        {" "}
+                        New accounts start with 123456 — the same default used by the mobile app.
+                      </span>
                     </p>
                   </div>
                 )}

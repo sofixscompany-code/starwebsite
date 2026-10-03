@@ -1,16 +1,19 @@
 /**
  * Shared types for the Star Coaching Institute digital admission form
- * (2-page A4 document) and its admin/pricing system.
+ * (3-page A4 document) and its admin/pricing system.
  */
 
 export const ORGANIZATIONS = ["Nepal Police", "Nepal Army", "APF"] as const;
 export type Organization = (typeof ORGANIZATIONS)[number];
 
-export const POSTS = ["Inspector", "Sub-Inspector (ASI)", "Jawan"] as const;
+export const POSTS = ["Inspector", "Sub-Inspector (ASI)", "Jawan", "Research Assistant"] as const;
 export type AppliedPost = (typeof POSTS)[number];
 
 export const GENDERS = ["Male", "Female"] as const;
 export type Gender = (typeof GENDERS)[number];
+
+/** स्वास्थ्य विवरण — blood group checkboxes on the printed form. */
+export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] as const;
 
 export const PACKAGE_TYPES = ["Monthly", "Year", "Course"] as const;
 export type PackageType = (typeof PACKAGE_TYPES)[number];
@@ -130,6 +133,32 @@ export interface AdmissionFormData {
   motherOccupation: string;
   motherMobile: string;
 
+  /* ── अभिभावक (guardian) — जो भर्ना र भुक्तानीको सम्पर्क व्यक्ति हुनुहुन्छ ── */
+  guardianName: string;
+  /** विद्यार्थीसँगको सम्बन्ध — e.g. बुवा / आमा / दाजु / कका */
+  guardianRelation: string;
+  guardianMobile: string;
+
+  /* ── शैक्षिक विवरण (paper form §3) ── */
+  schoolName: string;
+  /** अन्तिम उत्तीर्ण परीक्षा / कक्षा — e.g. SLC, SEE, +2 */
+  lastExamPassed: string;
+  /** बोर्ड / विश्वविद्यालय */
+  educationBoard: string;
+  /** GPA / प्राप्त अङ्क */
+  gpa: string;
+
+  /* ── स्वास्थ्य विवरण (paper form §5) ── */
+  bloodGroup: string;
+  physicalDisability: "" | "Yes" | "No";
+  disabilityDetail: string;
+  heightWeight: string;
+
+  /* ── व्यक्तिगत थप (paper form §1–2) ── */
+  /** राष्ट्रियता — फार्ममा नेपाली नै भरिन्छ। */
+  nationality: string;
+  email: string;
+
   province: string;
   district: string;
   municipality: string;
@@ -196,6 +225,19 @@ export const EMPTY_ADMISSION: AdmissionFormData = {
   motherName: "",
   motherOccupation: "",
   motherMobile: "",
+  guardianName: "",
+  guardianRelation: "",
+  guardianMobile: "",
+  schoolName: "",
+  lastExamPassed: "",
+  educationBoard: "",
+  gpa: "",
+  bloodGroup: "",
+  physicalDisability: "",
+  disabilityDetail: "",
+  heightWeight: "",
+  nationality: "नेपाली",
+  email: "",
   province: "",
   district: "",
   municipality: "",

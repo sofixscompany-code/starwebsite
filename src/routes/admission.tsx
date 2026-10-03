@@ -26,7 +26,11 @@ import { useLanguage } from "@/hooks/use-language";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
 import { AdmissionDocument } from "@/components/admission/AdmissionDocument";
 import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
-import { PaymentMethodCard, usePaymentQrSettings } from "@/components/admission/PaymentMethodCard";
+import {
+  PaymentMethodCard,
+  usePaymentQrSettings,
+  qrKeyForMethod,
+} from "@/components/admission/PaymentMethodCard";
 import { PAYMENT_METHODS } from "@/lib/admission-form/types";
 import "@/components/admission/admission-print.css";
 import { applicableCourses } from "@/lib/admission-form/defaults";
@@ -137,13 +141,15 @@ export function AdmissionPage() {
         : /\bapf\b|armed police/.test(q)
           ? "APF"
           : "";
-    const postGuess: AppliedPost | "" = /sub.?inspector|\basi\b/.test(q)
-      ? "Sub-Inspector (ASI)"
-      : /inspector/.test(q)
-        ? "Inspector"
-        : /jawan|constable|soldier|guard/.test(q)
-          ? "Jawan"
-          : "";
+    const postGuess: AppliedPost | "" = /research|anushandhan/.test(q)
+      ? "Research Assistant"
+      : /sub.?inspector|\basi\b/.test(q)
+        ? "Sub-Inspector (ASI)"
+        : /inspector/.test(q)
+          ? "Inspector"
+          : /jawan|constable|soldier|guard/.test(q)
+            ? "Jawan"
+            : "";
 
     let hit = best && best.s >= 2 ? best.c : null;
     if (!hit && (orgGuess || postGuess)) {
@@ -330,9 +336,9 @@ export function AdmissionPage() {
                     कुनै अग्रिम भुक्तानी छैन — भुक्तानी अफिसमा पहुँदा गर्नुहुनेछ। तपाईंको भुक्तानी
                     विधि यस आवेदनसँगै रेकर्ड भइसकेको छ।
                   </p>
-                ) : qrCfg?.[form.paymentMethod as "esewa" | "khalti" | "fonepay"] ? (
+                ) : qrCfg?.[qrKeyForMethod(form.paymentMethod)] ? (
                   <img
-                    src={qrCfg[form.paymentMethod as "esewa" | "khalti" | "fonepay"]}
+                    src={qrCfg[qrKeyForMethod(form.paymentMethod)]}
                     alt="Payment QR code"
                     className="mt-2 h-36 w-36 rounded-lg border bg-white object-contain p-1"
                   />
@@ -407,7 +413,7 @@ export function AdmissionPage() {
       <div className="bg-white border-b sticky top-0 z-40 no-print shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mr-auto">
-            Digital Admission Form — 2 Page A4 Document
+            Digital Admission Form — 3 Page A4 Document
           </span>
 
           {editing ? (
@@ -515,9 +521,9 @@ export function AdmissionPage() {
           <div className="sci-side-card">
             <p className="sci-side-title">How it works</p>
             <ol className="sci-side-steps">
-              <li>Fill both pages of the form (draft saves on this device).</li>
+              <li>Fill all three pages of the form (draft saves on this device).</li>
               <li>Preview to check exactly what will print.</li>
-              <li>Print or Download PDF (A4, 2 pages).</li>
+              <li>Print or Download PDF (A4, 3 pages).</li>
               <li>Submit — you get an Application ID instantly.</li>
             </ol>
             <p className="sci-side-note">

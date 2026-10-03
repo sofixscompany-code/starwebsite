@@ -210,6 +210,11 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    // ── Student progress cards + photo ID cards (never public) ──
+    match /student_cards/{doc} {
+      allow read, write: if isSuperAdmin();
+    }
+
     // ── Audit logs: appends are attributed to the signed-in caller;
     // only super admin reads, and logs are immutable. ────────────────
     match /audit_logs/{doc} {

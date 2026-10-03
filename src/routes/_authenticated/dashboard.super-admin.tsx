@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Users, Baby, Wallet, BookOpen, BarChart3, Bell, User } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,22 +15,24 @@ import {
   Cell,
 } from "recharts";
 import { useSuperAdminStats, fmtShortDate } from "@/hooks/use-dashboard-data";
+import { useAdminT, formatClock } from "@/lib/admin-i18n";
 
 const PIE_COLORS = ["#FBBF24", "#EF4444", "#10b981", "#1E3A8A", "#8b5cf6", "#f97316"];
 
-const now = new Date();
-const hour = now.getHours();
-const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-const dateStr = now.toLocaleDateString("en-US", {
-  weekday: "long",
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-});
-
 export function SuperAdminDashboard() {
   const { data: live } = useSuperAdminStats();
+  const { t, lang } = useAdminT();
   const hasData = !!live?.hasData;
+
+  // Live day/date string — refreshes with the minute, never hardcoded.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
+  const { full: dateStr } = formatClock(now, lang);
+  const hour = now.getHours();
+  const greeting = hour < 12 ? t("goodMorning") : hour < 17 ? t("goodAfternoon") : t("goodEvening");
 
   const fmtCompact = (n: number) =>
     n >= 100000 ? "Rs " + (n / 100000).toFixed(1) + "L" : "Rs " + n.toLocaleString();
@@ -62,48 +65,48 @@ export function SuperAdminDashboard() {
 
   const statCards = [
     {
-      label: "Total Students",
-      value: hasData && live ? live.totalStudents.toLocaleString() : "No data yet",
+      label: t("totalStudents"),
+      value: hasData && live ? live.totalStudents.toLocaleString() : "0",
       icon: GraduationCap,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
       accent: "text-navy",
     },
     {
-      label: "Teachers",
-      value: hasData && live ? live.totalTeachers.toLocaleString() : "No data yet",
+      label: t("totalTeachers"),
+      value: hasData && live ? live.totalTeachers.toLocaleString() : "0",
       icon: Users,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
       accent: "text-brand-red",
     },
     {
-      label: "Parents",
-      value: hasData && live ? live.totalParents.toLocaleString() : "No data yet",
+      label: t("totalParents"),
+      value: hasData && live ? live.totalParents.toLocaleString() : "0",
       icon: Baby,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
       accent: "text-amber-600",
     },
     {
-      label: "Revenue",
-      value: hasData && live ? fmtCompact(live.revenue) : "No data yet",
+      label: t("revenue"),
+      value: hasData && live ? fmtCompact(live.revenue) : "Rs 0",
       icon: Wallet,
       color: "from-emerald-500 to-emerald-600",
       bg: "bg-emerald-50",
       accent: "text-emerald-600",
     },
     {
-      label: "Admissions",
-      value: hasData && live ? live.admissionsCount.toLocaleString() : "No data yet",
+      label: t("admissions"),
+      value: hasData && live ? live.admissionsCount.toLocaleString() : "0",
       icon: BookOpen,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
       accent: "text-navy",
     },
     {
-      label: "Active Users",
-      value: hasData && live ? live.activeUsers.toLocaleString() : "No data yet",
+      label: t("activeUsers"),
+      value: hasData && live ? live.activeUsers.toLocaleString() : "0",
       icon: Users,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
@@ -123,29 +126,27 @@ export function SuperAdminDashboard() {
         <div className="relative">
           <p className="text-sm text-gold font-medium">{dateStr}</p>
           <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
-            {greeting}, Super Admin
+            {greeting}, {t("adminDashboard")}
           </h1>
-          <p className="text-white/70 mt-1 text-sm">
-            Here is what is happening at Star Coaching Institute today.
-          </p>
+          <p className="text-white/70 mt-1 text-sm">{t("hereToday")}</p>
           <div className="flex flex-wrap gap-3 mt-4">
             <Link
               to="/admin/students"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
             >
-              <User className="w-4 h-4" /> Manage Students
+              <User className="w-4 h-4" /> {t("manageStudents")}
             </Link>
             <Link
               to="/admin/payments"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
             >
-              <Wallet className="w-4 h-4" /> View Collections
+              <Wallet className="w-4 h-4" /> {t("viewCollections")}
             </Link>
             <Link
               to="/admin/reports"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-gold/20 hover:bg-gold/30 rounded-lg text-sm font-medium transition backdrop-blur-sm text-gold"
             >
-              <BarChart3 className="w-4 h-4" /> Reports
+              <BarChart3 className="w-4 h-4" /> {t("Reports")}
             </Link>
           </div>
         </div>
@@ -191,16 +192,16 @@ export function SuperAdminDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Revenue Trend</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Monthly revenue over the last 6 months
-                </p>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  {t("revenueTrend")}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">{t("revenueTrendSub")}</p>
               </div>
             </div>
             <div className="h-72">
               {revMonths.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -249,14 +250,14 @@ export function SuperAdminDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <div className="mb-3">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                Income Distribution
+                {t("incomeDistribution")}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">Revenue by source</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t("incomeDistributionSub")}</p>
             </div>
             <div className="h-56">
               {incomeDist.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -313,12 +314,12 @@ export function SuperAdminDashboard() {
         >
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Recent Activities
+              {t("recentActivities")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Latest actions across the institute</p>
+            <p className="text-xs text-gray-400 mb-4">{t("recentActivitiesSub")}</p>
             {activityRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No activity yet
+                {t("noActivity")}
               </p>
             ) : (
               <div className="space-y-1">
@@ -351,20 +352,22 @@ export function SuperAdminDashboard() {
         >
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-1 gap-2">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Pending Approvals</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                {t("pendingApprovals")}
+              </h3>
               <Link
                 to="/admin/admissions"
                 className="text-xs font-semibold text-navy hover:text-navy/80 transition shrink-0"
               >
-                Review in Admissions →
+                {t("reviewInAdmissions")}
               </Link>
             </div>
             <p className="text-xs text-gray-400 mb-3">
-              {approvalRows.length} items awaiting review
+              {approvalRows.length} {t("pendingApprovalsSub")}
             </p>
             {approvalRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">
-                Nothing to show
+                {t("nothingToShow")}
               </p>
             ) : (
               <div className="space-y-2">
@@ -390,16 +393,16 @@ export function SuperAdminDashboard() {
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
-              Quick Management
+              {t("quickManagement")}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "Add Student", icon: GraduationCap, to: "/admin/students" },
-                { label: "Add Teacher", icon: Users, to: "/admin/teachers" },
-                { label: "Collect Fee", icon: Wallet, to: "/admin/payments" },
-                { label: "Create Notice", icon: Bell, to: "/admin/communication/notices" },
-                { label: "Schedule Exam", icon: BookOpen, to: "/admin/exams" },
-                { label: "View Reports", icon: BarChart3, to: "/admin/reports" },
+                { label: t("addStudent"), icon: GraduationCap, to: "/admin/students" },
+                { label: t("addTeacher"), icon: Users, to: "/admin/teachers" },
+                { label: t("collectFee"), icon: Wallet, to: "/admin/payments" },
+                { label: t("createNotice"), icon: Bell, to: "/admin/communication/notices" },
+                { label: t("scheduleExam"), icon: BookOpen, to: "/admin/exams" },
+                { label: t("viewReports"), icon: BarChart3, to: "/admin/reports" },
               ].map((s) => {
                 const Icon = s.icon;
                 return (
@@ -430,26 +433,26 @@ export function SuperAdminDashboard() {
       >
         {[
           {
-            label: "Pass Percentage",
-            value: hasData && live?.passRate != null ? `${live.passRate}%` : "No data yet",
+            label: t("passPercentage"),
+            value: hasData && live?.passRate != null ? `${live.passRate}%` : "0%",
             width: hasData && live?.passRate != null ? `${live.passRate}%` : "0%",
             color: "navy",
           },
           {
-            label: "Active Students",
-            value: hasData && live?.retention != null ? `${live.retention}%` : "No data yet",
+            label: t("activeStudents"),
+            value: hasData && live?.retention != null ? `${live.retention}%` : "0%",
             width: hasData && live?.retention != null ? `${live.retention}%` : "0%",
             color: "brand-red",
           },
           {
-            label: "Fee Collection",
-            value: hasData && live?.collectedPct != null ? `${live.collectedPct}%` : "No data yet",
+            label: t("feeCollection"),
+            value: hasData && live?.collectedPct != null ? `${live.collectedPct}%` : "0%",
             width: hasData && live?.collectedPct != null ? `${live.collectedPct}%` : "0%",
             color: "emerald",
           },
           {
-            label: "Pending Dues",
-            value: hasData && live ? fmtCompact(live.pendingDues) : "No data yet",
+            label: t("pendingDues"),
+            value: hasData && live ? fmtCompact(live.pendingDues) : "Rs 0",
             width:
               hasData && live && live.invoicedTotal > 0
                 ? `${Math.min(100, Math.round((live.pendingDues / live.invoicedTotal) * 100))}%`

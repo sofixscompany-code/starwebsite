@@ -1,0 +1,541 @@
+/* ═══════════════════════════════════════════════════════════
+   STAR COACHING INSTITUTE — STUDENT PROGRESS CARD + PHOTO ID CARD
+   Screen preview + isolated A4 print.
+   Print: add `sc-printing` to <body>, wrap the card(s) in
+   `.sc-print-root .sc-print-isolated`, remove on afterprint.
+   ═══════════════════════════════════════════════════════════ */
+
+.sc-wrap {
+  background: #eef1f5;
+  border-radius: 14px;
+  padding: 20px 12px 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ── Progress card ─────────────────────────────────────── */
+.sc-progress {
+  width: 100%;
+  max-width: 190mm;
+  background: #fff;
+  color: #111827;
+  border: 1.5px solid #1b3a6b;
+  border-radius: 8px;
+  padding: 7mm;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(15, 42, 82, 0.12);
+}
+
+.sc-head {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  border-bottom: 2.5px solid #1b3a6b;
+  padding-bottom: 3mm;
+}
+
+.sc-logo {
+  width: 17mm;
+  height: 17mm;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #1b3a6b;
+  flex-shrink: 0;
+}
+
+.sc-head-text {
+  min-width: 0;
+}
+
+.sc-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #0f2a52;
+  line-height: 1.15;
+}
+
+.sc-sub {
+  margin: 0.6mm 0 0;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.sc-doc {
+  margin: 1.4mm 0 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #c1121f;
+  letter-spacing: 0.02em;
+}
+
+.sc-term {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+  border: 1.2px solid #1b3a6b;
+  border-radius: 3mm;
+  padding: 1.4mm 3mm;
+}
+
+.sc-term-label {
+  display: block;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+}
+
+.sc-term-value {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f2a52;
+}
+
+/* Student row */
+.sc-student {
+  display: flex;
+  gap: 5mm;
+  margin-top: 4mm;
+}
+
+.sc-photo {
+  width: 26mm;
+  height: 32mm;
+  border: 1.3px solid #111827;
+  border-radius: 2mm;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.sc-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sc-fields {
+  flex: 1;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.6mm 5mm;
+  min-width: 0;
+}
+
+.sc-fields div {
+  min-width: 0;
+}
+
+.sc-fields dt {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.sc-fields dd {
+  margin: 0.5mm 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 1.2px dotted #9ca3af;
+  padding-bottom: 0.6mm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Marks table */
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4.5mm;
+  font-size: 12.5px;
+}
+
+.sc-table th,
+.sc-table td {
+  border: 1px solid #d1d5db;
+  padding: 1.9mm 2.4mm;
+  text-align: center;
+}
+
+.sc-table thead th {
+  background: #0f2a52;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-color: #0f2a52;
+}
+
+.sc-table .sc-c-sub {
+  text-align: left;
+  font-weight: 700;
+}
+
+.sc-table tbody td {
+  background: #fff;
+}
+
+.sc-table tbody tr:nth-child(even) td {
+  background: #f7f9fc;
+}
+
+.sc-table tfoot td {
+  background: #eef2f8;
+  font-weight: 800;
+}
+
+.sc-status {
+  display: inline-block;
+  padding: 0.6mm 2.2mm;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sc-st-excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+.sc-st-pass {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.sc-st-good {
+  background: #e0f2fe;
+  color: #075985;
+}
+.sc-st-warn {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.sc-st-review {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Remarks + signatures */
+.sc-remarks {
+  margin-top: 4mm;
+  border: 1.2px dashed #9ca3af;
+  border-radius: 2mm;
+  padding: 2.4mm 3mm;
+}
+
+.sc-remarks-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+}
+
+.sc-remarks p {
+  margin: 1mm 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  min-height: 6mm;
+}
+
+.sc-signs {
+  display: flex;
+  justify-content: space-between;
+  gap: 6mm;
+  margin-top: 9mm;
+}
+
+.sc-sign {
+  flex: 1;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.sc-sign-line {
+  display: block;
+  border-bottom: 1.3px solid #111827;
+  height: 8mm;
+}
+
+.sc-sign-stamp .sc-sign-line {
+  border-bottom-style: dashed;
+}
+
+/* ── Photo ID card (CR80: 85.6 × 54 mm, front + back) ──── */
+.sc-id-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 5mm;
+}
+
+.sc-id {
+  width: 85.6mm;
+  height: 54mm;
+  background: #fff;
+  border: 1px solid #1b3a6b;
+  border-radius: 3mm;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(15, 42, 82, 0.12);
+}
+
+.sc-id-band {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  background: #0f2a52;
+  color: #fff;
+  padding: 2mm 3mm;
+}
+
+.sc-id-logo {
+  width: 7mm;
+  height: 7mm;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.sc-id-inst {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.sc-id-inst-sub {
+  margin: 0.3mm 0 0;
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  color: #facc15;
+}
+
+.sc-id-body {
+  display: flex;
+  gap: 3mm;
+  padding: 2.5mm 3mm;
+  flex: 1;
+  min-height: 0;
+}
+
+.sc-id-fields {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.4mm;
+}
+
+.sc-id-fields div {
+  min-width: 0;
+}
+
+.sc-id-fields dt {
+  font-size: 7.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.sc-id-fields dd {
+  margin: 0.2mm 0 0;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.sc-id-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-id-foot {
+  background: #c1121f;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 1.2mm;
+  text-transform: uppercase;
+}
+
+.sc-id-back {
+  background: #f7f9fc;
+}
+
+.sc-id-back-head {
+  background: #0f2a52;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1.6mm 3mm;
+}
+
+.sc-id-back-fields {
+  margin: 0;
+  padding: 2.5mm 3mm 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6mm 4mm;
+}
+
+.sc-id-back-fields dt {
+  font-size: 7.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.sc-id-back-fields dd {
+  margin: 0.2mm 0 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.sc-id-note {
+  margin: 2mm 3mm 0;
+  font-size: 7.8px;
+  line-height: 1.45;
+  color: #4b5563;
+}
+
+.sc-id-barcode {
+  margin: auto 3mm 2.5mm;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7mm;
+  height: 7mm;
+}
+
+.sc-id-barcode span {
+  display: block;
+  width: 0.8mm;
+  background: #111827;
+}
+
+.sc-id-barcode span:nth-child(3n) {
+  width: 1.8mm;
+}
+.sc-id-barcode span:nth-child(4n) {
+  width: 0.4mm;
+}
+.sc-id-barcode span:nth-child(5n) {
+  height: 70%;
+}
+.sc-id-barcode span:nth-child(7n) {
+  height: 85%;
+}
+
+@media screen and (max-width: 720px) {
+  .sc-wrap {
+    padding: 14px 8px 40px;
+  }
+  .sc-progress {
+    font-size: 12px;
+    padding: 5mm;
+  }
+  .sc-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ═══════════════════════════ PRINT ═══════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print,
+  header.sticky,
+  footer {
+    display: none !important;
+  }
+
+  .sc-wrap {
+    background: #fff !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    display: block !important;
+  }
+
+  .sc-progress,
+  .sc-id {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .sc-progress {
+    max-width: none;
+    border-width: 1.5px;
+    margin: 0 auto;
+  }
+
+  .sc-id-pair {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 8mm;
+  }
+
+  /* Isolated print — only the chosen card prints. */
+  body.sc-printing * {
+    visibility: hidden !important;
+  }
+
+  body.sc-printing .sc-print-isolated,
+  body.sc-printing .sc-print-isolated * {
+    visibility: visible !important;
+  }
+
+  body.sc-printing .sc-print-isolated {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  body.sc-printing .sc-print-isolated .sc-progress {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}

@@ -22,9 +22,11 @@ import {
 } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export function TeacherDashboard() {
   const [mounted, setMounted] = useState(false);
+  const { t } = useAdminT();
   useEffect(() => {
     if (getUserRole() === "teacher") {
       setMounted(true);
@@ -40,7 +42,7 @@ export function TeacherDashboard() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-navy" />
-          <p className="text-sm text-gray-400 mt-3">Loading dashboard...</p>
+          <p className="text-sm text-gray-400 mt-3">{t("loadingDashboard")}</p>
         </div>
       </div>
     );
@@ -72,43 +74,43 @@ export function TeacherDashboard() {
 
   const dbTasks = [
     ...(stats?.homework || []).map((h) => ({
-      title: `Grade Homework`,
+      title: t("gradeHomework"),
       subject: String(h.title || h.subject || ""),
       due: fmtShortDate(h.dueDate),
     })),
     ...(stats?.exams || []).map((e) => ({
-      title: `Prepare Exam Paper`,
+      title: t("prepareExamPaper"),
       subject: String(e.title || e.subject || ""),
       due: fmtShortDate(e.scheduledAt),
     })),
-  ].filter((t) => t.subject);
+  ].filter((task) => task.subject);
   const taskRows = dbTasks.slice(0, 5);
 
   const statCards = [
     {
-      label: "My Classes",
-      value: hasData ? classCount : "No data yet",
+      label: t("My Classes"),
+      value: hasData ? classCount : "0",
       icon: BookOpen,
       color: "from-navy to-navy/80",
       bg: "bg-navy/5",
     },
     {
-      label: "Total Students",
-      value: hasData ? totalStudents.toLocaleString() : "No data yet",
+      label: t("totalStudents"),
+      value: hasData ? totalStudents.toLocaleString() : "0",
       icon: Users,
       color: "from-brand-red to-brand-red/80",
       bg: "bg-brand-red/5",
     },
     {
-      label: "Homework",
-      value: hasData ? hwCount : "No data yet",
+      label: t("Homework"),
+      value: hasData ? hwCount : "0",
       icon: FileText,
       color: "from-gold to-gold/80",
       bg: "bg-gold/5",
     },
     {
-      label: "Upcoming Exams",
-      value: hasData ? examCount : "No data yet",
+      label: t("upcomingExams"),
+      value: hasData ? examCount : "0",
       icon: ClipboardCheck,
       color: "from-emerald-500 to-emerald-600",
       bg: "bg-emerald-50",
@@ -125,11 +127,11 @@ export function TeacherDashboard() {
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm text-gold font-medium">Teacher Dashboard</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">Welcome back, Teacher</h1>
-          <p className="text-white/70 mt-1 text-sm">
-            Manage your classes, assignments, and students
-          </p>
+          <p className="text-sm text-gold font-medium">{t("teacherDashboard")}</p>
+          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
+            {t("welcomeBackTeacher")}
+          </h1>
+          <p className="text-white/70 mt-1 text-sm">{t("teacherIntro")}</p>
         </div>
       </motion.div>
 
@@ -166,12 +168,12 @@ export function TeacherDashboard() {
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Today's Schedule
+              {t("todaySchedule")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Your classes scheduled for today</p>
+            <p className="text-xs text-gray-400 mb-4">{t("todayScheduleSub")}</p>
             {todayClasses.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No classes scheduled today
+                {t("noClassesToday")}
               </p>
             ) : (
               <div className="space-y-2">
@@ -201,10 +203,10 @@ export function TeacherDashboard() {
                       }
                     >
                       {s.status === "ongoing"
-                        ? "Live"
+                        ? t("statusLive")
                         : s.status === "upcoming"
-                          ? "Upcoming"
-                          : "Ended"}
+                          ? t("statusUpcoming")
+                          : t("statusEnded")}
                     </span>
                   </div>
                 ))}
@@ -215,15 +217,17 @@ export function TeacherDashboard() {
 
         <div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Upcoming Tasks</h3>
-            <p className="text-xs text-gray-400 mb-4">Pending items requiring attention</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+              {t("upcomingTasks")}
+            </h3>
+            <p className="text-xs text-gray-400 mb-4">{t("tasksSub")}</p>
             {taskRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No pending tasks
+                {t("noPendingTasks")}
               </p>
             ) : (
               <div className="space-y-3">
-                {taskRows.map((t, i) => (
+                {taskRows.map((task, i) => (
                   <div
                     key={i}
                     className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
@@ -242,10 +246,14 @@ export function TeacherDashboard() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
-                        {t.title}
+                        {task.title}
                       </p>
-                      <p className="text-[11px] text-gray-400">{t.subject}</p>
-                      {t.due && <p className="text-[10px] text-gray-400 mt-0.5">Due: {t.due}</p>}
+                      <p className="text-[11px] text-gray-400">{task.subject}</p>
+                      {task.due && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {t("due")}: {task.due}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -259,12 +267,12 @@ export function TeacherDashboard() {
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-              Recent Activity
+              {t("recentActivity")}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Latest actions and updates</p>
+            <p className="text-xs text-gray-400 mb-4">{t("recentActivitySub")}</p>
             {activityRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
-                No activity yet
+                {t("noActivity")}
               </p>
             ) : (
               <div className="space-y-1">
@@ -288,29 +296,31 @@ export function TeacherDashboard() {
 
         <div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">
+              {t("quickActions")}
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  label: "Take Attendance",
+                  label: t("takeAttendance"),
                   icon: CalendarCheck,
                   to: "/admin/teacher/attendance",
                   color: "from-emerald-500 to-emerald-600",
                 },
                 {
-                  label: "Upload Notes",
+                  label: t("uploadNotes"),
                   icon: Upload,
                   to: "/admin/teacher/resources",
                   color: "from-navy to-navy/80",
                 },
                 {
-                  label: "Create Assignment",
+                  label: t("createAssignment"),
                   icon: FileText,
                   to: "/admin/teacher/assignments",
                   color: "from-gold to-gold/80",
                 },
                 {
-                  label: "Send Notice",
+                  label: t("sendNotice"),
                   icon: Bell,
                   to: "/admin/communication/notices",
                   color: "from-brand-red to-brand-red/80",

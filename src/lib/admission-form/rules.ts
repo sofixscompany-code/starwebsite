@@ -92,6 +92,29 @@ export const AGREEMENT_NOTE =
 export const AGREEMENT_EN =
   "I/Student confirm that I have read and agree to follow all the rules mentioned above.";
 
+/**
+ * Page 3 — विधिक तथा प्रावधानिक विद्यार्थी भर्ना सम्बन्धी (Declaration & Undertaking).
+ * Paper form §7 — English and Nepali declarations plus the undertaking block.
+ */
+export const DECLARATION_HEADING_NP = "विधिक तथा प्रावधानिक विद्यार्थी भर्ना सम्बन्धी";
+export const DECLARATION_HEADING_EN = "(Declaration & Undertaking)";
+
+export const DECLARATION_NP = [
+  "म आफ्नै स्वेच्छा र इच्छामा Star Coaching Institute Pvt. Ltd., जनकपुरधाममा भर्ना लिएको हुँ र संस्थाको सम्पूर्ण नियम, शर्त, शुल्क तथा अनुशासन पालना गर्ने सहमति जनाउँछु।",
+  "मैले यस भर्ना फारामसँग बुझाएका सम्पूर्ण कागजात, प्रमाणपत्र र जानकारीहरू सत्य र वास्तविक रहेकोमा कुनै तथ्य लुकाएको वा बिगारेर बुझाएको छैन भनी घोषणा गर्दछु।",
+  "संस्थाले निर्धारित गरेको शुल्क निश्चित समयसम्म तिर्ने, कक्षा, परीक्षा र शारीरिक प्रशिक्षणमा नियमित रूपमा सहभागी हुने र शिक्षक तथा प्रशासनको निर्देशन पालना गर्ने बाध्यता स्वीकार गर्दछु।",
+  "अभिभावकको सहमति र परिचयमा आधारित भएकाले भर्ना, शुल्क र उपस्थितिसम्बन्धी समस्त निर्णयमा अभिभावक पनि सहभागी हुनेछन् भन्ने मान्दछु।",
+  "यो घोषणा र बाध्यतापत्रमा सही गरेपछि माथिका बुँदाहरू कानुनी रूपमा बाध्यकारी रहनेछन् भन्ने र कुनै विवाद उत्पन्न भएमा संस्थाको नियम अनुसार निपटान हुनेछ भन्ने स्वीकार गर्दछु।",
+];
+
+export const DECLARATION_EN = [
+  "I confirm that I am taking admission at Star Coaching Institute Pvt. Ltd., Janakpurdham of my own free will, and I agree to abide by all the rules, conditions, fees and discipline of the institute.",
+  "I declare that all documents, certificates and information submitted with this admission form are true and original, and that nothing has been hidden or falsified.",
+  "I undertake to pay the prescribed fee on time, to attend classes, examinations and physical training regularly, and to follow the guidance of the teachers and the administration.",
+  "As this admission is based on the consent and reference of my guardian, I acknowledge that the guardian also participates in all decisions regarding admission, fee and attendance.",
+  "Once signed, this Declaration & Undertaking shall be legally binding, and any dispute shall be settled as per the rules of the institute.",
+];
+
 export const SIGNATURE_LABELS = [
   "Student's Signature",
   "Parent's Signature",
