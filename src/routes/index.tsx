@@ -298,34 +298,62 @@ function PhysicalTrainingPreview() {
 function ProgressCardPreview() {
   const { t } = useLanguage();
 
+  const features = [
+    { icon: ClipboardList, key: "progressCardF1" },
+    { icon: TrendingUp, key: "progressCardF2" },
+    { icon: Award, key: "progressCardF3" },
+  ] as const;
+
   return (
-    <section className="py-14 bg-navy text-navy-foreground relative overflow-hidden">
+    <section className="py-14 md:py-16 bg-navy text-navy-foreground relative overflow-hidden">
       <div
         className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-brand-red/15 blur-3xl"
         aria-hidden="true"
       />
-      <div className="max-w-6xl mx-auto px-4 relative">
-        <div className="text-center mb-8">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">{t("Results")}</p>
-          <h2 className="font-display font-black text-2xl md:text-3xl mt-2">
-            {t("progressCardTitle")}
-          </h2>
-          <p className="text-white/70 max-w-2xl mx-auto mt-2 text-sm leading-relaxed">
-            {t("progressCardSub")}
-          </p>
-        </div>
-
-        <div className="sc-print-root overflow-x-auto pb-2">
-          <ProgressCard data={SAMPLE_CARD} />
-        </div>
-
-        <div className="mt-6 text-center">
+      <div
+        className="absolute -bottom-32 -right-16 h-72 w-72 rounded-full bg-gold/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div className="max-w-5xl mx-auto px-4 relative">
+        {/* Heading + CTA on one row (stacked on mobile) */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-widest text-gold">{t("Results")}</p>
+            <h2 className="font-display font-black text-2xl md:text-3xl mt-2">
+              {t("progressCardTitle")}
+            </h2>
+            <p className="text-white/70 max-w-xl mt-2 text-sm leading-relaxed">
+              {t("progressCardSub")}
+            </p>
+          </div>
           <Link
             to="/results"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-red px-5 py-3 text-sm font-bold text-white hover:bg-red-600 transition"
+            className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-xl bg-brand-red px-5 py-3 text-sm font-bold text-white hover:bg-red-600 transition"
           >
             {t("Results")} <ArrowRight className="w-4 h-4" />
           </Link>
+        </div>
+
+        {/* Quick feature bullets */}
+        <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {features.map((f) => (
+            <li
+              key={f.key}
+              className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold/20">
+                <f.icon className="h-4 w-4 text-gold" />
+              </span>
+              <span className="text-xs font-semibold text-white/85">{t(f.key)}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Card framed inside a soft panel so it never floats on bare navy */}
+        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-5 backdrop-blur-sm">
+          <div className="sc-print-root overflow-x-auto pb-2">
+            <ProgressCard data={SAMPLE_CARD} />
+          </div>
         </div>
       </div>
     </section>
@@ -766,11 +794,12 @@ export function Index() {
 
       {/* ════════════════════════════════════════════
           STEP 4.5 — About the Institute (short version; full page at /about)
-          Photo: "…Operation Sahayogi Haat (9030163)" by Cpl. Thomas Sheng,
-          U.S. Marine Corps, Public domain (Wikimedia Commons)
+          Photos: "…Operation Sahayogi Haat (9030163)" by Cpl. Thomas Sheng and
+          Nepal Police band photo, U.S. Marine Corps / public domain
          ════════════════════════════════════════════ */}
-      <section className="py-14 bg-gradient-to-b from-white to-slate-50">
-        <div className="grid max-w-7xl items-center gap-10 px-4 lg:grid-cols-2">
+      <section className="py-14 md:py-16 bg-gradient-to-b from-white to-slate-50">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 lg:grid-cols-2">
+          {/* Image collage */}
           <div className="relative">
             <div className="pointer-events-none absolute -inset-2 sm:-inset-3 translate-x-3 translate-y-3 rounded-3xl border-2 border-gold/50" />
             <img
@@ -780,36 +809,95 @@ export function Index() {
               loading="lazy"
               className="relative h-64 w-full rounded-3xl object-cover shadow-xl sm:h-80 lg:h-[26rem]"
             />
+            <div className="relative -mt-10 ml-4 mr-16 overflow-hidden rounded-2xl border-4 border-white shadow-xl sm:-mt-14 sm:ml-8 sm:mr-24">
+              <img
+                src="/site/notice-hero.jpg"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                className="h-28 w-full object-cover sm:h-36"
+              />
+            </div>
+            {/* Logo badge */}
+            <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 shadow-lg backdrop-blur-sm sm:right-6 sm:top-6">
+              <img
+                src="/favicon-48x48.jpg"
+                alt="Star Coaching Institute logo"
+                className="h-7 w-7 rounded-full object-cover ring-1 ring-gold/70"
+              />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gold">
+                {t("starCoaching")}
+              </span>
+            </div>
           </div>
+
+          {/* Content */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-gold">{t("About")}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-red">
+              {t("About")}
+            </p>
             <h2 className="mt-2 font-display font-black text-2xl text-navy md:text-3xl">
               {t("aboutSectionTitle")}
             </h2>
-            <p className="mt-3 leading-relaxed text-foreground/80">{t("historyBody")}</p>
+            <div className="mt-1 h-1 w-16 rounded bg-brand-red" />
+            <p className="mt-4 leading-relaxed text-foreground/80 text-sm md:text-base">
+              {t("historyBody").replace("{year}", String(site.established))}
+            </p>
+
+            {/* Vision & Mission */}
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border bg-white p-4">
-                <Eye className="mb-2 w-5 h-5 text-brand-red" />
+              <div className="rounded-2xl border border-border bg-white p-4 shadow-sm transition hover:border-brand-red/40">
+                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-red/10">
+                  <Eye className="w-5 h-5 text-brand-red" />
+                </div>
                 <p className="text-sm font-bold text-navy">{t("vision")}</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">
                   {t("visionBody")}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border bg-white p-4">
-                <Target className="mb-2 w-5 h-5 text-brand-red" />
+              <div className="rounded-2xl border border-border bg-white p-4 shadow-sm transition hover:border-brand-red/40">
+                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-red/10">
+                  <Target className="w-5 h-5 text-brand-red" />
+                </div>
                 <p className="text-sm font-bold text-navy">{t("mission")}</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">
                   {t("missionBody")}
                 </p>
               </div>
             </div>
-            <Link
-              to="/about"
-              className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl bg-navy px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy/90"
-            >
-              {t("exploreAbout")}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+
+            {/* Quick facts */}
+            <ul className="mt-4 space-y-2 text-sm text-foreground/80">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <span>{t("aboutGoal1")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <span>{t("aboutGoal2")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <span>{t("aboutGoal3")}</span>
+              </li>
+            </ul>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-2 rounded-xl bg-navy px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy/90"
+              >
+                {t("exploreAbout")}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/admission"
+                className="inline-flex items-center gap-2 rounded-xl border border-navy/20 bg-white px-5 py-3 text-sm font-semibold text-navy transition hover:border-brand-red hover:text-brand-red"
+              >
+                {t("Apply Now")}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

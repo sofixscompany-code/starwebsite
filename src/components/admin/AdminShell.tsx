@@ -532,7 +532,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   attendance: "Attendance",
   exams: "Examinations",
   results: "Results",
-  certificates: "Certificates",
+  "student-cards": "Student Cards",
   hostel: "Hostel",
   payments: "Payments",
   accounting: "Accounting",

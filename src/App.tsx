@@ -86,11 +86,6 @@ const ExamsPage = lazy(() =>
 const ResultsPage2 = lazy(() =>
   import("./routes/_authenticated/admin.results").then((m) => ({ default: m.ResultsPage })),
 );
-const CertificatesPage = lazy(() =>
-  import("./routes/_authenticated/admin.certificates").then((m) => ({
-    default: m.CertificatesPage,
-  })),
-);
 const HostelPage = lazy(() =>
   import("./routes/_authenticated/admin.hostel").then((m) => ({ default: m.HostelPage })),
 );
@@ -343,7 +338,6 @@ export default function App() {
               <Route path="attendance" element={<LazyPage Component={AttendancePage} />} />
               <Route path="exams" element={<LazyPage Component={ExamsPage} />} />
               <Route path="results" element={<LazyPage Component={ResultsPage2} />} />
-              <Route path="certificates" element={<LazyPage Component={CertificatesPage} />} />
               <Route path="hostel" element={<LazyPage Component={HostelPage} />} />
               <Route path="payments" element={<LazyPage Component={PaymentsPage} />} />
               <Route path="reports" element={<LazyPage Component={ReportsPage} />} />

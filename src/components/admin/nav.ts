@@ -227,12 +227,6 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["super_admin"],
       },
       {
-        label: "Certificates",
-        to: "/admin/certificates",
-        icon: Award,
-        roles: ["super_admin"],
-      },
-      {
         label: "Student Cards",
         to: "/admin/student-cards",
         icon: CreditCard,

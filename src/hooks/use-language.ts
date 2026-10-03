@@ -385,6 +385,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     progressCardTitle: "Student Progress Card",
     progressCardSub:
       "Every admitted student receives a printed progress report card with subject-wise marks, grade, attendance and the class teacher's remarks.",
+    progressCardF1: "Subject-wise marks & grade",
+    progressCardF2: "Attendance & teacher remarks",
+    progressCardF3: "Printed copy for every student",
 
     // Faculty Page
     facultyHeroTitle: "Learn from real experts",
@@ -752,6 +755,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     progressCardTitle: "विद्यार्थी प्रगतिरिपोर्ट कार्ड",
     progressCardSub:
       "भर्ना भएका प्रत्येक विद्यार्थीलाई विषयगत अङ्क, ग्रेड, उपस्थिति र कक्षा शिक्षकको टिप्पणी सहितको प्रगतिरिपोर्ट कार्ड छापिएर दिइन्छ।",
+    progressCardF1: "विषयगत अङ्क र ग्रेड",
+    progressCardF2: "उपस्थिति र शिक्षक टिप्पणी",
+    progressCardF3: "प्रत्येक विद्यार्थीलाई छापिएर प्रति",
 
     // Faculty Page
     facultyHeroTitle: "वास्तविक विशेषज्ञहरूबाट सिक्नुहोस्",
@@ -1131,6 +1137,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     progressCardTitle: "छात्र प्रगति कार्ड",
     progressCardSub:
       "प्रवेश पाए हर छात्र को विषयवार अंक, ग्रेड, उपस्थिति और कक्षा शिक्षक की टिप्पणी सहित प्रगति रिपोर्ट कार्ड छापा जाता है।",
+    progressCardF1: "विषयवार अंक और ग्रेड",
+    progressCardF2: "उपस्थिति और शिक्षक टिप्पणी",
+    progressCardF3: "हर छात्र के लिए मुद्रित प्रति",
 
     // Faculty Page
     facultyHeroTitle: "वास्तविक विशेषज्ञों से सीखें",

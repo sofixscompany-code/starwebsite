@@ -227,7 +227,6 @@ export function ResultsPage() {
           { label: "Results", value: "results" },
           { label: "Merit Lists", value: "merit" },
           { label: "Analytics", value: "analytics" },
-          { label: "Certificates", value: "certificates" },
         ]}
         value={activeTab}
         onChange={setActiveTab}
@@ -415,34 +414,6 @@ export function ResultsPage() {
               )}
             </Panel>
           </div>
-        )}
-
-        {activeTab === "certificates" && (
-          <Panel title="Result Certificates" subtitle="Generated certificates for completed exams">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {[...new Map(rows.map((r) => [r.exam as string, r])).values()].map((r) => (
-                <div key={r.id} className="ap-card p-4 hover:shadow-lg transition">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl ap-grad flex items-center justify-center text-white">
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">{r.exam as string}</p>
-                      <p className="text-xs text-[hsl(var(--ap-muted))]">{r.subject as string}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-[hsl(var(--ap-muted))]">Score</span>
-                      <span className="font-bold">
-                        {r.score as number}/{r.total as number}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
         )}
       </div>
 
