@@ -44,6 +44,7 @@ const CREATORS: Record<string, string[]> = {
   lms_materials: STAFF,
   // Finance
   payments: FINANCE,
+  payables: FINANCE,
   expenses: FINANCE,
   fees: FINANCE,
   fee_invoices: FINANCE,

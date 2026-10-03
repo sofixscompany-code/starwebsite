@@ -120,6 +120,11 @@ export const NAV_SECTIONS: NavSection[] = [
     roles: ["teacher"],
     items: [{ label: "Calendar", to: "/admin/calendar", icon: Clock, roles: ["teacher"] }],
   },
+  {
+    header: "Finance",
+    roles: ["teacher"],
+    items: [{ label: "My Payments", to: "/admin/payments", icon: CreditCard, roles: ["teacher"] }],
+  },
 
   // ========== STUDENT ==========
   {

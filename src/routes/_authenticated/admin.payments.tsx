@@ -1,87 +1,127 @@
-import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
-import { useModuleData } from "@/hooks/use-module-data";
-import { Wallet, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
+/**
+ * Universal Payment & Invoice system — the central payments page.
+ *
+ * Finance roles (super_admin / accountant):
+ *   Ledger | Transactions | Invoices | Teacher & Staff Pay | Reports
+ * Student / parent / teacher:
+ *   read-only "My Payments" scoped to themselves (or their children).
+ */
+
+import { useState } from "react";
+import { PageHeader } from "@/components/admin/AdminShell";
+import { EmptyState, Tabs } from "@/components/admin/ui";
+import { AlertCircle } from "lucide-react";
+import { getUserRole } from "@/lib/api-auth";
+import { useAdminT } from "@/lib/admin-i18n";
+import { useFinanceData } from "@/hooks/use-finance";
+import type { ModuleRecord } from "@/hooks/use-module-data";
+import type { PaymentTxn } from "@/lib/finance";
+import { LedgerTab } from "@/components/payments/LedgerTab";
+import { TransactionsTab } from "@/components/payments/TransactionsTab";
+import { InvoicesTab } from "@/components/payments/InvoicesTab";
+import { PayrollTab } from "@/components/payments/PayrollTab";
+import { ReportsTab } from "@/components/payments/ReportsTab";
+import { MyPayments } from "@/components/payments/MyPayments";
+import {
+  PayableModal,
+  RecordPaymentModal,
+  type PaymentPrefill,
+} from "@/components/payments/modals";
+import { ReceiptModal } from "@/components/payments/Printable";
 
 export function PaymentsPage() {
-  const { rows } = useModuleData("payments");
+  const { t } = useAdminT();
+  const role = getUserRole();
+  const isFinance = role === "super_admin" || role === "accountant";
 
-  const isCompleted = (status: unknown) => {
-    const s = String(status ?? "").toLowerCase();
-    return s === "completed" || s === "paid";
+  if (isFinance) return <FinancePayments />;
+  return (
+    <div className="space-y-6">
+      <PageHeader title={t("myPaymentsTitle")} subtitle={t("myPaymentsSub")} />
+      <MyPayments />
+    </div>
+  );
+}
+
+function FinancePayments() {
+  const { t } = useAdminT();
+  const data = useFinanceData();
+  const [tab, setTab] = useState("ledger");
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [prefill, setPrefill] = useState<PaymentPrefill | undefined>(undefined);
+  const [payableOpen, setPayableOpen] = useState(false);
+  const [payableEditing, setPayableEditing] = useState<ModuleRecord | null>(null);
+  const [receipt, setReceipt] = useState<PaymentTxn | null>(null);
+
+  const openRecord = (p?: PaymentPrefill) => {
+    setPrefill(p);
+    setRecordOpen(true);
   };
-  const isFailed = (status: unknown) => String(status ?? "").toLowerCase() === "failed";
 
-  const total = rows.length;
-  const completed = rows.filter((r) => isCompleted(r.status)).length;
-  const failed = rows.filter((r) => isFailed(r.status)).length;
-  const collected = rows.reduce((sum, r) => {
-    if (!isCompleted(r.status)) return sum;
-    const amount = Number(r.amount);
-    return sum + (Number.isFinite(amount) ? amount : 0);
-  }, 0);
+  const payrollCount = data.ledger.filter(
+    (r) => r.personRole === "teacher" || r.personRole === "staff",
+  ).length;
 
   return (
-    <FirestoreModulePage
-      collectionName="payments"
-      title="Payments"
-      subtitle="Track all fee collections, refunds and payment status"
-      stats={[
-        { label: "Total Payments", value: total, icon: Wallet, tone: "purple" },
-        { label: "Successful", value: completed, icon: CheckCircle2, tone: "success" },
-        { label: "Failed", value: failed, icon: XCircle, tone: "danger" },
-        {
-          label: "Collected",
-          value: `Rs ${collected.toLocaleString("en-IN")}`,
-          icon: TrendingUp,
-          tone: "info",
-        },
-      ]}
-      columns={[
-        { key: "studentName", label: "Student" },
-        { key: "amount", label: "Amount" },
-        { key: "method", label: "Method" },
-        { key: "type", label: "Type" },
-        { key: "status", label: "Status" },
-      ]}
-      fields={[
-        { key: "studentName", label: "Student", type: "text", required: true },
-        { key: "amount", label: "Amount (Rs)", type: "number", required: true },
-        { key: "method", label: "Method", type: "text" },
-        { key: "type", label: "Type", type: "text" },
-        {
-          key: "status",
-          label: "Status",
-          type: "select",
-          options: [
-            { value: "completed", label: "Completed" },
-            { value: "pending", label: "Pending" },
-            { value: "failed", label: "Failed" },
-          ],
-        },
-      ]}
-      rows={[
-        {
-          studentName: "Aarav Sharma",
-          amount: 45000,
-          method: "eSewa",
-          type: "tuition",
-          status: "completed",
-        },
-        {
-          studentName: "Sneha Gupta",
-          amount: 38000,
-          method: "Khalti",
-          type: "admission",
-          status: "completed",
-        },
-        {
-          studentName: "Vikram Singh",
-          amount: 42000,
-          method: "Bank Transfer",
-          type: "hostel",
-          status: "pending",
-        },
-      ]}
-    />
+    <div className="space-y-6">
+      <PageHeader title={t("paymentsInvoices")} subtitle={t("paymentsInvoicesSub")} />
+
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { label: t("ledgerTab"), value: "ledger", badge: data.ledger.length },
+          { label: t("transactionsTab"), value: "transactions", badge: data.txns.length },
+          { label: t("invoicesTab"), value: "invoices", badge: data.invoices.length },
+          { label: t("payrollTab"), value: "payroll", badge: payrollCount },
+          { label: t("reportsTab"), value: "reports" },
+        ]}
+      />
+
+      {data.error && !data.loading ? (
+        <EmptyState
+          icon={AlertCircle}
+          title={t("errorLoad")}
+          desc={t("paymentsErrorDesc")}
+          action={{ label: t("tryAgain"), onClick: () => window.location.reload() }}
+        />
+      ) : (
+        <>
+          {tab === "ledger" && <LedgerTab data={data} onRecord={openRecord} />}
+          {tab === "transactions" && <TransactionsTab data={data} onRecord={openRecord} />}
+          {tab === "invoices" && <InvoicesTab data={data} />}
+          {tab === "payroll" && (
+            <PayrollTab
+              data={data}
+              onRecord={openRecord}
+              onAddPayable={() => {
+                setPayableEditing(null);
+                setPayableOpen(true);
+              }}
+              onEditPayable={(doc) => {
+                setPayableEditing(doc);
+                setPayableOpen(true);
+              }}
+            />
+          )}
+          {tab === "reports" && <ReportsTab data={data} />}
+        </>
+      )}
+
+      <RecordPaymentModal
+        open={recordOpen}
+        onClose={() => setRecordOpen(false)}
+        data={data}
+        prefill={prefill}
+        onSaved={(txn) => setReceipt(txn)}
+      />
+      <PayableModal
+        open={payableOpen}
+        onClose={() => setPayableOpen(false)}
+        data={data}
+        editing={payableEditing}
+      />
+      <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />
+    </div>
   );
 }

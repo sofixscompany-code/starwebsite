@@ -1,11 +1,13 @@
 ﻿import { useEffect, useState } from "react";
-import { CalendarCheck, Trophy, Wallet, Bell, Loader2, FileText } from "lucide-react";
+import { CalendarCheck, Trophy, Wallet, Bell, Loader2, FileText, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useParentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
 import { useAdminT } from "@/lib/admin-i18n";
+import { useMyFinance } from "@/hooks/use-finance";
+import { fmtDateTime, fmtRs, methodLabel } from "@/lib/finance";
 
 export function ParentDashboard() {
   const [mounted, setMounted] = useState(false);
@@ -19,6 +21,7 @@ export function ParentDashboard() {
   const storedUser = getStoredAuthUser();
   const parentEmail = storedUser?.email || auth.currentUser?.email || undefined;
   const { data: stats, isLoading } = useParentDashboard(parentEmail);
+  const fin = useMyFinance();
 
   if (!mounted || isLoading) {
     return (
@@ -68,7 +71,7 @@ export function ParentDashboard() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4"
       >
         {[
           {
@@ -98,6 +101,20 @@ export function ParentDashboard() {
             icon: Bell,
             color: "from-brand-red to-brand-red/80",
             bg: "bg-brand-red/5",
+          },
+          {
+            label: t("feePaidLabel"),
+            value: fin.loading ? "—" : fmtRs(fin.summary.paid),
+            icon: Wallet,
+            color: "from-emerald-500 to-emerald-600",
+            bg: "bg-emerald-50",
+          },
+          {
+            label: t("feePendingLabel"),
+            value: fin.loading ? "—" : fmtRs(fin.summary.pending),
+            icon: Clock,
+            color: "from-navy to-navy/80",
+            bg: "bg-navy/5",
           },
         ].map((s) => {
           const Icon = s.icon;
@@ -197,6 +214,107 @@ export function ParentDashboard() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* Fees & Payments — linked children's fee info */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                {t("myPaymentsTitle")}
+              </h3>
+              <Link
+                to="/admin/payments"
+                className="text-xs font-semibold text-navy hover:underline"
+              >
+                {t("viewAllPayments")}
+              </Link>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">{t("childFeeSummarySub")}</p>
+            {fin.loading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-10 rounded-xl bg-gray-100 dark:bg-gray-700/50 animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60 text-center">
+                    <p className="text-[11px] text-gray-500">{t("totalFeeLabel")}</p>
+                    <p className="text-sm font-bold text-navy">{fmtRs(fin.summary.total)}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 text-center">
+                    <p className="text-[11px] text-gray-500">{t("feePaidLabel")}</p>
+                    <p className="text-sm font-bold text-emerald-600">{fmtRs(fin.summary.paid)}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200/60 text-center">
+                    <p className="text-[11px] text-gray-500">{t("feePendingLabel")}</p>
+                    <p className="text-sm font-bold text-brand-red">{fmtRs(fin.summary.pending)}</p>
+                  </div>
+                </div>
+
+                {fin.children.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    {fin.children.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/30"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {c.name}
+                          </p>
+                          <p className="text-[11px] text-gray-400">
+                            {t("totalFeeLabel")}: {fmtRs(c.total)} · {t("feePaidLabel")}:{" "}
+                            {fmtRs(c.paid)}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-sm font-bold shrink-0 ${
+                            c.pending > 0 ? "text-brand-red" : "text-emerald-600"
+                          }`}
+                        >
+                          {c.pending > 0 ? fmtRs(c.pending) : t("status_cleared")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {fin.transactions.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">
+                    {t("noPaymentHistoryDesc")}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                      {t("paymentHistory")}
+                    </p>
+                    {fin.transactions.slice(0, 5).map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {fmtRs(tx.amount)} · {methodLabel(tx.method)}
+                          </p>
+                          <p className="text-[11px] text-gray-400 font-mono truncate">
+                            {tx.transactionId || tx.receiptNumber || "—"} · {fmtDateTime(tx.date)}
+                          </p>
+                        </div>
+                        <span className="text-xs font-bold text-emerald-600 shrink-0">
+                          {t("paidLabel")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 

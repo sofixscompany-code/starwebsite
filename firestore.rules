@@ -178,6 +178,7 @@ service cloud.firestore {
 
     // ── Finance: signed-in users read, accountants/admin manage ─────
     match /payments/{doc}       { allow read: if isSignedIn(); allow write: if isAccountant(); }
+    match /payables/{doc}       { allow read: if isSignedIn(); allow write: if isAccountant(); }
     match /expenses/{doc}       { allow read: if isSignedIn(); allow write: if isAccountant(); }
     match /fees/{doc}           { allow read: if isSignedIn(); allow write: if isAccountant(); }
     match /fee_invoices/{doc}   { allow read: if isSignedIn(); allow write: if isAccountant(); }

@@ -21,9 +21,12 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAccountantDashboard } from "@/hooks/use-dashboard-data";
 import { useAdminT } from "@/lib/admin-i18n";
+import { useLedgerSnapshot } from "@/hooks/use-finance";
+import { roleLabel } from "@/lib/finance";
 
 export function AccountantDashboard() {
   const { data: fin } = useAccountantDashboard();
+  const { data: ledgerSnap, isLoading: ledgerLoading, isError: ledgerError } = useLedgerSnapshot();
   const { t } = useAdminT();
   const hasData = !!fin?.hasData;
 
@@ -297,6 +300,103 @@ export function AccountantDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Central ledger + teacher/staff payroll snapshot */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("ledgerTab")}</h3>
+            <p className="text-xs text-gray-400 mt-0.5">{t("paymentsInvoicesSub")}</p>
+          </div>
+          <Link to="/admin/payments" className="ap-btn">
+            {t("viewAllPayments")}
+          </Link>
+        </div>
+
+        {ledgerLoading || !ledgerSnap ? (
+          ledgerError ? (
+            <p className="text-sm text-brand-red mt-4">{t("errorLoad")}</p>
+          ) : (
+            <div className="space-y-2 mt-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 rounded-xl bg-gray-100 dark:bg-gray-700/50 animate-pulse"
+                />
+              ))}
+            </div>
+          )
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60">
+                <p className="text-[11px] text-gray-500">{t("totalPayableLabel")}</p>
+                <p className="text-lg font-bold text-navy">{fmt(ledgerSnap.totals.total)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60">
+                <p className="text-[11px] text-gray-500">{t("totalCollectedLabel")}</p>
+                <p className="text-lg font-bold text-emerald-600">{fmt(ledgerSnap.totals.paid)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200/60">
+                <p className="text-[11px] text-gray-500">{t("totalPendingLabel")}</p>
+                <p className="text-lg font-bold text-brand-red">{fmt(ledgerSnap.totals.pending)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-200/60">
+                <p className="text-[11px] text-gray-500">{t("payrollTab")}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {fmt(ledgerSnap.payroll.paid)}
+                  <span className="text-xs font-semibold text-gray-400">
+                    {" "}
+                    / {fmt(ledgerSnap.payroll.total)}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {!ledgerSnap.hasData ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
+                {t("noLedgerRowsDesc")}
+              </p>
+            ) : (
+              <div className="mt-4 space-y-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                  {t("pendingLabel")}
+                </p>
+                {ledgerSnap.topPending.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-3 text-center">{t("status_cleared")}</p>
+                ) : (
+                  ledgerSnap.topPending.map((r) => (
+                    <div
+                      key={r.key}
+                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {r.personName}
+                          <span className="text-[11px] font-normal text-gray-400">
+                            {" "}
+                            · {roleLabel(r.personRole)}
+                          </span>
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          {t("totalAmountLabel")}: {fmt(r.total)} · {t("paidLabel")}: {fmt(r.paid)}
+                        </p>
+                      </div>
+                      <span className="text-sm font-bold text-brand-red shrink-0">
+                        {fmt(r.pending)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </motion.div>
     </div>
   );
 }
