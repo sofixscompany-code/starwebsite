@@ -72,6 +72,13 @@ import { CATEGORY_TONE } from "./notices";
 /**
  * Service cards (homepage "तपाईं कुन सेवाको तयारी गर्दै हुनुहुन्छ ?").
  * `img` = per-service photo served from `public/services/`.
+ * `logo` = official government emblem served from `public/logos/`:
+ *   police.png  — Nepal Police emblem (nepalpolice.gov.np)
+ *   army.png    — Coat of arms of the Nepali Army (Wikimedia Commons, CC BY 4.0)
+ *   apf.png     — Armed Police Force logo (apf.gov.np)
+ *   forest.png  — Emblem of Nepal, the logo the Ministry of Forests & Environment
+ *                 and the Department of Forests display on their own sites (mofe.gov.np)
+ *   loksewa.png — Public Service Commission / Loksewa Aayog logo (psc.gov.np, Wikipedia)
  * Image credits (Wikimedia Commons):
  *   police.jpg — "Nepal police on duty at Fulpati 2013…" by Ashishlohorung, CC BY-SA 3.0
  *   army.jpg   — "Bangladeshi and Nepalese soldiers stand in formation…" (Exercise Shanti Doot 3)
@@ -79,7 +86,25 @@ import { CATEGORY_TONE } from "./notices";
  *   apf.jpg    — "Armed Police Force Nepal" by Owlf, CC BY-SA 4.0
  *   forest.jpg — "Forest Gateway to the Himalayas" by Megaurab09, CC BY-SA 4.0
  */
-const COURSES = [
+type HomeCourse = {
+  titleKey: string;
+  descKey: string;
+  slug: string;
+  /** Overrides the default `/services/:slug` link when no prep-portal page exists. */
+  href?: string;
+  bg: string;
+  shadow: string;
+  watermark: string;
+  btnBg: string;
+  icon: typeof Shield;
+  img?: string;
+  /** Official government emblem shown on the "Our Online Courses" card row. */
+  logo: string;
+  /** Rendered only in the "Our Online Courses" card row (no big service card). */
+  onlineOnly?: boolean;
+};
+
+const COURSES: HomeCourse[] = [
   {
     titleKey: "nepalPolice",
     descKey: "policeDesc",
@@ -89,6 +114,7 @@ const COURSES = [
     watermark: "text-blue-500/30",
     btnBg: "bg-blue-500/80 hover:bg-blue-500",
     icon: Shield,
+    logo: "/logos/police.png",
     img: "/services/police.jpg",
   },
   {
@@ -100,6 +126,7 @@ const COURSES = [
     watermark: "text-emerald-600/40",
     btnBg: "bg-emerald-600/80 hover:bg-emerald-600",
     icon: Shield,
+    logo: "/logos/army.png",
     img: "/services/army.jpg",
   },
   {
@@ -111,6 +138,7 @@ const COURSES = [
     watermark: "text-red-600/40",
     btnBg: "bg-red-600/80 hover:bg-red-600",
     icon: Shield,
+    logo: "/logos/apf.png",
     img: "/services/apf.jpg",
   },
   {
@@ -122,7 +150,23 @@ const COURSES = [
     watermark: "text-emerald-800/40",
     btnBg: "bg-emerald-800/80 hover:bg-emerald-800",
     icon: TreePine,
+    logo: "/logos/forest.png",
     img: "/services/forest.jpg",
+  },
+  {
+    // Loksewa has no prep-portal service page yet — the card links to /courses,
+    // which lists the Loksewa & Administrative course category.
+    titleKey: "loksewa",
+    descKey: "loksewaDesc",
+    slug: "loksewa",
+    href: "/courses",
+    bg: "bg-indigo-700",
+    shadow: "shadow-indigo-700/20",
+    watermark: "text-indigo-600/40",
+    btnBg: "bg-indigo-600/80 hover:bg-indigo-600",
+    icon: Building,
+    logo: "/logos/loksewa.png",
+    onlineOnly: true,
   },
 ];
 
@@ -454,9 +498,9 @@ export function Index() {
             <p className="text-slate-600 text-sm sm:text-base">{t("courseSubtext")}</p>
           </div>
 
-          {/* Course Cards — 2×2 grid matching reference */}
+          {/* Course Cards — 2×2 grid matching reference (Loksewa has no service card) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {COURSES.map((c) => {
+            {COURSES.filter((c) => !c.onlineOnly).map((c) => {
               const Icon = c.icon;
               return (
                 <div
@@ -990,16 +1034,26 @@ export function Index() {
               {t("prepareBrighterTomorrow")} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {COURSES.map((c) => {
-              const Icon = c.icon;
               return (
                 <Link
                   key={c.titleKey}
-                  to={`/services/${c.slug}`}
+                  to={c.href ?? `/services/${c.slug}`}
                   className={`group relative rounded-xl overflow-hidden text-white text-center hover:shadow-lg transition aspect-[3/4] bg-gradient-to-br ${c.bg} flex flex-col items-center justify-center`}
                 >
-                  <Icon className="w-12 h-12 text-white/40 mb-3" />
+                  {/* Official government emblem on a white plate — stays legible on every card colour.
+                      Explicit w-full/h-full (not max-*): an unloaded image has an intrinsic size of
+                      0×0, so max-* would collapse the box and lazy-loading would never trigger. */}
+                  <div className="w-28 h-20 mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center p-2">
+                    <img
+                      src={c.logo}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
                   <div className="p-4">
                     <h4 className="font-bold text-sm">{t(c.titleKey)}</h4>
                     <span className="mt-2 inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full transition backdrop-blur-sm">

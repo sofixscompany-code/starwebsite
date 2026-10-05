@@ -113,6 +113,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     armyDesc: "Defense of the nation, our commitment",
     apfDesc: "Border security, peace and community service",
     forestDesc: "Nature conservation, secure future",
+    loksewa: "Loksewa (All Sectors)",
+    loksewaDesc: "Loksewa Aayog (Public Service Commission) — all sectors",
     viewDetails: "View Details",
 
     // Stats
@@ -495,6 +497,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     armyDesc: "राष्ट्रको रक्षा, हामो प्रतिबद्धता",
     apfDesc: "सीमा सुरक्षा, शान्ति र सम्प्रदायका लागि",
     forestDesc: "प्रकृति संरक्षण, सुरक्षित भविष्य",
+    loksewa: "लोकसेवा (सबै क्षेत्र)",
+    loksewaDesc: "लोक सेवा आयोगका सबै समूह र क्षेत्रको तयारी",
     viewDetails: "विवरण हेर्नुहोस्",
     satisfiedStudents: "सन्तुष्ट विद्यार्थी",
     selections: "छनोटमा सफलता",
@@ -865,6 +869,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     armyDesc: "राष्ट्र की रक्षा, हमारी प्रतिबद्धता",
     apfDesc: "सीमा सुरक्षा, शांति और सामुदायिक सेवा",
     forestDesc: "प्रकृति संरक्षण, सुरक्षित भविष्य",
+    loksewa: "लोक सेवा (सभी क्षेत्र)",
+    loksewaDesc: "लोक सेवा आयोग — सभी क्षेत्रों की तैयारी",
     viewDetails: "विवरण देखें",
 
     // Stats
