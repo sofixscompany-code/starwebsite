@@ -2,7 +2,6 @@ import { lazy, Suspense, createElement } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { GlobalLoading } from "@/components/site/GlobalLoading";
 import { FloatingChat } from "@/components/site/FloatingChat";
-import { SofixsIntro } from "@/components/site/SofixsIntro";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SessionManager } from "@/components/auth/SessionManager";
 import { LanguageProvider } from "@/components/site/LanguageProvider";
@@ -285,8 +284,6 @@ export default function App() {
 
   return (
     <>
-      {/* "Powered by Sofixs" loading screen — plays once per hard page load */}
-      <SofixsIntro />
       <GlobalLoading />
       <SessionManager isActive={isAuthenticated()} />
       <LanguageProvider>
