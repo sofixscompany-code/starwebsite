@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * One full loop of the intro animation. `public/intro.html` loops every 6.4s
- * and wipes itself clean by ~5.3s, so 6.5s lands exactly at the end of the
- * first cycle — the fade then overlaps the (invisible) start of the next loop.
+ * Timing of the simplified intro (`public/intro.html`): the badge/text
+ * entrance finishes ~0.8s in, we hold until 2.4s, then fade for 0.6s —
+ * gone at ~3.0s total.
  */
-const HOLD_MS = 6500;
+const HOLD_MS = 2400;
 const FADE_MS = 600;
 /** Safety net: dismiss even if /intro.html never fires its load event. */
-const MAX_MS = 9500;
+const MAX_MS = 5000;
 
 type Phase = "hold" | "fade" | "done";
 
@@ -16,9 +16,9 @@ type Phase = "hold" | "fade" | "done";
  * Full-screen "Powered by Sofixs" loading screen (renders `public/intro.html`).
  *
  * Shown once per hard page load — SPA navigation never re-triggers it, because
- * this component stays mounted for the lifetime of the React app. Plays one
- * full animation loop, fades out, then unmounts entirely. A Skip button lets
- * impatient visitors jump straight to the site.
+ * this component stays mounted for the lifetime of the React app. Holds for
+ * the short entrance animation, fades out, then stops rendering entirely. A
+ * Skip button lets impatient visitors jump straight to the site.
  */
 export function SofixsIntro() {
   const [phase, setPhase] = useState<Phase>("hold");
@@ -39,7 +39,7 @@ export function SofixsIntro() {
   }, []);
 
   // Arm the dismissal timer when the animation actually starts (iframe load),
-  // so slow connections don't eat into the 6.5s loop.
+  // so slow connections don't eat into the 2.4s hold.
   const startHold = () => {
     if (holdTimer.current !== null) return;
     holdTimer.current = window.setTimeout(() => setPhase("fade"), HOLD_MS);
