@@ -355,7 +355,7 @@ export function SignatureModal({
  * (per-admission value) always overrides these defaults.
  */
 export const OFFICE_SIGNATURES = {
-  academic: "/site/signature-academic.png?v=1",
+  academic: "/site/signature-academic.png?v=2",
   principal: "/site/signature-principal.png?v=1",
 } as const;
 
