@@ -53,6 +53,7 @@ const DICT = {
     feeExam: "Exam",
     feePhysical: "Physical",
     feeAdditional: "Additional",
+    otherNote: "And others — for admission details of any other course/post, call",
   },
   ne: {
     badge: "निःशुल्क सोधपुछ",
@@ -94,6 +95,7 @@ const DICT = {
     feeExam: "परीक्षा शुल्क",
     feePhysical: "फिजिकल शुल्क",
     feeAdditional: "अतिरिक्त शुल्क",
+    otherNote: "र अन्य — अन्य कोर्स/पदको प्रवेश विवरणको लागि फोन गर्नुहोस्:",
   },
   hi: {
     badge: "निःशुल्क पूछताछ",
@@ -135,6 +137,7 @@ const DICT = {
     feeExam: "परीक्षा फ़ीस",
     feePhysical: "फ़िज़िकल फ़ीस",
     feeAdditional: "अतिरिक्त फ़ीस",
+    otherNote: "और अन्य — किसी अन्य कोर्स/पद के प्रवेश विवरण के लिए फ़ोन करें:",
   },
 } as const;
 
@@ -534,6 +537,17 @@ export function EnquiryPage() {
                     </div>
                   </div>
                 )}
+
+                {/* And others — admission details for unlisted courses/posts */}
+                <p className="mt-2 text-xs text-gray-500">
+                  {d.otherNote}{" "}
+                  <a
+                    href={`tel:${site.phones[0]}`}
+                    className="font-bold text-navy underline-offset-2 hover:underline"
+                  >
+                    {site.phones[0]}
+                  </a>
+                </p>
               </label>
 
               <label className="block sm:col-span-2">

@@ -323,14 +323,15 @@ export const DEFAULT_ADMISSION_COURSES: AdmissionCourse[] = [
     ],
   },
 
-  /* ── होस्टेल (enquiry-only) ── */
+  /* ── होस्टेल (enquiry-only, optional with any course) ── */
   {
     id: "hostel",
     organization: "",
     post: "",
     enquiryOnly: true,
-    name: "होस्टेल (खाना + बास)",
-    description: "होस्टेल शुल्क संरचना — खाना र बास सबै मिलाएर, प्रति महिना",
+    name: "होस्टेल (खाना + बास) — ऐच्छिक (Optional)",
+    description:
+      "होस्टेल शुल्क संरचना — खाना र बास सबै मिलाएर, प्रति महिना • कुनै पनि कोर्ससँग ऐच्छिक रूपमा जोड्न मिल्ने",
     duration: "प्रति महिना",
     active: true,
     packages: [
