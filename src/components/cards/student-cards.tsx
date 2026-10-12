@@ -148,7 +148,7 @@ export function ProgressCard({ data }: { data: StudentCardData }) {
   return (
     <div className="sc-progress">
       <header className="sc-head">
-        <img src="/favicon-180x180.jpg" alt="Star Coaching Institute" className="sc-logo" />
+        <img src="/favicon-180x180.jpg?v=2" alt="Star Coaching Institute" className="sc-logo" />
         <div className="sc-head-text">
           <p className="sc-title">Star Coaching Institute Pvt. Ltd.</p>
           <p className="sc-sub">जनकपुरधाम, नेपाल • ९८०४८९९१२३ / ९८६४१७६६०६</p>
@@ -262,7 +262,7 @@ export function IdCard({ data }: { data: StudentCardData }) {
       {/* Front */}
       <div className="sc-id sc-id-front">
         <div className="sc-id-band">
-          <img src="/favicon-48x48.jpg" alt="" className="sc-id-logo" />
+          <img src="/favicon-48x48.jpg?v=2" alt="" className="sc-id-logo" />
           <div>
             <p className="sc-id-inst">Star Coaching Institute</p>
             <p className="sc-id-inst-sub">PVT. LTD. • JANAKPURDHAM</p>

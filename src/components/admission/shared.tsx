@@ -113,7 +113,7 @@ export function Bullet() {
 export function DocumentHeader({ photoBox }: { photoBox?: ReactNode }) {
   return (
     <header className="sci-header">
-      <img src="/favicon-180x180.jpg" alt="Star Coaching Institute logo" className="sci-logo" />
+      <img src="/favicon-180x180.jpg?v=2" alt="Star Coaching Institute logo" className="sci-logo" />
       <div className="sci-header-mid">
         <div className="sci-institute-name">Star Coaching Institute Pvt. Ltd.</div>
         <div className="sci-institute-addr">Zeromile-7, Janakpurdham</div>

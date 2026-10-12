@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
 
-const LOGO = "/favicon-180x180.jpg";
+const LOGO = "/favicon-180x180.jpg?v=2";
 const BUILDING = "/site/about-lead.jpg";
 
 /** Goals list — the checklist shown under हाम्रो लक्ष्य. */

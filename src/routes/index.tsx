@@ -865,7 +865,7 @@ export function Index() {
             {/* Logo badge */}
             <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 shadow-lg backdrop-blur-sm sm:right-6 sm:top-6">
               <img
-                src="/favicon-48x48.jpg"
+                src="/favicon-48x48.jpg?v=2"
                 alt="Star Coaching Institute logo"
                 className="h-7 w-7 rounded-full object-cover ring-1 ring-gold/70"
               />

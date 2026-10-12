@@ -15,7 +15,7 @@ const sizeMap = {
 export function StarLogo({ className, size = "md" }: StarLogoProps) {
   return (
     <img
-      src="/favicon-180x180.jpg"
+      src="/favicon-180x180.jpg?v=2"
       alt="Star Coaching Institute"
       className={cn("object-cover rounded-full", sizeMap[size], className)}
     />

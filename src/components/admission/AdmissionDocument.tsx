@@ -154,7 +154,7 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
       {/* ═══════════════ PAGE 1 ═══════════════ */}
       <section className="sci-page page-1" aria-label="Admission form page 1">
         <div className="sci-watermark" aria-hidden="true">
-          <img src="/favicon-180x180.jpg" alt="" />
+          <img src="/favicon-180x180.jpg?v=2" alt="" />
           <span>
             Star Coaching Institute Pvt. Ltd.
             <br />
@@ -681,7 +681,7 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
         aria-label="Education, guardian, health and declaration page 2"
       >
         <div className="sci-watermark" aria-hidden="true">
-          <img src="/favicon-180x180.jpg" alt="" />
+          <img src="/favicon-180x180.jpg?v=2" alt="" />
           <span>
             Star Coaching Institute Pvt. Ltd.
             <br />
@@ -913,7 +913,7 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
       {/* ═══════════════ PAGE 3 ═══════════════ */}
       <section className="sci-page page-3" aria-label="Rules and agreement page 3">
         <div className="sci-watermark" aria-hidden="true">
-          <img src="/favicon-180x180.jpg" alt="" />
+          <img src="/favicon-180x180.jpg?v=2" alt="" />
           <span>
             Star Coaching Institute Pvt. Ltd.
             <br />
