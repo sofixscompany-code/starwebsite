@@ -349,6 +349,16 @@ export function SignatureModal({
   );
 }
 
+/**
+ * Institute office signatures — baked into every admission document's
+ * Academic & Principal lines. A signature captured later by the office
+ * (per-admission value) always overrides these defaults.
+ */
+export const OFFICE_SIGNATURES = {
+  academic: "/site/signature-academic.png?v=1",
+  principal: "/site/signature-principal.png?v=1",
+} as const;
+
 /* Signature line: dotted rule + drawn image (or blank for print). */
 export function SignatureLine({
   label,

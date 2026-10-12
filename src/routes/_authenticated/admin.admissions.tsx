@@ -35,6 +35,7 @@ import {
   Toolbar,
 } from "@/components/admin/ui";
 import { AdmissionDocument } from "@/components/admission/AdmissionDocument";
+import { OFFICE_SIGNATURES } from "@/components/admission/shared";
 import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
 import "@/components/admission/admission-print.css";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
@@ -237,8 +238,8 @@ function mapToDocShape(raw: RawAdmission): AdmissionRow {
     agreementAccepted: raw.agreementAccepted === true,
     status: normalizeDocStatus(status),
     createdAt: createdAt ?? 0,
-    academicSignature: str(raw.academicSignature),
-    principalSignature: str(raw.principalSignature),
+    academicSignature: str(raw.academicSignature) || OFFICE_SIGNATURES.academic,
+    principalSignature: str(raw.principalSignature) || OFFICE_SIGNATURES.principal,
   };
 
   return {

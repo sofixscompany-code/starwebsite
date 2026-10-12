@@ -40,6 +40,7 @@ import {
   PhotoBox,
   SignatureModal,
   SignatureLine,
+  OFFICE_SIGNATURES,
 } from "./shared";
 
 type Errors = Record<string, string>;
@@ -994,7 +995,8 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
           <SignatureLine
             label="Academic Signature"
             value={
-              (data as AdmissionFormData & { academicSignature?: string }).academicSignature ?? ""
+              (data as AdmissionFormData & { academicSignature?: string }).academicSignature ||
+              OFFICE_SIGNATURES.academic
             }
             editable={false}
             actionLabel="Sign"
@@ -1002,7 +1004,8 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
           <SignatureLine
             label="Principal's Signature"
             value={
-              (data as AdmissionFormData & { principalSignature?: string }).principalSignature ?? ""
+              (data as AdmissionFormData & { principalSignature?: string }).principalSignature ||
+              OFFICE_SIGNATURES.principal
             }
             editable={false}
             actionLabel="Sign"
