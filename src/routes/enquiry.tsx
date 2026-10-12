@@ -10,6 +10,7 @@ import { whatsappHref, whatsappNumberHref } from "@/lib/links";
 import { useLanguage } from "@/hooks/use-language";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
 import { NEPAL_GEO, districtsFor, municipalitiesFor } from "@/data/nepal-geo";
+import type { AdmissionCourse } from "@/lib/admission-form/types";
 
 /* ── Tri-language strings (page is self-contained like other public pages) ── */
 const DICT = {
@@ -281,6 +282,15 @@ export function EnquiryPage() {
 
   const rs = (n: number) => `Rs. ${n.toLocaleString("en-IN")}`;
 
+  /* Short price tag for <select> options — same totals the card shows below */
+  const priceTag = (pkgs: AdmissionCourse["packages"]) => {
+    const totals = pkgs.filter((p) => p.active !== false).map((p) => p.totalFee);
+    if (!totals.length) return "";
+    const min = Math.min(...totals);
+    const max = Math.max(...totals);
+    return min === max ? rs(min) : `${rs(min)} – ${rs(max)}`;
+  };
+
   /* ── Success ── */
   if (done) {
     return (
@@ -489,11 +499,14 @@ export function EnquiryPage() {
                   onChange={(e) => set("course", e.target.value)}
                 >
                   <option value="">{d.select}</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {courses.map((c) => {
+                    const price = priceTag(c.packages);
+                    return (
+                      <option key={c.id} value={c.name}>
+                        {price ? `${c.name} — ${price}` : c.name}
+                      </option>
+                    );
+                  })}
                 </select>
 
                 {/* Selected course — name + official fee breakdown (२०८३/२०८४) */}
