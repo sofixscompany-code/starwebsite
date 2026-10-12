@@ -55,6 +55,9 @@ const DICT = {
     feePhysical: "Physical",
     feeAdditional: "Additional",
     otherNote: "And others — for admission details of any other course/post, call",
+    hostelLabel: "Interested Hostel (optional)",
+    hostelNone: "No hostel needed",
+    selectedHostel: "Selected Hostel",
   },
   ne: {
     badge: "निःशुल्क सोधपुछ",
@@ -97,6 +100,9 @@ const DICT = {
     feePhysical: "फिजिकल शुल्क",
     feeAdditional: "अतिरिक्त शुल्क",
     otherNote: "र अन्य — अन्य कोर्स/पदको प्रवेश विवरणको लागि फोन गर्नुहोस्:",
+    hostelLabel: "होस्टेल (ऐच्छिक)",
+    hostelNone: "होस्टेल चाहिँदैन",
+    selectedHostel: "छानिएको होस्टेल",
   },
   hi: {
     badge: "निःशुल्क पूछताछ",
@@ -139,6 +145,9 @@ const DICT = {
     feePhysical: "फ़िज़िकल फ़ीस",
     feeAdditional: "अतिरिक्त फ़ीस",
     otherNote: "और अन्य — किसी अन्य कोर्स/पद के प्रवेश विवरण के लिए फ़ोन करें:",
+    hostelLabel: "हॉस्टल (वैकल्पिक)",
+    hostelNone: "हॉस्टल नहीं चाहिए",
+    selectedHostel: "चुना हुआ हॉस्टल",
   },
 } as const;
 
@@ -159,6 +168,7 @@ interface EnquiryForm {
   municipality: string;
   ward: string;
   course: string;
+  hostel: string;
   message: string;
   company: string; // honeypot — bots fill it, humans never see it
 }
@@ -173,6 +183,7 @@ const EMPTY: EnquiryForm = {
   municipality: "",
   ward: "",
   course: "",
+  hostel: "",
   message: "",
   company: "",
 };
@@ -225,7 +236,10 @@ export function EnquiryPage() {
         `${d.parentName}: ${form.parentName}`,
         `${d.parentPhone}: ${form.parentPhone}`,
         `${d.province}: ${form.province}, ${d.district}: ${form.district}, ${d.municipality}: ${form.municipality}, ${d.ward}: ${form.ward}`,
-        `${d.course}: ${form.course}`,
+        `${d.course}: ${form.course}${selectedCourse ? ` (${d.feeTotal}: ${priceTag(selectedCourse.packages)})` : ""}`,
+        form.hostel
+          ? `${d.hostelLabel}: ${form.hostel}${selectedHostel ? ` (${d.feeTotal}: ${priceTag(selectedHostel.packages)})` : ""}`
+          : "",
         form.message.trim() ? `${d.message}: ${form.message.trim()}` : "",
       ]
         .filter(Boolean)
@@ -257,6 +271,7 @@ export function EnquiryPage() {
         municipality: form.municipality,
         ward: form.ward,
         course: form.course,
+        hostel: form.hostel || null,
         message: form.message.trim() || null,
         source: "Enquiry Form",
         status: "New",
@@ -273,11 +288,17 @@ export function EnquiryPage() {
     }
   };
 
-  const waLink = `${whatsappNumberHref(site.whatsapp)}?text=${waText()}`;
-
   const selectedCourse = useMemo(
     () => courses.find((c) => c.name === form.course) ?? null,
     [courses, form.course],
+  );
+
+  /* Hostel is an optional add-on — kept out of the course list, fees shown separately */
+  const hostelOptions = useMemo(() => courses.filter((c) => c.id === "hostel"), [courses]);
+  const courseOptions = useMemo(() => courses.filter((c) => c.id !== "hostel"), [courses]);
+  const selectedHostel = useMemo(
+    () => hostelOptions.find((c) => c.name === form.hostel) ?? null,
+    [hostelOptions, form.hostel],
   );
 
   const rs = (n: number) => `Rs. ${n.toLocaleString("en-IN")}`;
@@ -290,6 +311,34 @@ export function EnquiryPage() {
     const max = Math.max(...totals);
     return min === max ? rs(min) : `${rs(min)} – ${rs(max)}`;
   };
+
+  /* Shared fee-package rows for the course & hostel cards */
+  const packageRows = (course: AdmissionCourse, accent: string) =>
+    course.packages
+      .filter((p) => p.active !== false)
+      .map((p) => (
+        <div key={p.id} className="rounded-lg border bg-white px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-bold text-navy">{p.name}</p>
+            <p className={`whitespace-nowrap text-sm font-black ${accent}`}>
+              {d.feeTotal}: {rs(p.totalFee)}
+            </p>
+          </div>
+          <p className="mt-1 break-words text-xs text-gray-500">
+            {[
+              p.admissionFee ? `${d.feeAdmission} ${rs(p.admissionFee)}` : "",
+              p.tuitionFee ? `${d.feeTuition} ${rs(p.tuitionFee)}` : "",
+              p.examFee ? `${d.feeExam} ${rs(p.examFee)}` : "",
+              p.physicalFee ? `${d.feePhysical} ${rs(p.physicalFee)}` : "",
+              p.additionalFee ? `${d.feeAdditional} ${rs(p.additionalFee)}` : "",
+            ]
+              .filter(Boolean)
+              .join(" • ")}
+          </p>
+        </div>
+      ));
+
+  const waLink = `${whatsappNumberHref(site.whatsapp)}?text=${waText()}`;
 
   /* ── Success ── */
   if (done) {
@@ -499,7 +548,7 @@ export function EnquiryPage() {
                   onChange={(e) => set("course", e.target.value)}
                 >
                   <option value="">{d.select}</option>
-                  {courses.map((c) => {
+                  {courseOptions.map((c) => {
                     const price = priceTag(c.packages);
                     return (
                       <option key={c.id} value={c.name}>
@@ -524,29 +573,7 @@ export function EnquiryPage() {
                       </p>
                     )}
                     <div className="mt-3 space-y-2">
-                      {selectedCourse.packages
-                        .filter((p) => p.active !== false)
-                        .map((p) => (
-                          <div key={p.id} className="rounded-lg border bg-white px-3 py-2.5">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm font-bold text-navy">{p.name}</p>
-                              <p className="whitespace-nowrap text-sm font-black text-brand-red">
-                                {d.feeTotal}: {rs(p.totalFee)}
-                              </p>
-                            </div>
-                            <p className="mt-1 break-words text-xs text-gray-500">
-                              {[
-                                p.admissionFee ? `${d.feeAdmission} ${rs(p.admissionFee)}` : "",
-                                p.tuitionFee ? `${d.feeTuition} ${rs(p.tuitionFee)}` : "",
-                                p.examFee ? `${d.feeExam} ${rs(p.examFee)}` : "",
-                                p.physicalFee ? `${d.feePhysical} ${rs(p.physicalFee)}` : "",
-                                p.additionalFee ? `${d.feeAdditional} ${rs(p.additionalFee)}` : "",
-                              ]
-                                .filter(Boolean)
-                                .join(" • ")}
-                            </p>
-                          </div>
-                        ))}
+                      {packageRows(selectedCourse, "text-brand-red")}
                     </div>
                   </div>
                 )}
@@ -561,6 +588,45 @@ export function EnquiryPage() {
                     {site.phones[0]}
                   </a>
                 </p>
+              </label>
+
+              {/* Hostel — optional, separate select with its own fee display */}
+              <label className="block sm:col-span-2">
+                <span className={LABEL}>{d.hostelLabel}</span>
+                <select
+                  className={INPUT}
+                  value={form.hostel}
+                  onChange={(e) => set("hostel", e.target.value)}
+                >
+                  <option value="">{d.hostelNone}</option>
+                  {hostelOptions.map((c) => {
+                    const price = priceTag(c.packages);
+                    return (
+                      <option key={c.id} value={c.name}>
+                        {price ? `${c.name} — ${price}` : c.name}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {selectedHostel && (
+                  <div className="mt-3 rounded-xl border border-green-500/30 bg-green-50 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-green-700">
+                      {d.selectedHostel}
+                    </p>
+                    <p className="mt-0.5 font-display font-black text-lg text-navy">
+                      {selectedHostel.name}
+                    </p>
+                    {selectedHostel.description && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {selectedHostel.description}
+                      </p>
+                    )}
+                    <div className="mt-3 space-y-2">
+                      {packageRows(selectedHostel, "text-green-700")}
+                    </div>
+                  </div>
+                )}
               </label>
 
               <label className="block sm:col-span-2">
