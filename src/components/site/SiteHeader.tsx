@@ -128,7 +128,7 @@ export function SiteHeader() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Logo + Name */}
           <Link to="/" className="flex items-center gap-3 shrink-0">
-            <StarLogo size="sm" />
+            <StarLogo size="sm" className="h-11 w-11 md:h-12 md:w-12" />
             <div>
               <h1 className="font-display font-black text-sm md:text-base text-navy leading-tight">
                 STAR COACHING <span className="text-brand-red">INSTITUTE</span>
