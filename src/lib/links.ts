@@ -13,7 +13,22 @@ export function whatsappDigits(raw: string | undefined): string {
   return digits.startsWith("977") ? digits : `977${digits.slice(-10)}`;
 }
 
-export function whatsappHref(raw: string | undefined): string {
+/**
+ * Institute WhatsApp "click-to-chat" message link (owner-provided).
+ *
+ * Used for every general "chat with us" button (header, footer, hero,
+ * floating chat, contact, payment card…). Number-based links
+ * (whatsappNumberHref) are kept ONLY where the page must prefill the message
+ * text (?text=…): the enquiry / admission forms sending form details.
+ */
+export const WHATSAPP_CHAT_LINK = "https://wa.me/message/546YHQNR6APQA1";
+
+export function whatsappHref(_raw?: string): string {
+  return WHATSAPP_CHAT_LINK;
+}
+
+/** Number-based wa.me link — only for prefilled form-detail messages. */
+export function whatsappNumberHref(raw: string | undefined): string {
   const digits = whatsappDigits(raw);
   return digits ? `https://wa.me/${digits}` : "https://wa.me/";
 }

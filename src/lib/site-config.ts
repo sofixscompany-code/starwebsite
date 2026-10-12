@@ -8,10 +8,10 @@ export const site = {
   whatsapp: "9804899123",
   email: "info@starcoaching.edu.np",
   socials: {
-    facebook: "https://facebook.com",
+    facebook: "https://www.facebook.com/share/1JzpKhhZwJ/",
     instagram: "https://instagram.com",
-    youtube: "https://youtube.com",
-    tiktok: "https://tiktok.com",
+    youtube: "https://youtube.com/@star_coaching_institute?si=aJYHytNrrvfgEfMl",
+    tiktok: "https://www.tiktok.com/@star_coaching_janakpur?_r=1&_t=ZS-9AEKkPTRtn2",
   },
   established: 2015,
   tagline: "Nepal Police • Army • Loksewa • Medical • Technical • Tuition",

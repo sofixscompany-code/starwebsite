@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Phone } from "lucide-react";
-
-const WHATSAPP_NUMBER = "9779804899123";
+import { WHATSAPP_CHAT_LINK } from "@/lib/links";
 const FREE_MESSAGE_LIMIT = 3;
 
 const PREdefined_REPLIES: Record<string, string> = {
@@ -86,7 +85,7 @@ export function FloatingChat() {
 
   const openWhatsApp = () => {
     window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Star Coaching! I need help.")}`,
+      `${WHATSAPP_CHAT_LINK}?text=${encodeURIComponent("Hi Star Coaching! I need help.")}`,
       "_blank",
     );
   };

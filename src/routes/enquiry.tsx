@@ -6,7 +6,7 @@ import { db } from "@/integrations/firebase/config";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/lib/site-config";
-import { whatsappHref } from "@/lib/links";
+import { whatsappHref, whatsappNumberHref } from "@/lib/links";
 import { useLanguage } from "@/hooks/use-language";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
 import { NEPAL_GEO, districtsFor, municipalitiesFor } from "@/data/nepal-geo";
@@ -46,6 +46,13 @@ const DICT = {
     why1: "Free career counselling with our senior faculty.",
     why2: "Course fees, batches and schedules explained clearly.",
     why3: "No obligation — enquiry is100% free of charge.",
+    selected: "Selected Course",
+    feeTotal: "Total Fee",
+    feeAdmission: "Admission",
+    feeTuition: "Tuition",
+    feeExam: "Exam",
+    feePhysical: "Physical",
+    feeAdditional: "Additional",
   },
   ne: {
     badge: "निःशुल्क सोधपुछ",
@@ -80,6 +87,13 @@ const DICT = {
     why1: "हाम्रा वरिष्ठ शिक्षकसँग निःशुल्क करियर परामर्श।",
     why2: "कोर्स फी, ब्याच र समयतालिका स्पष्ट रूपमा जान्न पाइन्छ।",
     why3: "कुनै बाध्यता छैन — सोधपुछ पूर्ण रूपमा निःशुल्क छ।",
+    selected: "छानिएको कोर्स",
+    feeTotal: "जम्मा शुल्क",
+    feeAdmission: "भर्ना शुल्क",
+    feeTuition: "पढाई शुल्क",
+    feeExam: "परीक्षा शुल्क",
+    feePhysical: "फिजिकल शुल्क",
+    feeAdditional: "अतिरिक्त शुल्क",
   },
   hi: {
     badge: "निःशुल्क पूछताछ",
@@ -114,6 +128,13 @@ const DICT = {
     why1: "हमारे वरिष्ठ शिक्षकों से निःशुल्क करियर परामर्श।",
     why2: "कोर्स फी, बैच और समय-सारणी की स्पष्ट जानकारी।",
     why3: "कोई बाध्यता नहीं — पूछताछ पूर्णतः निःशुल्क है।",
+    selected: "चुना गया कोर्स",
+    feeTotal: "कुल फ़ीस",
+    feeAdmission: "भर्ना फ़ीस",
+    feeTuition: "पढ़ाई फ़ीस",
+    feeExam: "परीक्षा फ़ीस",
+    feePhysical: "फ़िज़िकल फ़ीस",
+    feeAdditional: "अतिरिक्त फ़ीस",
   },
 } as const;
 
@@ -248,7 +269,14 @@ export function EnquiryPage() {
     }
   };
 
-  const waLink = `${whatsappHref(site.whatsapp)}?text=${waText()}`;
+  const waLink = `${whatsappNumberHref(site.whatsapp)}?text=${waText()}`;
+
+  const selectedCourse = useMemo(
+    () => courses.find((c) => c.name === form.course) ?? null,
+    [courses, form.course],
+  );
+
+  const rs = (n: number) => `Rs. ${n.toLocaleString("en-IN")}`;
 
   /* ── Success ── */
   if (done) {
@@ -464,6 +492,48 @@ export function EnquiryPage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Selected course — name + official fee breakdown (२०८३/२०८४) */}
+                {selectedCourse && (
+                  <div className="mt-3 rounded-xl border border-brand-red/25 bg-brand-red/5 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-brand-red">
+                      {d.selected}
+                    </p>
+                    <p className="mt-0.5 font-display font-black text-lg text-navy">
+                      {selectedCourse.name}
+                    </p>
+                    {selectedCourse.description && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {selectedCourse.description}
+                      </p>
+                    )}
+                    <div className="mt-3 space-y-2">
+                      {selectedCourse.packages
+                        .filter((p) => p.active !== false)
+                        .map((p) => (
+                          <div key={p.id} className="rounded-lg border bg-white px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-bold text-navy">{p.name}</p>
+                              <p className="whitespace-nowrap text-sm font-black text-brand-red">
+                                {d.feeTotal}: {rs(p.totalFee)}
+                              </p>
+                            </div>
+                            <p className="mt-1 break-words text-xs text-gray-500">
+                              {[
+                                p.admissionFee ? `${d.feeAdmission} ${rs(p.admissionFee)}` : "",
+                                p.tuitionFee ? `${d.feeTuition} ${rs(p.tuitionFee)}` : "",
+                                p.examFee ? `${d.feeExam} ${rs(p.examFee)}` : "",
+                                p.physicalFee ? `${d.feePhysical} ${rs(p.physicalFee)}` : "",
+                                p.additionalFee ? `${d.feeAdditional} ${rs(p.additionalFee)}` : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" • ")}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </label>
 
               <label className="block sm:col-span-2">

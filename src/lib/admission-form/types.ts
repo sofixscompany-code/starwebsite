@@ -81,6 +81,11 @@ export interface AdmissionCourse {
   /** "" means the course applies to every organization/post. */
   organization: Organization | "";
   post: AppliedPost | "";
+  /**
+   * Enquiry-only courses (school classes, Loksewa, health, bank… listed on the
+   * public enquiry form) — hidden from the security-forces admission form.
+   */
+  enquiryOnly?: boolean;
   name: string;
   description: string;
   duration: string;
