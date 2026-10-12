@@ -14,7 +14,6 @@ import {
   MUNICIPALITY_TYPES,
   BLOOD_GROUPS,
 } from "@/lib/admission-form/types";
-import { applicableCourses } from "@/lib/admission-form/defaults";
 import {
   districtsFor,
   municipalitiesFor,
@@ -65,6 +64,15 @@ function money(n: number | null | undefined): string {
   return n == null ? "" : n.toLocaleString("en-IN");
 }
 
+/** Option price tag — min–max when a course has multiple active packages. */
+function priceTag(pkgs: AdmissionCourse["packages"]): string {
+  const totals = pkgs.filter((p) => p.active !== false).map((p) => p.totalFee);
+  if (!totals.length) return "";
+  const min = Math.min(...totals);
+  const max = Math.max(...totals);
+  return min === max ? `Rs. ${money(min)}` : `Rs. ${money(min)} – Rs. ${money(max)}`;
+}
+
 function splitDate(value: string) {
   const [y = "", m = "", d = ""] = value.split("-");
   return { y, m, d };
@@ -77,7 +85,9 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
   const [sigModal, setSigModal] = useState<null | "studentSignature" | "parentSignature">(null);
 
   const active = courses.filter((c) => c.active !== false);
-  const courseOptions = applicableCourses(active, data.organization, data.appliedPost);
+  /* Show EVERY course in the dropdown — hostel is asked separately below */
+  const courseOptions = active.filter((c) => c.id !== "hostel");
+  const hostelPkg = active.find((c) => c.id === "hostel")?.packages.find((p) => p.active !== false);
   const selectedCourse = active.find((c) => c.id === data.courseId);
   const packages = (selectedCourse?.packages ?? []).filter((p) => p.active !== false);
   const fallbackPackages = [
@@ -268,16 +278,15 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
             aria-label="Course / Class applied for"
             onChange={(e) => selectCourse(e.target.value)}
           >
-            <option value="">
-              {courseOptions.length
-                ? "— Select Course / Class —"
-                : "Select organization & post first"}
-            </option>
-            {courseOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            <option value="">— Select Course / Class —</option>
+            {courseOptions.map((c) => {
+              const price = priceTag(c.packages);
+              return (
+                <option key={c.id} value={c.id}>
+                  {price ? `${c.name} — ${price}` : c.name}
+                </option>
+              );
+            })}
           </select>
           {err("courseId") && <FieldError msg={err("courseId")!} />}
         </div>
@@ -597,6 +606,11 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
               />
             ))}
           </div>
+          {data.hostel === "Yes" && hostelPkg && (
+            <span className="shrink-0 whitespace-nowrap rounded border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">
+              Hostel fee: Rs. {money(hostelPkg.totalFee)} / {hostelPkg.name}
+            </span>
+          )}
           <span className="sci-label sci-label-gap">Package :</span>
           <div className="sci-checks">
             {PACKAGE_TYPES.map((p) => (
