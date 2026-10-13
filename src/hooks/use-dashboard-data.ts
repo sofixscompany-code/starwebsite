@@ -269,6 +269,25 @@ export function useSuperAdminStats() {
 
       const revenue = payments.reduce((s, p) => s + num(p.amount), 0);
       const parents = users.filter((u) => u.role === "parent").length;
+
+      // Period collections — today & this month (calendar month).
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const todayCollection = payments
+        .filter((p) => toMs(p.createdAt) >= startOfToday.getTime())
+        .reduce((s, p) => s + num(p.amount), 0);
+      const monthCollection = payments
+        .filter((p) => toMs(p.createdAt) >= startOfMonth.getTime())
+        .reduce((s, p) => s + num(p.amount), 0);
+      const monthExpense = expenses
+        .filter((e) => toMs(e.createdAt) >= startOfMonth.getTime())
+        .reduce((s, e) => s + num(e.amount), 0);
+      const monthAdmissions = admissions.filter(
+        (a) => toMs(a.createdAt) >= startOfMonth.getTime(),
+      ).length;
       // Real admission workflow statuses (Draft/Submitted/pending).
       const PENDING_ADMISSION = new Set(["pending", "submitted", "draft"]);
       const pendingAdmissions = admissions.filter((a) =>
@@ -342,6 +361,11 @@ export function useSuperAdminStats() {
         revenue,
         admissionsCount: admissions.length,
         activeUsers: users.length,
+        todayCollection,
+        monthCollection,
+        monthExpense,
+        monthNet: monthCollection - monthExpense,
+        monthAdmissions,
         recentActivities: activities.slice(0, 8),
         pendingApprovals: pendingAdmissions.slice(0, 5),
         revenueByMonth,

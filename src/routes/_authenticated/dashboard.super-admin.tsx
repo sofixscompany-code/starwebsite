@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, Users, Baby, Wallet, BookOpen, BarChart3, Bell, User } from "lucide-react";
+import {
+  GraduationCap,
+  Users,
+  Baby,
+  Wallet,
+  BookOpen,
+  BarChart3,
+  Bell,
+  User,
+  RefreshCw,
+  Banknote,
+  TrendingDown,
+  PiggyBank,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   AreaChart,
@@ -19,8 +32,13 @@ import { useAdminT, formatClock } from "@/lib/admin-i18n";
 
 const PIE_COLORS = ["#FBBF24", "#EF4444", "#10b981", "#1E3A8A", "#8b5cf6", "#f97316"];
 
+/** Loading placeholder block. */
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={"animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800 " + className} />;
+}
+
 export function SuperAdminDashboard() {
-  const { data: live } = useSuperAdminStats();
+  const { data: live, isLoading, isFetching, refetch, dataUpdatedAt } = useSuperAdminStats();
   const { t, lang } = useAdminT();
   const hasData = !!live?.hasData;
 
@@ -37,6 +55,10 @@ export function SuperAdminDashboard() {
   const fmtCompact = (n: number) =>
     n >= 100000 ? "Rs " + (n / 100000).toFixed(1) + "L" : "Rs " + n.toLocaleString();
 
+  const updatedStr = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : "—";
+
   const activityRows = live?.recentActivities ?? [];
 
   const approvalRows = (live?.pendingApprovals ?? []).map((a) => ({
@@ -46,13 +68,16 @@ export function SuperAdminDashboard() {
     date: fmtShortDate(a.createdAt),
   }));
 
-  const revMonths =
-    hasData && (live?.revenue ?? 0) > 0 && live?.revenueByMonth?.length
-      ? live.revenueByMonth.map((r) => ({
+  /* Income vs expense — both series share the same last-6-months order. */
+  const chartSeries =
+    hasData && live?.revenueByMonth?.length
+      ? live.revenueByMonth.map((r, i) => ({
           m: String(r.month),
           rev: r.amount,
+          exp: live.expenseByMonth?.[i]?.amount ?? 0,
         }))
       : [];
+  const revMonths = chartSeries.some((p) => p.rev > 0 || p.exp > 0) ? chartSeries : [];
 
   const incomeDist =
     live?.incomeBreakdown && live.incomeBreakdown.length
@@ -114,6 +139,42 @@ export function SuperAdminDashboard() {
     },
   ];
 
+  const monthStrip = [
+    {
+      label: t("todayCollection"),
+      value: hasData && live ? fmtCompact(live.todayCollection) : "Rs 0",
+      icon: Wallet,
+      tone: "text-navy bg-navy/10",
+    },
+    {
+      label: t("monthCollection"),
+      value: hasData && live ? fmtCompact(live.monthCollection) : "Rs 0",
+      icon: Banknote,
+      tone: "text-emerald-600 bg-emerald-100",
+    },
+    {
+      label: t("monthExpense"),
+      value: hasData && live ? fmtCompact(live.monthExpense) : "Rs 0",
+      icon: TrendingDown,
+      tone: "text-red-600 bg-red-100",
+    },
+    {
+      label: t("monthNet"),
+      value: hasData && live ? fmtCompact(live.monthNet) : "Rs 0",
+      icon: PiggyBank,
+      tone:
+        (hasData && live ? live.monthNet : 0) >= 0
+          ? "text-emerald-600 bg-emerald-100"
+          : "text-red-600 bg-red-100",
+    },
+    {
+      label: t("monthAdmissions"),
+      value: hasData && live ? live.monthAdmissions.toLocaleString() : "0",
+      icon: BookOpen,
+      tone: "text-amber-600 bg-amber-100",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -123,186 +184,287 @@ export function SuperAdminDashboard() {
       >
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
-        <div className="relative">
-          <p className="text-sm text-gold font-medium">{dateStr}</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
-            {greeting}, {t("adminDashboard")}
-          </h1>
-          <p className="text-white/70 mt-1 text-sm">{t("hereToday")}</p>
-          <div className="flex flex-wrap gap-3 mt-4">
-            <Link
-              to="/admin/students"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-gold font-medium">{dateStr}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
+              {greeting}, {t("adminDashboard")}
+            </h1>
+            <p className="text-white/70 mt-1 text-sm">{t("hereToday")}</p>
+            <div className="flex flex-wrap gap-3 mt-4">
+              <Link
+                to="/admin/students"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
+              >
+                <User className="w-4 h-4" /> {t("manageStudents")}
+              </Link>
+              <Link
+                to="/admin/payments"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
+              >
+                <Wallet className="w-4 h-4" /> {t("viewCollections")}
+              </Link>
+              <Link
+                to="/admin/reports"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gold/20 hover:bg-gold/30 rounded-lg text-sm font-medium transition backdrop-blur-sm text-gold"
+              >
+                <BarChart3 className="w-4 h-4" /> {t("Reports")}
+              </Link>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition backdrop-blur-sm text-white disabled:opacity-60"
             >
-              <User className="w-4 h-4" /> {t("manageStudents")}
-            </Link>
-            <Link
-              to="/admin/payments"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition backdrop-blur-sm text-white"
-            >
-              <Wallet className="w-4 h-4" /> {t("viewCollections")}
-            </Link>
-            <Link
-              to="/admin/reports"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-gold/20 hover:bg-gold/30 rounded-lg text-sm font-medium transition backdrop-blur-sm text-gold"
-            >
-              <BarChart3 className="w-4 h-4" /> {t("Reports")}
-            </Link>
+              <RefreshCw className={"w-3.5 h-3.5 " + (isFetching ? "animate-spin" : "")} />
+              {t("refreshLabel")}
+            </button>
+            <p className="text-[11px] text-white/60">
+              {t("updatedLabel")}: {updatedStr}
+            </p>
           </div>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
-      >
-        {statCards.map((s) => {
-          const Icon = s.icon;
-          return (
-            <motion.div
-              key={s.label}
-              whileHover={{ y: -4 }}
-              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
-            >
-              <div
-                className={
-                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
-                  s.color +
-                  " flex items-center justify-center shadow-md mb-3"
-                }
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skel key={i} className="h-28" />
+          ))}
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
+        >
+          {statCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <motion.div
+                key={s.label}
+                whileHover={{ y: -4 }}
+                className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
               >
-                <Icon className="w-5 h-5 text-white" />
+                <div
+                  className={
+                    "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                    s.color +
+                    " flex items-center justify-center shadow-md mb-3"
+                  }
+                >
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
+
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skel key={i} className="h-20" />
+          ))}
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4"
+        >
+          {monthStrip.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3"
+              >
+                <div
+                  className={
+                    "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 " + item.tone
+                  }
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-gray-500 font-medium leading-tight">
+                    {item.label}
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                    {item.value}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="xl:col-span-2"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                  {t("revenueTrend")}
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">{t("revenueTrendSub")}</p>
-              </div>
-            </div>
-            <div className="h-72">
-              {revMonths.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revMonths}>
-                    <defs>
-                      <linearGradient id="revG" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="m" stroke="#9ca3af" fontSize={11} />
-                    <YAxis
-                      stroke="#9ca3af"
-                      fontSize={11}
-                      tickFormatter={(v) => "Rs " + v / 1000 + "k"}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "#fff",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 12,
-                      }}
-                      formatter={(v: number) => ["Rs " + v.toLocaleString(), undefined]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="rev"
-                      stroke="#1E3A8A"
-                      fill="url(#revG)"
-                      strokeWidth={2}
-                      name="Total Revenue"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-            <div className="mb-3">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                {t("incomeDistribution")}
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">{t("incomeDistributionSub")}</p>
-            </div>
-            <div className="h-56">
-              {incomeDist.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={incomeDist}
-                      innerRadius={50}
-                      outerRadius={80}
-                      dataKey="value"
-                      paddingAngle={3}
-                    >
-                      {incomeDist.map((e) => (
-                        <Cell key={e.name} fill={e.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "#fff",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 12,
-                      }}
-                      formatter={(v: number) => [v + "%", undefined]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            {incomeDist.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {incomeDist.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2 text-xs">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ background: item.color }}
-                    />
-                    <span className="text-gray-500 dark:text-gray-400 truncate">{item.name}</span>
-                    <span className="ml-auto font-semibold text-gray-700 dark:text-gray-200">
-                      {item.value}%
+        {isLoading ? (
+          <>
+            <Skel className="h-96 xl:col-span-2" />
+            <Skel className="h-96" />
+          </>
+        ) : (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="xl:col-span-2"
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      {t("revenueTrend")}
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">{t("revenueTrendSub")}</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-2 rounded-sm bg-navy inline-block" />
+                      {t("collectionLabel")}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-2 rounded-sm bg-red-500 inline-block" />
+                      {t("expenseLabel")}
                     </span>
                   </div>
-                ))}
+                </div>
+                <div className="h-72">
+                  {revMonths.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={revMonths}>
+                        <defs>
+                          <linearGradient id="revG" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="expG" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#DC2626" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="#DC2626" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="m" stroke="#9ca3af" fontSize={11} />
+                        <YAxis
+                          stroke="#9ca3af"
+                          fontSize={11}
+                          tickFormatter={(v) => "Rs " + v / 1000 + "k"}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: 12,
+                          }}
+                          formatter={(v: number, name: string) => [
+                            "Rs " + v.toLocaleString(),
+                            name === "rev" ? t("collectionLabel") : t("expenseLabel"),
+                          ]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="rev"
+                          stroke="#1E3A8A"
+                          fill="url(#revG)"
+                          strokeWidth={2}
+                          name="rev"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="exp"
+                          stroke="#DC2626"
+                          fill="url(#expG)"
+                          strokeWidth={2}
+                          strokeDasharray="5 3"
+                          name="exp"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+                <div className="mb-3">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                    {t("incomeDistribution")}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{t("incomeDistributionSub")}</p>
+                </div>
+                <div className="h-56">
+                  {incomeDist.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={incomeDist}
+                          innerRadius={50}
+                          outerRadius={80}
+                          dataKey="value"
+                          paddingAngle={3}
+                        >
+                          {incomeDist.map((e) => (
+                            <Cell key={e.name} fill={e.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            background: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: 12,
+                          }}
+                          formatter={(v: number) => [v + "%", undefined]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+                {incomeDist.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {incomeDist.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2 text-xs">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: item.color }}
+                        />
+                        <span className="text-gray-500 dark:text-gray-400 truncate">
+                          {item.name}
+                        </span>
+                        <span className="ml-auto font-semibold text-gray-700 dark:text-gray-200">
+                          {item.value}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
