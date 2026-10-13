@@ -1,4 +1,5 @@
-﻿import {
+﻿import { useEffect, useState } from "react";
+import {
   AreaChart,
   Area,
   XAxis,
@@ -16,22 +17,39 @@ import {
   DollarSign,
   BarChart3,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAccountantDashboard } from "@/hooks/use-dashboard-data";
-import { useAdminT } from "@/lib/admin-i18n";
+import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { useLedgerSnapshot } from "@/hooks/use-finance";
 import { roleLabel } from "@/lib/finance";
 
+/** Loading placeholder block. */
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={"animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800 " + className} />;
+}
+
 export function AccountantDashboard() {
-  const { data: fin } = useAccountantDashboard();
+  const { data: fin, isLoading, isFetching, refetch, dataUpdatedAt } = useAccountantDashboard();
   const { data: ledgerSnap, isLoading: ledgerLoading, isError: ledgerError } = useLedgerSnapshot();
-  const { t } = useAdminT();
+  const { t, lang } = useAdminT();
+  // Live day/date string — refreshes with the minute, never hardcoded.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
+  const { full: dateStr } = formatClock(now, lang);
   const hasData = !!fin?.hasData;
 
   const fmt = (n: number) =>
     n >= 100000 ? "Rs " + (n / 100000).toFixed(2) + "L" : "Rs " + n.toLocaleString();
+
+  const updatedStr = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : "—";
 
   const statCards = [
     {
@@ -95,43 +113,67 @@ export function AccountantDashboard() {
       >
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
-        <div className="relative">
-          <p className="text-sm text-gold font-medium">{t("accountantDashboard")}</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
-            {t("financialOverview")}
-          </h1>
-          <p className="text-white/70 mt-1 text-sm">{t("accountantIntro")}</p>
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-gold font-medium">{dateStr}</p>
+            <p className="text-xs text-white/60 mt-0.5">{t("accountantDashboard")}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">
+              {t("financialOverview")}
+            </h1>
+            <p className="text-white/70 mt-1 text-sm">{t("accountantIntro")}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition backdrop-blur-sm text-white disabled:opacity-60"
+            >
+              <RefreshCw className={"w-3.5 h-3.5 " + (isFetching ? "animate-spin" : "")} />
+              {t("refreshLabel")}
+            </button>
+            <p className="text-[11px] text-white/60">
+              {t("updatedLabel")}: {updatedStr}
+            </p>
+          </div>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-4"
-      >
-        {statCards.map((s) => {
-          const Icon = s.icon;
-          return (
-            <motion.div
-              key={s.label}
-              whileHover={{ y: -4 }}
-              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
-            >
-              <div
-                className={
-                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
-                  s.color +
-                  " flex items-center justify-center shadow-md mb-3"
-                }
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skel key={i} className="h-28" />
+          ))}
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+        >
+          {statCards.map((s) => {
+            const Icon = s.icon;
+            return (
+              <motion.div
+                key={s.label}
+                whileHover={{ y: -4 }}
+                className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
               >
-                <Icon className="w-5 h-5 text-white" />
-              </div>
-              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                <div
+                  className={
+                    "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                    s.color +
+                    " flex items-center justify-center shadow-md mb-3"
+                  }
+                >
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">
@@ -150,7 +192,9 @@ export function AccountantDashboard() {
               )}
             </div>
             <div className="h-64">
-              {chartRows.length === 0 ? (
+              {isLoading ? (
+                <Skel className="h-64" />
+              ) : chartRows.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-sm text-gray-400 dark:text-gray-500">{t("noData")}</p>
                 </div>
@@ -200,7 +244,13 @@ export function AccountantDashboard() {
               {t("recentTxns")}
             </h3>
             <p className="text-xs text-gray-400 mb-4">{t("recentTxnsSub")}</p>
-            {txnRows.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skel key={i} className="h-12" />
+                ))}
+              </div>
+            ) : txnRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
                 {t("noTxns")}
               </p>

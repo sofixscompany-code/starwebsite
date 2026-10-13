@@ -1,17 +1,38 @@
 ﻿import { useEffect, useState } from "react";
-import { CalendarCheck, Trophy, Wallet, Bell, Loader2, FileText, Clock } from "lucide-react";
+import {
+  CalendarCheck,
+  Trophy,
+  Wallet,
+  Bell,
+  Loader2,
+  FileText,
+  Clock,
+  RefreshCw,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useParentDashboard, getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
-import { useAdminT } from "@/lib/admin-i18n";
+import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { useMyFinance } from "@/hooks/use-finance";
 import { fmtDateTime, fmtRs, methodLabel } from "@/lib/finance";
 
+/** Loading placeholder block. */
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={"animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800 " + className} />;
+}
+
 export function ParentDashboard() {
   const [mounted, setMounted] = useState(false);
-  const { t } = useAdminT();
+  const { t, lang } = useAdminT();
+  // Live day/date string — refreshes with the minute, never hardcoded.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
+  const { full: dateStr } = formatClock(now, lang);
   useEffect(() => {
     if (getUserRole() === "parent") {
       setMounted(true);
@@ -20,10 +41,16 @@ export function ParentDashboard() {
 
   const storedUser = getStoredAuthUser();
   const parentEmail = storedUser?.email || auth.currentUser?.email || undefined;
-  const { data: stats, isLoading } = useParentDashboard(parentEmail);
+  const {
+    data: stats,
+    isLoading,
+    isFetching,
+    refetch,
+    dataUpdatedAt,
+  } = useParentDashboard(parentEmail);
   const fin = useMyFinance();
 
-  if (!mounted || isLoading) {
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -33,6 +60,10 @@ export function ParentDashboard() {
       </div>
     );
   }
+
+  const updatedStr = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : "—";
 
   const hasData = !!stats?.hasData;
   const childRows = (stats?.children || []).map((c) => {
@@ -61,84 +92,108 @@ export function ParentDashboard() {
       >
         <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-brand-red/10 blur-2xl" />
-        <div className="relative">
-          <p className="text-sm text-gold font-medium">{t("parentDashboard")}</p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">{t("welcomeParent")}</h1>
-          <p className="text-white/70 mt-1 text-sm">{t("parentIntro")}</p>
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-gold font-medium">{dateStr}</p>
+            <p className="text-xs text-white/60 mt-0.5">{t("parentDashboard")}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white">{t("welcomeParent")}</h1>
+            <p className="text-white/70 mt-1 text-sm">{t("parentIntro")}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition backdrop-blur-sm text-white disabled:opacity-60"
+            >
+              <RefreshCw className={"w-3.5 h-3.5 " + (isFetching ? "animate-spin" : "")} />
+              {t("refreshLabel")}
+            </button>
+            <p className="text-[11px] text-white/60">
+              {t("updatedLabel")}: {updatedStr}
+            </p>
+          </div>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4"
-      >
-        {[
-          {
-            label: t("attendanceLabel"),
-            value: attPercent === null ? "0%" : attPercent + "%",
-            icon: CalendarCheck,
-            color: "from-emerald-500 to-emerald-600",
-            bg: "bg-emerald-50",
-          },
-          {
-            label: t("myResults"),
-            value: avgScore === null ? "0%" : avgScore + "%",
-            icon: Trophy,
-            color: "from-navy to-navy/80",
-            bg: "bg-navy/5",
-          },
-          {
-            label: t("homeworkPend"),
-            value: hasData ? String(pendingHw) : "0",
-            icon: FileText,
-            color: "from-gold to-gold/80",
-            bg: "bg-gold/5",
-          },
-          {
-            label: t("notices"),
-            value: hasData ? String(stats?.notices?.length ?? 0) : "0",
-            icon: Bell,
-            color: "from-brand-red to-brand-red/80",
-            bg: "bg-brand-red/5",
-          },
-          {
-            label: t("feePaidLabel"),
-            value: fin.loading ? "—" : fmtRs(fin.summary.paid),
-            icon: Wallet,
-            color: "from-emerald-500 to-emerald-600",
-            bg: "bg-emerald-50",
-          },
-          {
-            label: t("feePendingLabel"),
-            value: fin.loading ? "—" : fmtRs(fin.summary.pending),
-            icon: Clock,
-            color: "from-navy to-navy/80",
-            bg: "bg-navy/5",
-          },
-        ].map((s) => {
-          const Icon = s.icon;
-          return (
-            <motion.div
-              key={s.label}
-              whileHover={{ y: -4 }}
-              className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
-            >
-              <div
-                className={
-                  "w-10 h-10 rounded-xl bg-gradient-to-br " +
-                  s.color +
-                  " flex items-center justify-center shadow-md mb-3"
-                }
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skel key={i} className="h-28" />
+          ))}
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4"
+        >
+          {[
+            {
+              label: t("attendanceLabel"),
+              value: attPercent === null ? "0%" : attPercent + "%",
+              icon: CalendarCheck,
+              color: "from-emerald-500 to-emerald-600",
+              bg: "bg-emerald-50",
+            },
+            {
+              label: t("myResults"),
+              value: avgScore === null ? "0%" : avgScore + "%",
+              icon: Trophy,
+              color: "from-navy to-navy/80",
+              bg: "bg-navy/5",
+            },
+            {
+              label: t("homeworkPend"),
+              value: hasData ? String(pendingHw) : "0",
+              icon: FileText,
+              color: "from-gold to-gold/80",
+              bg: "bg-gold/5",
+            },
+            {
+              label: t("notices"),
+              value: hasData ? String(stats?.notices?.length ?? 0) : "0",
+              icon: Bell,
+              color: "from-brand-red to-brand-red/80",
+              bg: "bg-brand-red/5",
+            },
+            {
+              label: t("feePaidLabel"),
+              value: fin.loading ? "—" : fmtRs(fin.summary.paid),
+              icon: Wallet,
+              color: "from-emerald-500 to-emerald-600",
+              bg: "bg-emerald-50",
+            },
+            {
+              label: t("feePendingLabel"),
+              value: fin.loading ? "—" : fmtRs(fin.summary.pending),
+              icon: Clock,
+              color: "from-navy to-navy/80",
+              bg: "bg-navy/5",
+            },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <motion.div
+                key={s.label}
+                whileHover={{ y: -4 }}
+                className={s.bg + " rounded-xl p-4 border border-gray-200/60 shadow-sm"}
               >
-                <Icon className="w-5 h-5 text-white" />
-              </div>
-              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                <div
+                  className={
+                    "w-10 h-10 rounded-xl bg-gradient-to-br " +
+                    s.color +
+                    " flex items-center justify-center shadow-md mb-3"
+                  }
+                >
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2 space-y-4">
@@ -147,7 +202,13 @@ export function ParentDashboard() {
               {t("childrenOverview")}
             </h3>
             <p className="text-xs text-gray-400 mb-4">{t("childrenOverviewSub")}</p>
-            {childRows.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <Skel key={i} className="h-36" />
+                ))}
+              </div>
+            ) : childRows.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">
                 {t("noChildrenLinked")}
               </p>
