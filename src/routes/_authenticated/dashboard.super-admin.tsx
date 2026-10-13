@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { useSuperAdminStats, fmtShortDate } from "@/hooks/use-dashboard-data";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
+import { DailyBudget } from "@/components/admin/DailyBudget";
 
 const PIE_COLORS = ["#FBBF24", "#EF4444", "#10b981", "#1E3A8A", "#8b5cf6", "#f97316"];
 
@@ -306,6 +307,12 @@ export function SuperAdminDashboard() {
           })}
         </motion.div>
       )}
+
+      <DailyBudget
+        income={live?.todayCollection ?? 0}
+        expense={live?.todayExpense ?? 0}
+        loading={isLoading}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {isLoading ? (

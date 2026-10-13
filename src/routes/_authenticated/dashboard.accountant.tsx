@@ -23,6 +23,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAccountantDashboard } from "@/hooks/use-dashboard-data";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
+import { DailyBudget } from "@/components/admin/DailyBudget";
 import { useLedgerSnapshot } from "@/hooks/use-finance";
 import { roleLabel } from "@/lib/finance";
 
@@ -174,6 +175,12 @@ export function AccountantDashboard() {
           })}
         </motion.div>
       )}
+
+      <DailyBudget
+        income={fin?.todayCollection ?? 0}
+        expense={fin?.todayExpense ?? 0}
+        loading={isLoading}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">

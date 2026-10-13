@@ -285,6 +285,9 @@ export function useSuperAdminStats() {
       const monthExpense = expenses
         .filter((e) => toMs(e.createdAt) >= startOfMonth.getTime())
         .reduce((s, e) => s + num(e.amount), 0);
+      const todayExpense = expenses
+        .filter((e) => toMs(e.createdAt) >= startOfToday.getTime())
+        .reduce((s, e) => s + num(e.amount), 0);
       const monthAdmissions = admissions.filter(
         (a) => toMs(a.createdAt) >= startOfMonth.getTime(),
       ).length;
@@ -362,6 +365,7 @@ export function useSuperAdminStats() {
         admissionsCount: admissions.length,
         activeUsers: users.length,
         todayCollection,
+        todayExpense,
         monthCollection,
         monthExpense,
         monthNet: monthCollection - monthExpense,
@@ -671,6 +675,9 @@ export function useAccountantDashboard() {
       const monthExpense = sortedExpenses
         .filter((e) => toMs(e.createdAt) >= startOfMonth.getTime())
         .reduce((s, e) => s + num(e.amount), 0);
+      const todayExpense = sortedExpenses
+        .filter((e) => toMs(e.createdAt) >= startOfDay.getTime())
+        .reduce((s, e) => s + num(e.amount), 0);
       const pendingDues =
         fees.filter((f) => f.status === "pending").reduce((s, f) => s + num(f.amount), 0) +
         invoices
@@ -699,6 +706,7 @@ export function useAccountantDashboard() {
 
       return {
         todayCollection,
+        todayExpense,
         pendingDues,
         monthRevenue,
         monthExpense,
@@ -713,6 +721,7 @@ export function useAccountantDashboard() {
     },
     initialData: {
       todayCollection: 0,
+      todayExpense: 0,
       pendingDues: 0,
       monthRevenue: 0,
       monthExpense: 0,
