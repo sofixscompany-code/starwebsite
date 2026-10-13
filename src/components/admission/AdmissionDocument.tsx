@@ -44,12 +44,26 @@ import {
 
 type Errors = Record<string, string>;
 
+type SigField = "studentSignature" | "parentSignature" | "academicSignature" | "principalSignature";
+
+const SIG_TITLES: Record<SigField, string> = {
+  studentSignature: "Student's Signature",
+  parentSignature: "Parent's Signature",
+  academicSignature: "Academic Signature",
+  principalSignature: "Principal's Signature",
+};
+
 interface Props {
   data: AdmissionFormData;
   courses: AdmissionCourse[];
   mode: "edit" | "readonly";
   errors?: Errors;
-  onChange: (patch: Partial<AdmissionFormData>) => void;
+  onChange: (patch: Partial<AdmissionFormData> & Partial<Record<SigField, string>>) => void;
+  /**
+   * Office sign mode: makes all four signature lines signable without
+   * enabling full form editing (used by the admin admissions view).
+   */
+  signatureEdit?: boolean;
 }
 
 const YEARS = Array.from({ length: 60 }, (_, i) => new Date().getFullYear() - 13 - i);
@@ -78,11 +92,19 @@ function splitDate(value: string) {
   return { y, m, d };
 }
 
-export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }: Props) {
+export function AdmissionDocument({
+  data,
+  courses,
+  mode,
+  errors = {},
+  onChange,
+  signatureEdit = false,
+}: Props) {
   const edit = mode === "edit";
+  const signable = edit || signatureEdit;
   const err = (k: string) => (edit ? errors[k] : undefined);
 
-  const [sigModal, setSigModal] = useState<null | "studentSignature" | "parentSignature">(null);
+  const [sigModal, setSigModal] = useState<null | SigField>(null);
 
   const active = courses.filter((c) => c.active !== false);
   /* Show EVERY course in the dropdown — hostel is asked separately below */
@@ -1005,7 +1027,7 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
           <SignatureLine
             label="Student's Signature"
             value={data.studentSignature}
-            editable={edit}
+            editable={signable}
             actionLabel="Sign"
             error={!!err("studentSignature")}
             onAction={() => setSigModal("studentSignature")}
@@ -1014,7 +1036,7 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
           <SignatureLine
             label="Parent's Signature"
             value={data.parentSignature}
-            editable={edit}
+            editable={signable}
             actionLabel="Sign"
             error={!!err("parentSignature")}
             onAction={() => setSigModal("parentSignature")}
@@ -1026,8 +1048,10 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
               (data as AdmissionFormData & { academicSignature?: string }).academicSignature ||
               OFFICE_SIGNATURES.academic
             }
-            editable={false}
+            editable={signatureEdit}
             actionLabel="Sign"
+            onAction={() => setSigModal("academicSignature")}
+            onClear={() => onChange({ academicSignature: "" })}
           />
           <SignatureLine
             label="Principal's Signature"
@@ -1035,19 +1059,33 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
               (data as AdmissionFormData & { principalSignature?: string }).principalSignature ||
               OFFICE_SIGNATURES.principal
             }
-            editable={false}
+            editable={signatureEdit}
             actionLabel="Sign"
+            onAction={() => setSigModal("principalSignature")}
+            onClear={() => onChange({ principalSignature: "" })}
           />
         </div>
       </section>
 
       <SignatureModal
         open={sigModal !== null}
-        title={sigModal === "studentSignature" ? "Student's Signature" : "Parent's Signature"}
-        initial={sigModal ? (data[sigModal] as string) : undefined}
+        title={sigModal ? SIG_TITLES[sigModal] : ""}
+        initial={
+          sigModal === "academicSignature"
+            ? (data as AdmissionFormData & { academicSignature?: string }).academicSignature ||
+              OFFICE_SIGNATURES.academic
+            : sigModal === "principalSignature"
+              ? (data as AdmissionFormData & { principalSignature?: string }).principalSignature ||
+                OFFICE_SIGNATURES.principal
+              : sigModal
+                ? (data[sigModal] as string)
+                : undefined
+        }
         onClose={() => setSigModal(null)}
         onSave={(dataUrl) => {
-          if (sigModal) onChange({ [sigModal]: dataUrl } as Partial<AdmissionFormData>);
+          if (sigModal) {
+            onChange({ [sigModal]: dataUrl } as Partial<Record<SigField, string>>);
+          }
           setSigModal(null);
         }}
       />

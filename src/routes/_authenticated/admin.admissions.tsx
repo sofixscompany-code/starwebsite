@@ -15,6 +15,7 @@ import {
   Loader2,
   MessageCircle,
   Pencil,
+  PenLine,
   Printer,
   RefreshCw,
   Save,
@@ -434,6 +435,41 @@ function AdmissionDetailOverlay({
   onEditOffice: () => void;
   onWhatsApp: () => void;
 }) {
+  const qc = useQueryClient();
+  /* Office sign mode — lets the office draw/override any of the 4 signatures
+     on the readonly document, then persist them to Firestore. */
+  const [signMode, setSignMode] = useState(false);
+  const [signData, setSignData] = useState<AdmissionRow["formData"]>(row.formData);
+  const [savingSign, setSavingSign] = useState(false);
+
+  const saveSignatures = async () => {
+    const keys = [
+      "studentSignature",
+      "parentSignature",
+      "academicSignature",
+      "principalSignature",
+    ] as const;
+    const patch: Record<string, string> = {};
+    for (const k of keys) {
+      if ((signData[k] ?? "") !== (row.formData[k] ?? "")) patch[k] = signData[k] ?? "";
+    }
+    if (!Object.keys(patch).length) {
+      toast.info("No signature changes");
+      return;
+    }
+    setSavingSign(true);
+    try {
+      await updateDoc(doc(db, "admissions", row.id), { ...patch, updatedAt: Date.now() });
+      toast.success("Signatures saved");
+      setSignMode(false);
+      qc.invalidateQueries({ queryKey: ["admin-admissions"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingSign(false);
+    }
+  };
+
   return createPortal(
     <div
       role="dialog"
@@ -476,6 +512,33 @@ function AdmissionDetailOverlay({
           </button>
           <button
             type="button"
+            onClick={() => setSignMode((v) => !v)}
+            className={
+              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold " +
+              (signMode
+                ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700")
+            }
+          >
+            <PenLine className="h-4 w-4" /> {signMode ? "Signing…" : "Signatures"}
+          </button>
+          {signMode && (
+            <button
+              type="button"
+              onClick={saveSignatures}
+              disabled={savingSign}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-60"
+            >
+              {savingSign ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Save signatures
+            </button>
+          )}
+          <button
+            type="button"
             onClick={onWhatsApp}
             className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/50 px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
           >
@@ -490,6 +553,14 @@ function AdmissionDetailOverlay({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Signing-mode hint (screen only) */}
+        {signMode && (
+          <div className="no-print border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+            Signing mode — click <b>Sign</b> / <b>Redraw</b> on any signature line below, draw, then
+            press <b>Save signatures</b>.
+          </div>
+        )}
 
         {/* Summary + fee breakdown (screen only) */}
         <div className="no-print grid gap-4 border-b border-gray-200 p-4 dark:border-gray-700 sm:grid-cols-2">
@@ -539,10 +610,11 @@ function AdmissionDetailOverlay({
         <div className="sci-paper-scroll">
           <div className="sci-print-root sci-print-isolated">
             <AdmissionDocument
-              data={row.formData}
+              data={signData}
               courses={courses}
               mode="readonly"
-              onChange={() => {}}
+              signatureEdit={signMode}
+              onChange={(patch) => setSignData((prev) => ({ ...prev, ...patch }))}
             />
           </div>
         </div>
