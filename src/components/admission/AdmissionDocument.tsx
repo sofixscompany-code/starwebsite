@@ -287,7 +287,21 @@ export function AdmissionDocument({ data, courses, mode, errors = {}, onChange }
                 </option>
               );
             })}
+            <option value="others">Others (अन्य)</option>
           </select>
+          {data.courseId === "others" && (
+            <input
+              className="sci-inline-select ml-1"
+              value={data.courseName}
+              disabled={!edit}
+              placeholder="Type course / class name"
+              maxLength={80}
+              aria-label="Course name (if others)"
+              onChange={(e) =>
+                onChange({ courseName: e.target.value, classAppliedFor: e.target.value })
+              }
+            />
+          )}
           {err("courseId") && <FieldError msg={err("courseId")!} />}
         </div>
 
