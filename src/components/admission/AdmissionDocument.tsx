@@ -64,6 +64,11 @@ interface Props {
    * enabling full form editing (used by the admin admissions view).
    */
   signatureEdit?: boolean;
+  /**
+   * Admin/office rendering — always shows the (office-set) Discount and
+   * Payable rows even when no discount has been granted yet.
+   */
+  officeView?: boolean;
 }
 
 const YEARS = Array.from({ length: 60 }, (_, i) => new Date().getFullYear() - 13 - i);
@@ -99,6 +104,7 @@ export function AdmissionDocument({
   errors = {},
   onChange,
   signatureEdit = false,
+  officeView = false,
 }: Props) {
   const edit = mode === "edit";
   const signable = edit || signatureEdit;
@@ -166,7 +172,7 @@ export function AdmissionDocument({
         course: selectedCourse.name,
         capturedAt: Date.now(),
       },
-      totalPayment: pkg.totalFee,
+      totalPayment: pkg.totalFee + (data.hostel === "Yes" ? data.hostelFee : 0),
     });
   };
 
@@ -638,7 +644,16 @@ export function AdmissionDocument({
                 error={!!err("hostel") && !data.hostel}
                 ariaLabel={`Hostel: ${h}`}
                 label={h}
-                onChange={() => onChange({ hostel: h })}
+                onChange={() => {
+                  const hostelFee = h === "Yes" ? (hostelPkg?.totalFee ?? 0) : 0;
+                  onChange({
+                    hostel: h,
+                    hostelFee,
+                    totalPayment: data.pricingSnapshot
+                      ? data.pricingSnapshot.totalFee + hostelFee
+                      : data.totalPayment,
+                  });
+                }}
               />
             ))}
           </div>
@@ -724,6 +739,19 @@ export function AdmissionDocument({
           <span className="sci-label sci-label-gap">Bill No.</span>
           <span className="sci-line-fill">{data.billNumber}</span>
         </div>
+
+        {/* Discount + Payable — office-set; shown to the applicant only once granted */}
+        {(officeView || data.discount > 0) && (
+          <div className="sci-row">
+            <Bullet />
+            <span className="sci-label">Discount (छुट): Rs.</span>
+            <span className="sci-amount-box">{data.discount > 0 ? money(data.discount) : "—"}</span>
+            <span className="sci-label sci-label-gap">Payable (दिनुपर्ने): Rs</span>
+            <span className="sci-amount-box">
+              {money(Math.max((data.totalPayment ?? 0) - (data.discount || 0), 0))}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* ═══════════════ PAGE 2 — paper form §§1–5 + 7 ═══════════════ */}

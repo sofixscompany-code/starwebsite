@@ -6,12 +6,15 @@ import { db } from "@/integrations/firebase/config";
 import { toast } from "sonner";
 import {
   AlertCircle,
+  BadgeCheck,
   CheckCircle2,
   ClipboardList,
   Clock,
+  Copy,
   ExternalLink,
   Eye,
   FileText,
+  KeyRound,
   Loader2,
   MessageCircle,
   Pencil,
@@ -41,6 +44,13 @@ import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
 import "@/components/admission/admission-print.css";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
 import { whatsappDigits } from "@/lib/links";
+import { useUserRole } from "@/hooks/use-user-role";
+import {
+  ADMISSION_PASSWORD,
+  issueAdmissionCredentials,
+  previewCredentials,
+  type IssueResult,
+} from "@/lib/admission-credentials";
 import {
   ADMISSION_STATUSES,
   EMPTY_ADMISSION,
@@ -86,6 +96,19 @@ interface AdmissionRow {
   coursePackage: string;
   packageDuration: string;
   totalPayment: number | null;
+  /** Office-set discount (Rs.) + payable after discount + hostel fee. */
+  discount: number;
+  payable: number | null;
+  hostelFee: number;
+  /** Auto-issued portal logins (verify step). */
+  studentUsername: string;
+  parentUsername: string;
+  studentEmail: string;
+  parentEmail: string;
+  studentUid: string;
+  parentUid: string;
+  verifiedAt: number | null;
+  credentialsIssuedAt: number | null;
   province: string;
   district: string;
   municipality: string;
@@ -225,6 +248,8 @@ function mapToDocShape(raw: RawAdmission): AdmissionRow {
     ward,
     tol: str(raw.tol) || str(raw.address),
     hostel: hostel === "Yes" || hostel === "No" ? hostel : "",
+    hostelFee: typeof raw.hostelFee === "number" ? raw.hostelFee : 0,
+    discount: typeof raw.discount === "number" ? raw.discount : 0,
     admissionDate: str(raw.admissionDate),
     totalPayment,
     paymentMethod: (PAYMENT_METHODS.some((m) => m.value === str(raw.paymentMethod))
@@ -256,6 +281,22 @@ function mapToDocShape(raw: RawAdmission): AdmissionRow {
     coursePackage: str(raw.coursePackage),
     packageDuration: str(raw.packageDuration),
     totalPayment,
+    discount: formData.discount,
+    payable:
+      typeof raw.payable === "number"
+        ? raw.payable
+        : totalPayment != null
+          ? Math.max(totalPayment - formData.discount, 0)
+          : null,
+    hostelFee: formData.hostelFee,
+    studentUsername: str(raw.studentUsername),
+    parentUsername: str(raw.parentUsername),
+    studentEmail: str(raw.studentEmail),
+    parentEmail: str(raw.parentEmail),
+    studentUid: str(raw.studentUid),
+    parentUid: str(raw.parentUid),
+    verifiedAt: toEpoch(raw.verifiedAt),
+    credentialsIssuedAt: toEpoch(raw.credentialsIssuedAt),
     province,
     district,
     municipality,
@@ -403,6 +444,8 @@ interface OfficeForm {
   admissionNumber: string;
   billNumber: string;
   totalPayment: string;
+  /** Office-set discount (Rs.) — visible only to this student + office. */
+  discount: string;
   status: string;
   officeRemarks: string;
   /** "", "pending", or "paid" — admin-only (clients cannot forge payment). */
@@ -413,6 +456,7 @@ const EMPTY_OFFICE_FORM: OfficeForm = {
   admissionNumber: "",
   billNumber: "",
   totalPayment: "",
+  discount: "",
   status: "Draft",
   officeRemarks: "",
   paymentStatus: "",
@@ -427,6 +471,8 @@ function AdmissionDetailOverlay({
   onPrint,
   onEditOffice,
   onWhatsApp,
+  onVerify,
+  canEdit,
 }: {
   row: AdmissionRow;
   courses: AdmissionCourse[];
@@ -434,6 +480,9 @@ function AdmissionDetailOverlay({
   onPrint: () => void;
   onEditOffice: () => void;
   onWhatsApp: () => void;
+  onVerify: () => void;
+  /** super_admin only — accountant sees a read-only document. */
+  canEdit: boolean;
 }) {
   const qc = useQueryClient();
   /* Office sign mode — lets the office draw/override any of the 4 signatures
@@ -503,25 +552,44 @@ function AdmissionDetailOverlay({
           >
             <Printer className="h-4 w-4" /> Print / PDF
           </button>
-          <button
-            type="button"
-            onClick={onEditOffice}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            <Pencil className="h-4 w-4" /> Office Fields
-          </button>
-          <button
-            type="button"
-            onClick={() => setSignMode((v) => !v)}
-            className={
-              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold " +
-              (signMode
-                ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700")
-            }
-          >
-            <PenLine className="h-4 w-4" /> {signMode ? "Signing…" : "Signatures"}
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={onVerify}
+              className={
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold " +
+                (row.credentialsIssuedAt
+                  ? "border border-green-500/60 bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300"
+                  : "bg-navy text-white hover:opacity-90")
+              }
+            >
+              <BadgeCheck className="h-4 w-4" />
+              {row.credentialsIssuedAt ? "Verified — Manage" : "Verify & Create Accounts"}
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              onClick={onEditOffice}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              <Pencil className="h-4 w-4" /> Office Fields
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setSignMode((v) => !v)}
+              className={
+                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold " +
+                (signMode
+                  ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700")
+              }
+            >
+              <PenLine className="h-4 w-4" /> {signMode ? "Signing…" : "Signatures"}
+            </button>
+          )}
           {signMode && (
             <button
               type="button"
@@ -576,6 +644,18 @@ function AdmissionDetailOverlay({
                   ? `Rs. ${row.totalPayment.toLocaleString("en-IN")}`
                   : "Not set",
               ],
+              ...(row.hostelFee > 0
+                ? ([["Hostel fee", `Rs. ${row.hostelFee.toLocaleString("en-IN")}`]] as const)
+                : []),
+              ...(row.discount > 0
+                ? ([
+                    ["Discount (छुट)", `− Rs. ${row.discount.toLocaleString("en-IN")}`],
+                    [
+                      "Payable (दिनुपर्ने)",
+                      `Rs. ${(row.payable ?? Math.max((row.totalPayment ?? 0) - row.discount, 0)).toLocaleString("en-IN")}`,
+                    ],
+                  ] as const)
+                : []),
               [
                 "Payment method",
                 row.paymentMethod
@@ -602,8 +682,26 @@ function AdmissionDetailOverlay({
                 <p className="mt-0.5 text-gray-700 dark:text-gray-200">{row.officeRemarks}</p>
               </div>
             )}
+            {row.credentialsIssuedAt && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-900/20">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400">
+                  Portal accounts issued
+                </span>
+                <p className="mt-0.5 text-xs text-gray-700 dark:text-gray-200">
+                  Student: <b className="font-mono">{row.studentUsername || "—"}</b> · Parent:{" "}
+                  <b className="font-mono">{row.parentUsername || "—"}</b>
+                  <br />
+                  Password: <b className="font-mono">{"Star123@"}</b>
+                </p>
+              </div>
+            )}
           </div>
-          <FeeBreakdown pricing={row.formData.pricingSnapshot} />
+          <FeeBreakdown
+            pricing={row.formData.pricingSnapshot}
+            hostelFee={row.hostelFee}
+            hostelName={row.formData.hostel === "Yes" ? "Hostel" : ""}
+            discount={row.discount}
+          />
         </div>
 
         {/* The real 3-page document (photo + signatures render here) */}
@@ -613,6 +711,7 @@ function AdmissionDetailOverlay({
               data={signData}
               courses={courses}
               mode="readonly"
+              officeView
               signatureEdit={signMode}
               onChange={(patch) => setSignData((prev) => ({ ...prev, ...patch }))}
             />
@@ -621,6 +720,232 @@ function AdmissionDetailOverlay({
       </div>
     </div>,
     document.body,
+  );
+}
+
+/* ══════════════════ VERIFY + AUTO-CREDENTIALS MODAL ═════════════ */
+
+function VerifyAdmissionModal({ row, onClose }: { row: AdmissionRow; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [discount, setDiscount] = useState(row.discount ? String(row.discount) : "");
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<IssueResult | null>(null);
+
+  const preview = previewCredentials(row.formData);
+  const total = row.totalPayment ?? row.formData.pricingSnapshot?.totalFee ?? 0;
+  const discountNum = Math.max(Number(discount) || 0, 0);
+  const payable = Math.max(total - discountNum, 0);
+  const alreadyIssued = !!row.credentialsIssuedAt;
+
+  const copy = (v: string, label: string) => {
+    navigator.clipboard.writeText(v);
+    toast.success(`${label} copied`);
+  };
+
+  const run = async () => {
+    setRunning(true);
+    try {
+      const res = await issueAdmissionCredentials({
+        admissionId: row.id,
+        record: {
+          studentName: row.formData.studentName || row.name,
+          mobileNumber: row.formData.mobileNumber || row.mobile,
+          applicationId: row.applicationId,
+          admissionNumber: row.admissionNumber,
+          fatherName: row.formData.fatherName,
+          motherName: row.formData.motherName,
+          guardianName: row.formData.guardianName,
+          guardianMobile: row.formData.guardianMobile,
+          fatherMobile: row.formData.fatherMobile,
+          motherMobile: row.formData.motherMobile,
+          courseName: row.courseName,
+          classAppliedFor: row.formData.classAppliedFor,
+          totalPayment: total,
+        },
+        discount: discountNum,
+      });
+      setResult(res);
+      toast.success("Admission verified — portal accounts are ready");
+      qc.invalidateQueries({ queryKey: ["admin-admissions"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verification failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      title={alreadyIssued ? "Verified Admission — Manage" : "Verify Admission & Create Accounts"}
+    >
+      <div>
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {row.formData.studentName || row.name || "Unnamed applicant"}
+          </span>
+          <span className="font-mono text-xs">{row.applicationId}</span>
+          <Badge tone={statusTone(row.status)}>{cap(row.status)}</Badge>
+        </div>
+
+        {alreadyIssued && (
+          <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+            Accounts were issued on{" "}
+            {row.verifiedAt ? new Date(row.verifiedAt).toLocaleString("en-GB") : "an earlier date"}.
+            Running again keeps the same logins (existing accounts are reused) and refreshes the
+            discount/payable.
+          </p>
+        )}
+
+        {/* Fee + discount */}
+        <div className="mb-4 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+              {[
+                ["Course", row.courseName || "—"],
+                ["Package", row.coursePackage || "—"],
+                ["Total (course + hostel)", `Rs. ${total.toLocaleString("en-IN")}`],
+                ["Applicant mobile", row.formData.mobileNumber || row.mobile || "—"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3">
+                  <span className="text-gray-400 dark:text-gray-500">{k}</span>
+                  <span className="text-right font-semibold">{v}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <Field label="Discount (Rs.) — office only">
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  placeholder="0"
+                  className="ap-input w-full"
+                  aria-label="Discount in rupees"
+                />
+              </Field>
+              <p className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900">
+                Payable:{" "}
+                <b className={discountNum > 0 ? "text-green-700 dark:text-green-400" : ""}>
+                  Rs. {payable.toLocaleString("en-IN")}
+                </b>
+                {discountNum > 0 && (
+                  <span className="ml-2 text-xs text-gray-500">
+                    (Rs. {discountNum.toLocaleString("en-IN")} off)
+                  </span>
+                )}
+              </p>
+              <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                Discount is never shown on the public form — only this student sees it on their own
+                copy, and the office/accountant see it here.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Credential preview / result */}
+        {result ? (
+          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+            <p className="flex items-center gap-1.5 text-sm font-bold text-green-700 dark:text-green-300">
+              <BadgeCheck className="h-4 w-4" /> Verified — portal accounts ready
+            </p>
+            <div className="mt-2 space-y-1.5 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-gray-600 dark:text-gray-300">Student login</span>
+                <button
+                  type="button"
+                  onClick={() => copy(result.studentEmail, "Student login")}
+                  className="inline-flex items-center gap-1.5 font-mono font-semibold text-green-800 hover:underline dark:text-green-300"
+                >
+                  {result.studentEmail} <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-gray-600 dark:text-gray-300">Parent login</span>
+                <button
+                  type="button"
+                  onClick={() => copy(result.parentEmail, "Parent login")}
+                  className="inline-flex items-center gap-1.5 font-mono font-semibold text-green-800 hover:underline dark:text-green-300"
+                >
+                  {result.parentEmail} <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-gray-600 dark:text-gray-300">Password (both)</span>
+                <button
+                  type="button"
+                  onClick={() => copy(ADMISSION_PASSWORD, "Password")}
+                  className="inline-flex items-center gap-1.5 font-mono font-semibold text-green-800 hover:underline dark:text-green-300"
+                >
+                  {ADMISSION_PASSWORD} <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+            {result.warnings.length > 0 && (
+              <ul className="mt-2 list-disc pl-5 text-xs text-amber-700 dark:text-amber-400">
+                {result.warnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+              Students sign in on the website/app with the bare mobile number + this password.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-4 rounded-xl border border-dashed border-gray-300 p-4 text-sm dark:border-gray-600">
+            <p className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-white">
+              <KeyRound className="h-4 w-4 text-navy dark:text-blue-300" /> Logins that will be
+              created
+            </p>
+            <div className="mt-2 space-y-1 text-gray-600 dark:text-gray-300">
+              <p>
+                Student: <b className="font-mono">{preview.studentEmail}</b>
+              </p>
+              <p>
+                Parent: <b className="font-mono">{preview.parentEmail}</b>
+              </p>
+              <p>
+                Password: <b className="font-mono">{ADMISSION_PASSWORD}</b> (both)
+              </p>
+            </div>
+            <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+              Verifying sets status → Verified, creates the student &amp; parent logins, links them
+              to the dashboard, and stores the discount/payable on this admission.
+            </p>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <button type="button" className="ap-btn-ghost" onClick={onClose} disabled={running}>
+            {result ? "Close" : "Cancel"}
+          </button>
+          {!result && (
+            <button
+              type="button"
+              className="ap-btn"
+              onClick={run}
+              disabled={running || !(row.formData.studentName || row.mobile)}
+            >
+              {running ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BadgeCheck className="h-4 w-4" />
+              )}
+              {running
+                ? "Creating accounts…"
+                : alreadyIssued
+                  ? "Re-run & Update Discount"
+                  : "Verify & Create Accounts"}
+            </button>
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -667,6 +992,11 @@ export function AdmissionsPage() {
   const [officeRow, setOfficeRow] = useState<AdmissionRow | null>(null);
   const [officeForm, setOfficeForm] = useState<OfficeForm>(EMPTY_OFFICE_FORM);
   const [savingOffice, setSavingOffice] = useState(false);
+  /* verify → auto-create student/parent portal accounts */
+  const [verifyRow, setVerifyRow] = useState<AdmissionRow | null>(null);
+  /* accountant gets read-only access (sees discount/payable); only super_admin edits */
+  const role = useUserRole()?.role ?? null;
+  const canEdit = role === "super_admin";
 
   const filterOptions = useMemo(() => {
     const uniq = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort();
@@ -783,6 +1113,7 @@ export function AdmissionsPage() {
       admissionNumber: row.admissionNumber,
       billNumber: row.billNumber,
       totalPayment: row.totalPayment != null ? String(row.totalPayment) : "",
+      discount: row.discount ? String(row.discount) : "",
       status: row.status || "Draft",
       officeRemarks: row.officeRemarks,
       paymentStatus: row.paymentStatus || "",
@@ -806,12 +1137,24 @@ export function AdmissionsPage() {
         return;
       }
     }
+    const rawDiscount = officeForm.discount.trim();
+    let discount = 0;
+    if (rawDiscount !== "") {
+      discount = Number(rawDiscount);
+      if (!Number.isFinite(discount) || discount < 0) {
+        toast.error("Discount must be a positive number");
+        return;
+      }
+    }
+    const effectiveTotal = total ?? officeRow.totalPayment ?? 0;
     setSavingOffice(true);
     try {
       await updateDoc(doc(db, "admissions", officeRow.id), {
         admissionNumber: officeForm.admissionNumber.trim(),
         billNumber: officeForm.billNumber.trim(),
         totalPayment: total,
+        discount,
+        payable: Math.max(effectiveTotal - discount, 0),
         status: officeForm.status,
         officeRemarks: officeForm.officeRemarks.trim(),
         paymentStatus: officeForm.paymentStatus,
@@ -1018,9 +1361,16 @@ export function AdmissionsPage() {
             <IconBtn title="Print / PDF" onClick={() => handlePrintRow(r)}>
               <Printer className="h-4 w-4" />
             </IconBtn>
-            <IconBtn title="Edit office fields" onClick={() => openOfficeEdit(r)}>
-              <Pencil className="h-4 w-4" />
-            </IconBtn>
+            {canEdit && (
+              <IconBtn title="Edit office fields" onClick={() => openOfficeEdit(r)}>
+                <Pencil className="h-4 w-4" />
+              </IconBtn>
+            )}
+            {canEdit && (
+              <IconBtn title="Verify & create accounts" onClick={() => setVerifyRow(r)}>
+                <BadgeCheck className="h-4 w-4" />
+              </IconBtn>
+            )}
             <IconBtn
               title="WhatsApp applicant"
               tone="green"
@@ -1028,13 +1378,15 @@ export function AdmissionsPage() {
             >
               <MessageCircle className="h-4 w-4" />
             </IconBtn>
-            <IconBtn
-              title="Delete application"
-              tone="red"
-              onClick={() => removeRow(r as AdmissionRow)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </IconBtn>
+            {canEdit && (
+              <IconBtn
+                title="Delete application"
+                tone="red"
+                onClick={() => removeRow(r as AdmissionRow)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </IconBtn>
+            )}
           </div>
         )}
       />
@@ -1214,9 +1566,19 @@ export function AdmissionsPage() {
             }}
             onEditOffice={() => openOfficeEdit(detailRow)}
             onWhatsApp={() => sendWhatsApp(detailRow)}
+            onVerify={() => setVerifyRow(detailRow)}
+            canEdit={canEdit}
           />,
           document.body,
         )}
+
+      {/* Verify → auto-create student/parent portal accounts + set discount */}
+      {verifyRow && (
+        <VerifyAdmissionModal
+          row={rows.find((r) => r.id === verifyRow.id) ?? verifyRow}
+          onClose={() => setVerifyRow(null)}
+        />
+      )}
 
       {/* Office-only fields edit — Admission No., Bill No., Total Payment, Status, Remarks */}
       <Modal open={!!officeRow} onClose={closeOfficeEdit} size="lg" title="Edit Office Fields">
@@ -1267,6 +1629,28 @@ export function AdmissionsPage() {
                     placeholder="20500"
                     className="ap-input w-full"
                   />
+                </Field>
+                <Field label="Discount (Rs.) — office only">
+                  <input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    value={officeForm.discount}
+                    onChange={(e) => setOfficeForm((p) => ({ ...p, discount: e.target.value }))}
+                    placeholder="0"
+                    className="ap-input w-full"
+                  />
+                  {officeForm.discount && Number(officeForm.discount) > 0 && (
+                    <p className="mt-1 text-xs font-semibold text-green-700 dark:text-green-400">
+                      Payable after discount: Rs.{" "}
+                      {Math.max(
+                        (Number(officeForm.totalPayment) || officeRow.totalPayment || 0) -
+                          Number(officeForm.discount),
+                        0,
+                      ).toLocaleString("en-IN")}{" "}
+                      — visible only to this student + office.
+                    </p>
+                  )}
                 </Field>
                 <Field label="Status">
                   <select

@@ -967,6 +967,27 @@
   background: #fafafa;
 }
 
+/* Hostel fee row — green per the enquiry-form convention (red = course). */
+.sci-fee-hostel td {
+  color: #15803d;
+  font-weight: 700;
+  background: #f0fdf4;
+}
+
+.sci-fee-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* Granted discount (office-set) — highlighted as a saving. */
+.sci-fee-discount td {
+  color: #15803d;
+  font-weight: 800;
+  background: #ecfdf5;
+}
+
 .sci-fee-hint {
   padding: 12px 14px;
   font-size: 12px;

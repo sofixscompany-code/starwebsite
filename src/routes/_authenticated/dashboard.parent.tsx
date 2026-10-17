@@ -16,6 +16,7 @@ import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { useMyFinance } from "@/hooks/use-finance";
+import { MyAdmissionCard } from "@/components/dashboard/MyAdmissionCard";
 import { fmtDateTime, fmtRs, methodLabel } from "@/lib/finance";
 
 /** Loading placeholder block. */
@@ -41,6 +42,7 @@ export function ParentDashboard() {
 
   const storedUser = getStoredAuthUser();
   const parentEmail = storedUser?.email || auth.currentUser?.email || undefined;
+  const parentUid = storedUser?.uid || auth.currentUser?.uid || undefined;
   const {
     data: stats,
     isLoading,
@@ -114,6 +116,9 @@ export function ParentDashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* Child's verified admission (incl. granted discount) — own record only */}
+      <MyAdmissionCard field="parentUid" uid={parentUid} />
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">

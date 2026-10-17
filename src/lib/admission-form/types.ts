@@ -172,6 +172,18 @@ export interface AdmissionFormData {
   tol: string;
 
   hostel: "" | "Yes" | "No";
+  /**
+   * Hostel fee captured when the applicant opts for the hostel (0 when "No").
+   * Part of the payable total: totalPayment = package total + hostelFee.
+   */
+  hostelFee: number;
+
+  /**
+   * OFFICE-ONLY discount (Rs.) — set by the super admin at verify/office time,
+   * never trusted from the public form (see OFFICE_ONLY_FIELDS). Shown only to
+   * the applicant on their own copy after it has been granted.
+   */
+  discount: number;
 
   /** Applicant's chosen payment method (QR wallets, bank, or COD). */
   paymentMethod: PaymentMethod | "";
@@ -208,6 +220,22 @@ export interface AdmissionRecord extends AdmissionFormData {
   paymentStatus?: AdmissionPaymentStatus;
   /** When the applicant picked the method (epoch ms). */
   paymentChosenAt?: number;
+
+  /* ── Verify-time financials + auto-issued portal credentials ──── */
+  /** totalPayment − discount, computed when the office saves the discount. */
+  payable?: number;
+  /** When the super admin verified this admission (epoch ms). */
+  verifiedAt?: number;
+  /** Firebase Auth UIDs created for the student & parent at verify. */
+  studentUid?: string;
+  parentUid?: string;
+  /** Institute portal logins: <username>@starcoaching.edu.np */
+  studentEmail?: string;
+  parentEmail?: string;
+  studentUsername?: string;
+  parentUsername?: string;
+  /** When the portal accounts were created (epoch ms). */
+  credentialsIssuedAt?: number;
 }
 
 export const EMPTY_ADMISSION: AdmissionFormData = {
@@ -250,6 +278,8 @@ export const EMPTY_ADMISSION: AdmissionFormData = {
   ward: "",
   tol: "",
   hostel: "",
+  hostelFee: 0,
+  discount: 0,
   paymentMethod: "",
   paymentReference: "",
   admissionDate: "",

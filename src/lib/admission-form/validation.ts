@@ -145,8 +145,12 @@ export function validateAdmissionForm(f: AdmissionFormData): Record<string, stri
 
   // — Pricing must be the calculated amount (never free-typed) —
   req(!!f.pricingSnapshot, "coursePackage", "Select a course package to calculate the fee.");
-  if (f.pricingSnapshot && f.totalPayment !== f.pricingSnapshot.totalFee) {
-    e.totalPayment = "Total payment is calculated automatically from the selected package.";
+  if (f.pricingSnapshot) {
+    const expectedTotal = f.pricingSnapshot.totalFee + (f.hostel === "Yes" ? f.hostelFee || 0 : 0);
+    if (f.totalPayment !== expectedTotal) {
+      e.totalPayment =
+        "Total payment is calculated automatically from the selected package and hostel choice.";
+    }
   }
   if (f.totalPayment !== null && Number.isNaN(f.totalPayment)) {
     e.totalPayment = "Enter a numeric amount.";
@@ -162,6 +166,36 @@ export function validateAdmissionForm(f: AdmissionFormData): Record<string, stri
   return e;
 }
 
+/**
+ * Part 1 of the two-step form (course + hostel + fee preview). Returns the
+ * subset of errors that must be fixed before the applicant may open the
+ * full application form. Empty object = valid.
+ */
+export function validateAdmissionFeeStep(f: AdmissionFormData): Record<string, string> {
+  const e: Record<string, string> = {};
+  const req = (cond: boolean, key: string, msg: string) => {
+    if (!cond) e[key] = msg;
+  };
+
+  req(
+    !!f.organization,
+    "organization",
+    "Select one organization (Nepal Police / Nepal Army / APF).",
+  );
+  req(
+    !!f.appliedPost,
+    "appliedPost",
+    "Select one post (Inspector / Sub-Inspector / Jawan / Research Assistant).",
+  );
+  req(!!f.courseId, "courseId", "Select the Course / Class applied for.");
+  req(!!f.hostel, "hostel", "Select Yes / No for hostel.");
+  req(!!f.packageType, "packageType", "Select a package (Monthly / Year / Course).");
+  req(!!f.coursePackage, "coursePackage", "Select a course package (duration).");
+  req(!!f.pricingSnapshot, "coursePackage", "Select a course package to calculate the fee.");
+
+  return e;
+}
+
 /** Hard security note: office-only fields are never trusted from the client. */
 export const OFFICE_ONLY_FIELDS = [
   "admissionNumber",
@@ -170,4 +204,6 @@ export const OFFICE_ONLY_FIELDS = [
   "principalSignature",
   "officeRemarks",
   "status",
+  "discount",
+  "payable",
 ] as const;

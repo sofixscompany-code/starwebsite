@@ -211,13 +211,14 @@ export const NAV_SECTIONS: NavSection[] = [
   // ========== SUPER ADMIN ==========
   {
     header: "Academics",
-    roles: ["super_admin"],
+    roles: ["super_admin", "accountant"],
     items: [
       {
         label: "Admissions",
         to: "/admin/admissions",
         icon: FileText,
-        roles: ["super_admin"],
+        // Accountant: read-only view (sees discount/payable on admissions).
+        roles: ["super_admin", "accountant"],
       },
       {
         label: "Courses & Pricing",

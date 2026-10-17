@@ -25,6 +25,7 @@ import { whatsappDigits } from "@/lib/links";
 import { useLanguage } from "@/hooks/use-language";
 import { useAdmissionCourses } from "@/hooks/use-admission-courses";
 import { AdmissionDocument } from "@/components/admission/AdmissionDocument";
+import { CourseFeeStep } from "@/components/admission/CourseFeeStep";
 import { FeeBreakdown } from "@/components/admission/FeeBreakdown";
 import {
   PaymentMethodCard,
@@ -43,12 +44,14 @@ import {
   type Organization,
   type AppliedPost,
 } from "@/lib/admission-form/types";
-import { validateAdmissionForm } from "@/lib/admission-form/validation";
+import { validateAdmissionFeeStep, validateAdmissionForm } from "@/lib/admission-form/validation";
 
 const DRAFT_KEY = "sci_admission_draft_v1";
 const WHATSAPP_NUMBER = whatsappDigits(site.whatsapp);
 
 type Mode = "edit" | "preview" | "success";
+/** Two-step flow: Step 1 = course/hostel fees, Step 2 = full application form. */
+type Step = "fees" | "form";
 
 export function AdmissionPage() {
   const { t } = useLanguage();
@@ -58,6 +61,7 @@ export function AdmissionPage() {
   const { data: courses = [] } = useAdmissionCourses();
   const [form, setForm] = useState<AdmissionFormData>(() => ({ ...EMPTY_ADMISSION }));
   const [mode, setMode] = useState<Mode>("edit");
+  const [step, setStep] = useState<Step>("fees");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [applicationId, setApplicationId] = useState("");
@@ -88,6 +92,8 @@ export function AdmissionPage() {
         const parsed = JSON.parse(raw) as Partial<AdmissionFormData>;
         if (parsed && typeof parsed === "object" && parsed.studentName) {
           setForm({ ...EMPTY_ADMISSION, ...parsed, status: "Draft" });
+          // A restored draft with a chosen package goes straight to Step 2.
+          if (parsed.pricingSnapshot && parsed.coursePackage) setStep("form");
           toast.info("Saved draft restored.");
         }
       }
@@ -194,6 +200,25 @@ export function AdmissionPage() {
     return true;
   };
 
+  /* ── Step 1 → Step 2 ── */
+  const continueToForm = () => {
+    const errs = validateAdmissionFeeStep(form);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error(`Please complete ${Object.keys(errs).length} selection(s) in Step 1 first.`);
+      return;
+    }
+    setStep("form");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const backToFees = () => {
+    setStep("fees");
+    setErrors({});
+    setMode("edit");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const saveDraft = () => {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
@@ -243,6 +268,13 @@ export function AdmissionPage() {
       return;
     }
 
+    // Hostel fee rebuilt from admission_courses (authoritative — mirrors the
+    // pricing snapshot above so a tampered draft can't understate the total).
+    const hostelPkgLive = courses
+      .find((c) => c.id === "hostel" && c.active !== false)
+      ?.packages.find((p) => p.active !== false);
+    const hostelFee = form.hostel === "Yes" ? (hostelPkgLive?.totalFee ?? 0) : 0;
+
     setSubmitting(true);
     try {
       const id = generateApplicationId();
@@ -251,7 +283,11 @@ export function AdmissionPage() {
         courseName: course?.name ?? form.courseName,
         classAppliedFor: course?.name ?? form.classAppliedFor,
         pricingSnapshot: snapshot,
-        totalPayment: snapshot.totalFee,
+        hostelFee,
+        // Course + hostel form the payable total; discount is office-set only
+        // and is stripped from every public submission (OFFICE_ONLY_FIELDS).
+        discount: 0,
+        totalPayment: snapshot.totalFee + hostelFee,
         paymentReference: form.paymentReference.trim(),
         paymentChosenAt: form.paymentMethod ? Date.now() : undefined,
         applicationId: id,
@@ -281,6 +317,7 @@ export function AdmissionPage() {
     setErrors({});
     setApplicationId("");
     setMode("edit");
+    setStep("fees");
     navigate("/admission");
   };
 
@@ -316,6 +353,53 @@ export function AdmissionPage() {
               >
                 <Copy size={12} /> Copy ID
               </button>
+            </div>
+            {/* Fee summary — course + hostel separately, payable after discount */}
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-left">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                Fee Summary
+              </p>
+              <dl className="mt-2 space-y-1.5 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600">
+                    Course fee{form.pricingSnapshot ? ` (${form.pricingSnapshot.package})` : ""}
+                  </dt>
+                  <dd className="font-bold text-brand-red">
+                    Rs. {(form.pricingSnapshot?.totalFee ?? 0).toLocaleString("en-IN")}
+                  </dd>
+                </div>
+                {form.hostel === "Yes" && form.hostelFee > 0 && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-gray-600">Hostel fee</dt>
+                    <dd className="font-bold text-green-700">
+                      Rs. {form.hostelFee.toLocaleString("en-IN")}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3 border-t pt-1.5">
+                  <dt className="font-bold text-navy">Total</dt>
+                  <dd className="font-extrabold text-navy">
+                    Rs. {(form.totalPayment ?? 0).toLocaleString("en-IN")}
+                  </dd>
+                </div>
+                {form.discount > 0 && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-gray-600">Discount (छुट)</dt>
+                    <dd className="font-bold text-green-700">
+                      − Rs. {form.discount.toLocaleString("en-IN")}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="font-bold text-navy">Payable (दिनुपर्ने)</dt>
+                  <dd className="font-extrabold text-brand-red">
+                    Rs.{" "}
+                    {Math.max((form.totalPayment ?? 0) - (form.discount || 0), 0).toLocaleString(
+                      "en-IN",
+                    )}
+                  </dd>
+                </div>
+              </dl>
             </div>
             {form.paymentMethod && (
               <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left">
@@ -359,7 +443,7 @@ export function AdmissionPage() {
               </button>
               <a
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                  `Namaste! I have submitted an online admission application at Star Coaching Institute.\nApplication ID: ${applicationId}\nName: ${form.studentName}\nCourse: ${form.courseName}\nTotal Fee: Rs. ${form.totalPayment?.toLocaleString("en-IN") ?? "-"}`,
+                  `Namaste! I have submitted an online admission application at Star Coaching Institute.\nApplication ID: ${applicationId}\nName: ${form.studentName}\nCourse: ${form.courseName}\nHostel: ${form.hostel === "Yes" ? `Yes — Rs. ${form.hostelFee.toLocaleString("en-IN")}` : "No"}\nTotal Fee: Rs. ${form.totalPayment?.toLocaleString("en-IN") ?? "-"}`,
                 )}`}
                 target="_blank"
                 rel="noreferrer"
@@ -413,11 +497,20 @@ export function AdmissionPage() {
       <div className="bg-white border-b sticky top-0 z-40 no-print shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mr-auto">
-            Digital Admission Form — 3 Page A4 Document
+            {step === "fees"
+              ? "Step 1 of 2 — Course & Hostel Fees"
+              : "Step 2 of 2 — Application Form (3 Page A4 Document)"}
           </span>
 
-          {editing ? (
+          {editing && step === "fees" && (
             <>
+              <ToolbarBtn icon={<Save size={14} />} label="Save Draft" onClick={saveDraft} />
+            </>
+          )}
+
+          {editing && step === "form" && (
+            <>
+              <ToolbarBtn icon={<Pencil size={14} />} label="Course & Fees" onClick={backToFees} />
               <ToolbarBtn icon={<Save size={14} />} label="Save Draft" onClick={saveDraft} />
               <ToolbarBtn
                 icon={<Printer size={14} />}
@@ -450,7 +543,9 @@ export function AdmissionPage() {
                 {submitting ? "Submitting…" : "Submit Application"}
               </button>
             </>
-          ) : (
+          )}
+
+          {!editing && (
             <>
               <button
                 type="button"
@@ -507,41 +602,64 @@ export function AdmissionPage() {
       )}
 
       {/* Workspace */}
-      <div className="sci-workspace no-print-bg">
-        <aside className="sci-side no-print">
-          <FeeBreakdown pricing={form.pricingSnapshot} />
-          <PaymentMethodCard
-            value={form.paymentMethod}
-            reference={form.paymentReference}
-            amount={form.pricingSnapshot?.totalFee ?? form.totalPayment}
-            error={errors.paymentMethod}
-            onChange={(m) => patch({ paymentMethod: m })}
-            onReferenceChange={(v) => patch({ paymentReference: v })}
-          />
-          <div className="sci-side-card">
-            <p className="sci-side-title">How it works</p>
-            <ol className="sci-side-steps">
-              <li>Fill all three pages of the form (draft saves on this device).</li>
-              <li>Preview to check exactly what will print.</li>
-              <li>Print or Download PDF (A4, 3 pages).</li>
-              <li>Submit — you get an Application ID instantly.</li>
-            </ol>
-            <p className="sci-side-note">
-              Office fields (Admission No., Bill No., signatures) are filled by the institute only.
-            </p>
-          </div>
-        </aside>
+      {editing && step === "fees" ? (
+        <CourseFeeStep
+          data={form}
+          courses={courses}
+          errors={errors}
+          onChange={patch}
+          onContinue={continueToForm}
+        />
+      ) : (
+        <div className="sci-workspace no-print-bg">
+          <aside className="sci-side no-print">
+            <FeeBreakdown
+              pricing={form.pricingSnapshot}
+              hostelFee={form.hostel === "Yes" ? form.hostelFee : 0}
+              hostelName={courses.find((c) => c.id === "hostel")?.name ?? ""}
+              discount={form.discount || 0}
+            />
+            <PaymentMethodCard
+              value={form.paymentMethod}
+              reference={form.paymentReference}
+              amount={form.totalPayment ?? form.pricingSnapshot?.totalFee ?? 0}
+              error={errors.paymentMethod}
+              onChange={(m) => patch({ paymentMethod: m })}
+              onReferenceChange={(v) => patch({ paymentReference: v })}
+            />
+            <div className="sci-side-card">
+              <p className="sci-side-title">How it works</p>
+              <ol className="sci-side-steps">
+                <li>
+                  <strong>Step 1 —</strong> कोर्स र छात्रावास छान्नुहोस्: कोर्स + छात्रावासको पूरा
+                  शुल्क (Total) तुरुन्तै देखिन्छ।
+                </li>
+                <li>
+                  <strong>Step 2 —</strong> व्यक्तिगत विवरण, फोटो, छाप र भुक्तानी भर्नुहोस् (draft
+                  saves on this device).
+                </li>
+                <li>Preview to check exactly what will print.</li>
+                <li>Print or Download PDF (A4, 3 pages).</li>
+                <li>Submit — you get an Application ID instantly.</li>
+              </ol>
+              <p className="sci-side-note">
+                Office fields (Admission No., Bill No., Discount, signatures) are filled by the
+                institute only — any discount granted appears on your own copy.
+              </p>
+            </div>
+          </aside>
 
-        <div className="sci-paper-scroll">
-          <AdmissionDocument
-            data={form}
-            courses={courses}
-            mode={editing ? "edit" : "readonly"}
-            errors={errors}
-            onChange={patch}
-          />
+          <div className="sci-paper-scroll">
+            <AdmissionDocument
+              data={form}
+              courses={courses}
+              mode={editing ? "edit" : "readonly"}
+              errors={errors}
+              onChange={patch}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <SiteFooter />
     </div>

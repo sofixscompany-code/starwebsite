@@ -25,6 +25,7 @@ import { getUserRole } from "@/lib/api-auth";
 import { auth } from "@/integrations/firebase/config";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { useMyFinance } from "@/hooks/use-finance";
+import { MyAdmissionCard } from "@/components/dashboard/MyAdmissionCard";
 import { fmtDateTime, fmtRs, methodLabel } from "@/lib/finance";
 
 /** Loading placeholder block. */
@@ -174,6 +175,9 @@ export function StudentDashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* Verified admission (incl. any granted discount) — own record only */}
+      <MyAdmissionCard field="studentUid" uid={uid} />
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">

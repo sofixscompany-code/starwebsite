@@ -30,6 +30,7 @@ import {
 import { useSuperAdminStats, fmtShortDate } from "@/hooks/use-dashboard-data";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { DailyBudget } from "@/components/admin/DailyBudget";
+import { ResetPasswordTool } from "@/components/admin/ResetPasswordTool";
 
 const PIE_COLORS = ["#FBBF24", "#EF4444", "#10b981", "#1E3A8A", "#8b5cf6", "#f97316"];
 
@@ -211,6 +212,7 @@ export function SuperAdminDashboard() {
               >
                 <BarChart3 className="w-4 h-4" /> {t("Reports")}
               </Link>
+              <ResetPasswordTool />
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
