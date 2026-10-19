@@ -23,6 +23,7 @@ import { ResultsPage as Results } from "./routes/results";
 import { NoticesPage as Notices } from "./routes/notices";
 import { GalleryPage as Gallery } from "./routes/gallery";
 import { ContactPage as Contact } from "./routes/contact";
+import { PrivacyPage as Privacy } from "./routes/privacy";
 import { EnquiryPage } from "./routes/enquiry";
 import { AdmissionPage as Admission } from "./routes/admission";
 import { CareerDetailPage } from "./routes/career";
@@ -301,6 +302,7 @@ export default function App() {
           <Route path="/notices" element={<Notices />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/enquiry" element={<EnquiryPage />} />
           <Route path="/admission" element={<Admission />} />
           <Route path="/services/*" element={<LazyPage Component={PrepPortalPage} />} />

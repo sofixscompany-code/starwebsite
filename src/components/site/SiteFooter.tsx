@@ -87,6 +87,7 @@ export function SiteFooter() {
               { to: "/admission", label: t("Admission") },
               { to: "/enquiry", label: t("Enquiry") },
               { to: "/contact", label: t("Contact") },
+              { to: "/privacy", label: t("Privacy Policy") || "Privacy Policy" },
             ].map((l) => (
               <li key={l.to}>
                 <Link
