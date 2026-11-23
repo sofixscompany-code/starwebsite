@@ -15,8 +15,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { collection, addDoc, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, addDoc, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";

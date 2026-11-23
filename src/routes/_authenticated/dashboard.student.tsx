@@ -22,7 +22,7 @@ import {
   fmtShortDate,
 } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";
-import { auth } from "@/integrations/firebase/config";
+import { auth } from "@/integrations/aws/config";
 import { useAdminT, formatClock } from "@/lib/admin-i18n";
 import { useMyFinance } from "@/hooks/use-finance";
 import { MyAdmissionCard } from "@/components/dashboard/MyAdmissionCard";

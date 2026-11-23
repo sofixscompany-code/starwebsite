@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { httpsCallable, getFunctions } from "firebase/functions";
-import { app, db } from "@/integrations/firebase/config";
-import { collection, getDocs, limit, query } from "firebase/firestore";
+import { httpsCallable, getFunctions } from "@/integrations/aws/functions";
+import { app, db } from "@/integrations/aws/config";
+import { collection, getDocs, limit, query } from "@/integrations/aws/firestore";
 import { KeyRound, Loader2, Mail, Search, Send, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/admin/ui";

@@ -1,4 +1,4 @@
-import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref as storageRef, uploadBytes } from "@/integrations/aws/storage";
 import { toast } from "sonner";
 import {
   DEFAULT_PREP_COURSES,
@@ -6,7 +6,7 @@ import {
   DEFAULT_PREP_SERVICES,
 } from "@/data/prep-defaults";
 import { deletePrepDoc, savePrepDoc } from "@/hooks/use-prep-data";
-import { storage } from "@/integrations/firebase/config";
+import { storage } from "@/integrations/aws/config";
 import { PREP_COLLECTIONS, type PrepCollection } from "@/lib/prep/types";
 
 /** Gradient presets for service cards — literal classes so Tailwind can see them. */

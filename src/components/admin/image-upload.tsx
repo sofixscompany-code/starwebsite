@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { Upload, X, Loader2, Link2 } from "lucide-react";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { addDoc, collection } from "firebase/firestore";
-import { storage, db } from "@/integrations/firebase/config";
+import { ref, uploadBytesResumable, getDownloadURL } from "@/integrations/aws/storage";
+import { addDoc, collection } from "@/integrations/aws/firestore";
+import { storage, db } from "@/integrations/aws/config";
 import { toast } from "sonner";
 
 interface ImageUploadProps {

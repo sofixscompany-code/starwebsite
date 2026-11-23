@@ -12,7 +12,7 @@ import {
   Music2,
   ExternalLink,
 } from "lucide-react";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "@/integrations/aws/firestore";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSiteSettings } from "@/hooks/use-site-settings";
-import { db } from "@/integrations/firebase/config";
+import { db } from "@/integrations/aws/config";
 import { useLanguage } from "@/hooks/use-language";
 import { MAP_EMBED, MAP_LINK } from "@/lib/maps";
 import { whatsappHref } from "@/lib/links";

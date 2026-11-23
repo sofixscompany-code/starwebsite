@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, MessageCircle, Send, Phone, MapPin, CheckCircle2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, addDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/lib/site-config";

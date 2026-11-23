@@ -14,7 +14,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
-import { db } from "@/integrations/firebase/config";
+import { db } from "@/integrations/aws/config";
 import {
   collection,
   getDocs,
@@ -24,7 +24,7 @@ import {
   doc,
   query,
   orderBy,
-} from "firebase/firestore";
+} from "@/integrations/aws/firestore";
 import { ROLE_LABELS } from "@/hooks/use-user-role";
 import type { Role } from "@/hooks/use-user-role";
 import {

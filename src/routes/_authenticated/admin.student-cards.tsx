@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, doc, getDoc, getDocs, setDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel } from "@/components/admin/ui";
 import { Printer, Loader2, Save, Plus, Trash2, CreditCard, BarChart3, Upload } from "lucide-react";

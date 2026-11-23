@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, limit, onSnapshot, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, limit, onSnapshot, query } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface LiveNotice {
   id: string;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { firebaseAuth } from "@/integrations/firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
+import { doc, getDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export type Role = "super_admin" | "teacher" | "student" | "parent" | "accountant" | null;
 

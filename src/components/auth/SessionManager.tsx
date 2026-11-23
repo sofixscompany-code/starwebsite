@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearAuthData } from "@/lib/api-auth";
-import { firebaseAuth } from "@/integrations/firebase/auth";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
 import { toast } from "sonner";
 
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes

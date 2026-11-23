@@ -1,5 +1,14 @@
-import { collection, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
-import { db, firebaseConfig } from "@/integrations/firebase/config";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
+import { api } from "@/integrations/aws/runtime";
 import { createAuthUser, usernameToLoginEmail } from "@/lib/user-accounts";
 
 /** Minimum admission data the credential flow needs (web + mobile share it). */
@@ -78,16 +87,11 @@ export function previewCredentials(record: {
  */
 async function resolveUid(email: string, password: string): Promise<string | null> {
   try {
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseConfig.apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, returnSecureToken: false }),
-      },
-    );
-    const json = (await res.json().catch(() => ({}))) as { localId?: string };
-    return res.ok && json.localId ? json.localId : null;
+    const res = await api<{ ok: boolean; uid: string | null }>("auth", {
+      action: "findUser",
+      email,
+    });
+    return res.uid || null;
   } catch {
     return null;
   }

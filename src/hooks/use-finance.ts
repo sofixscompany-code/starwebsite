@@ -8,8 +8,8 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { useModuleData, type ModuleRecord } from "@/hooks/use-module-data";
 import { getStoredAuthUser } from "@/hooks/use-dashboard-data";
 import { getUserRole } from "@/lib/api-auth";

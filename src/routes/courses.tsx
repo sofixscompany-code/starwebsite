@@ -15,8 +15,8 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { useLanguage } from "@/hooks/use-language";
 
 type Course = {

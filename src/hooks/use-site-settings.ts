@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { doc, onSnapshot } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { site, type SiteConfig } from "@/lib/site-config";
 
 /**

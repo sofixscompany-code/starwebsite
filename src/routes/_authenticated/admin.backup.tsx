@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ModulePage } from "@/components/admin/ModulePage";
 import { useModuleData } from "@/hooks/use-module-data";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { toast } from "sonner";
 import { Database, Clock, Plus, Loader2 } from "lucide-react";
 

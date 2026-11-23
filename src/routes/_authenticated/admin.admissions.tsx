@@ -1,8 +1,16 @@
 ﻿import { useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+} from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { toast } from "sonner";
 import {
   AlertCircle,

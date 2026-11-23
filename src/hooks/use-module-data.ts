@@ -7,8 +7,8 @@ import {
   deleteDoc,
   writeBatch,
   doc,
-} from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+} from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface ModuleRecord {
   id: string;

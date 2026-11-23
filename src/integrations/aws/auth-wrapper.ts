@@ -9,10 +9,10 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   type User,
-} from "firebase/auth";
-import { auth, validateConfig } from "./config";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "./config";
+} from "./auth";
+import { auth, db, validateConfig } from "./config";
+import { api } from "./runtime";
+import { doc, setDoc } from "./firestore";
 
 export type FirebaseUser = User;
 
@@ -38,19 +38,13 @@ export const firebaseAuth = {
   async getUser(): Promise<AuthResult> {
     try {
       validateConfig();
-      const user = auth.currentUser;
-      return { data: { user }, error: null };
+      return { data: { user: auth.currentUser }, error: null };
     } catch (err) {
       return { data: { user: null }, error: err instanceof Error ? err : new Error(String(err)) };
     }
   },
 
-  /**
-   * Waits for Firebase Auth to finish initializing before reading the current
-   * user. `auth.currentUser` is null on a cold page reload until the persisted
-   * session is restored — calling getUser() too early would falsely report
-   * "logged out" for a perfectly valid session.
-   */
+  /** Waits for the restored AWS/Cognito session before reading currentUser. */
   async waitForUser(): Promise<AuthResult> {
     try {
       validateConfig();
@@ -61,10 +55,9 @@ export const firebaseAuth = {
             unsub();
             resolve(u);
           },
-          (err) => {
+          () => {
             unsub();
             resolve(null);
-            void err;
           },
         );
       });
@@ -75,22 +68,10 @@ export const firebaseAuth = {
   },
 
   async getSession(): Promise<AuthResult> {
-    try {
-      validateConfig();
-      const user = auth.currentUser;
-      return { data: { user }, error: null };
-    } catch (err) {
-      return { data: { user: null }, error: err instanceof Error ? err : new Error(String(err)) };
-    }
+    return this.getUser();
   },
 
-  async signInWithPassword({
-    email,
-    password,
-  }: {
-    email: string;
-    password: string;
-  }): Promise<{ data: { user: FirebaseUser | null } | null; error: Error | null }> {
+  async signInWithPassword({ email, password }: { email: string; password: string }) {
     return safe(async () => {
       validateConfig();
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -105,11 +86,8 @@ export const firebaseAuth = {
   }: {
     email: string;
     password: string;
-    options?: {
-      emailRedirectTo?: string;
-      data?: Record<string, unknown>;
-    };
-  }): Promise<{ data: { user: FirebaseUser | null } | null; error: Error | null }> {
+    options?: { emailRedirectTo?: string; data?: Record<string, unknown> };
+  }) {
     return safe(async () => {
       validateConfig();
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -117,10 +95,6 @@ export const firebaseAuth = {
         await updateProfile(cred.user, { displayName: options.data.full_name as string });
       }
       if (options?.data) {
-        // Best-effort profile write: Firestore rules may reject the caller's
-        // requested fields (e.g. self-signup trying a privileged role). The
-        // Auth account is already created at this point — failing the whole
-        // signUp because the profile doc was denied would strand it.
         try {
           await setDoc(doc(db, "users", cred.user.uid), {
             uid: cred.user.uid,
@@ -167,17 +141,37 @@ export const firebaseAuth = {
       validateConfig();
       const user = auth.currentUser;
       if (!user || !user.email) throw new Error("No user logged in");
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
+      await reauthenticateWithCredential(
+        user,
+        EmailAuthProvider.credential(user.email, currentPassword),
+      );
       return null;
     });
   },
 
   onAuthStateChange(callback: (event: string, user: FirebaseUser | null) => void) {
-    return onAuthStateChanged(auth, (user) => {
-      callback("SIGNED_IN", user);
-    });
+    return onAuthStateChanged(auth, (user) => callback("SIGNED_IN", user));
+  },
+
+  /** Provision an account without changing the current session. */
+  async createUser(email: string, password: string, name?: string): Promise<string | null> {
+    const res = await apiCreateUser(email, password, name);
+    return res;
   },
 };
+
+async function apiCreateUser(
+  email: string,
+  password: string,
+  name?: string,
+): Promise<string | null> {
+  const res = await api<{ ok: boolean; uid: string | null }>("auth", {
+    action: "createUser",
+    email,
+    password,
+    name,
+  });
+  return res.uid || null;
+}
 
 export { auth, db };

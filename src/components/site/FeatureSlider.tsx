@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ArrowRight, Pause, Play } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 type Slide = {
   id: string;

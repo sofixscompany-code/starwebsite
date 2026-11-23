@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, limit, query, where } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, limit, query, where } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { BadgeCheck, BedDouble, GraduationCap } from "lucide-react";
 
 /**

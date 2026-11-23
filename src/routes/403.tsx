@@ -1,7 +1,7 @@
 import { ShieldOff, ArrowLeft, LogOut, Home, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { clearAuthData, isAuthenticated } from "@/lib/api-auth";
-import { firebaseAuth } from "@/integrations/firebase/auth";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";

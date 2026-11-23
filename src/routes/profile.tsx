@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StarLogo } from "@/components/site/StarLogo";
-import { firebaseAuth } from "@/integrations/firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
-import { updateProfile } from "firebase/auth";
-import { auth } from "@/integrations/firebase/config";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
+import { doc, getDoc, setDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
+import { updateProfile } from "@/integrations/aws/auth";
+import { auth } from "@/integrations/aws/config";
 import { ChangePassword } from "@/components/auth/ChangePassword";
 
 /** Read an image file and return a square, compressed JPEG data URL. */

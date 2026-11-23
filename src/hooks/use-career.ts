@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, onSnapshot } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 /** One service (Nepal Police / Nepali Army / APF / Forest Guard) — doc id or slug. */
 export interface CareerService {

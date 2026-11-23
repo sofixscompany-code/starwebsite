@@ -4,7 +4,7 @@ import {
   ROLE_DASHBOARD_ROUTES,
   ROLE_LABELS,
 } from "@/hooks/use-user-role";
-import { firebaseAuth } from "@/integrations/firebase/auth";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
 import { normalizeLoginId } from "@/lib/user-accounts";
 
 export interface AuthUser {

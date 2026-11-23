@@ -1,10 +1,10 @@
-import { firebaseConfig } from "@/integrations/firebase/config";
+import { api } from "@/integrations/aws/runtime";
 
 /**
  * Admin-assigned login credentials.
  *
  * The admin panel lets a super admin hand out a **username + password** for
- * any role. Firebase Auth only understands e-mail addresses, so a username is
+ * any role. Cognito only understands e-mail addresses, so a username is
  * mapped to an institute e-mail (`ram.teacher` → `ram.teacher@starcoaching.edu.np`).
  * The login form accepts either the bare username or a full e-mail.
  */
@@ -24,30 +24,27 @@ export function normalizeLoginId(input: string): string {
   return value.includes("@") ? value : usernameToLoginEmail(value);
 }
 
-interface IdentityToolkitError {
-  error?: { message?: string };
-}
-
 function identityErrorMessage(message: string, fallback: string): string {
-  if (message.includes("EMAIL_EXISTS")) return "This username/email is already registered";
-  if (message.includes("WEAK_PASSWORD")) return "Password is too weak (minimum 6 characters)";
-  if (message.includes("INVALID_EMAIL")) return "Invalid email address";
-  if (message.includes("EMAIL_NOT_FOUND")) return "No account found for this email";
-  if (message.includes("INVALID_PASSWORD")) return "Incorrect password";
-  if (message.includes("TOO_MANY_ATTEMPTS")) {
-    return "Too many attempts — please wait a moment and try again";
+  if (/already exists|usernameexists/i.test(message))
+    return "This username/email is already registered";
+  if (/password/i.test(message) && /weak|policy|short/i.test(message)) {
+    return "Password is too weak (minimum 8 characters)";
   }
+  if (/invalid email|InvalidEmail/i.test(message)) return "Invalid email address";
+  if (/user not found|usernotfound|email not found/i.test(message))
+    return "No account found for this email";
+  if (/incorrect password|not authorized/i.test(message)) return "Incorrect password";
+  if (/too many|throttl/i.test(message))
+    return "Too many attempts — please wait a moment and try again";
   return fallback;
 }
 
 /**
- * Create a Firebase Auth account from the client **without** switching the
- * current session to the new user. The SDK's `createUserWithEmailAndPassword`
- * would sign the admin out and sign in as the freshly created account, so we
- * call the public Identity Toolkit REST endpoint instead — the admin stays
- * logged in while the account is provisioned.
+ * Create a Cognito account through the API **without** switching the
+ * current session to the new user — the admin stays logged in while the
+ * account is provisioned.
  *
- * @returns the new account's Firebase UID.
+ * @returns the new account's Cognito sub.
  */
 export async function createAuthUser({
   email,
@@ -56,44 +53,38 @@ export async function createAuthUser({
   email: string;
   password: string;
 }): Promise<string> {
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, returnSecureToken: false }),
-    },
-  );
-  const json = (await res.json().catch(() => ({}))) as {
-    localId?: string;
-  } & IdentityToolkitError;
-  if (!res.ok || !json.localId) {
+  try {
+    const res = await api<{ ok: boolean; uid: string | null }>("auth", {
+      action: "createUser",
+      email,
+      password,
+    });
+    if (!res.uid) throw new Error("Account creation failed — no user id returned");
+    return res.uid;
+  } catch (err) {
     throw new Error(
-      identityErrorMessage(json.error?.message || "", "Account creation failed — please retry"),
+      identityErrorMessage(
+        err instanceof Error ? err.message : String(err),
+        "Account creation failed — please retry",
+      ),
     );
   }
-  return json.localId;
 }
 
 /**
- * Send Firebase's password-reset e-mail. A client cannot force-set another
- * user's password (that requires the Admin SDK), so after creation this is
- * how the admin hands a user a new password later — the user clicks the link
- * and chooses it. Needs only the public API key.
+ * Send the Cognito password-reset e-mail. A client cannot force-set another
+ * user's password, so after creation this is how the admin hands a user a
+ * new password later — the user clicks the link and chooses it.
  */
 export async function sendPasswordReset(email: string): Promise<void> {
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseConfig.apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
-    },
-  );
-  const json = (await res.json().catch(() => ({}))) as IdentityToolkitError;
-  if (!res.ok) {
+  try {
+    await api("auth", { action: "reset", email });
+  } catch (err) {
     throw new Error(
-      identityErrorMessage(json.error?.message || "", "Could not send the reset email"),
+      identityErrorMessage(
+        err instanceof Error ? err.message : String(err),
+        "Could not send the reset email",
+      ),
     );
   }
 }

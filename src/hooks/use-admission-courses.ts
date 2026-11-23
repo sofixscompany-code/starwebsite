@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, doc, setDoc, deleteDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { DEFAULT_ADMISSION_COURSES } from "@/lib/admission-form/defaults";
 import type { AdmissionCourse } from "@/lib/admission-form/types";
 

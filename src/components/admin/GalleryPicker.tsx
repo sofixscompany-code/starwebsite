@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, onSnapshot } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { Image, Loader2, Search, Check } from "lucide-react";
 import { Modal, EmptyState } from "@/components/admin/ui";
 

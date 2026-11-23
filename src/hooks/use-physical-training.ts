@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { doc, getDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 /** One row of the daily routine table. */
 export interface RoutineRow {

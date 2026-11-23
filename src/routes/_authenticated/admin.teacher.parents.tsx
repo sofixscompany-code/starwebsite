@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { StatCard, Panel, Badge, Skeleton } from "@/components/admin/ui";
 import { Users, Phone, Mail, GraduationCap } from "lucide-react";
-import { db } from "@/integrations/firebase/config";
-import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/integrations/aws/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
 
 type StudentDoc = {
   studentId?: string;

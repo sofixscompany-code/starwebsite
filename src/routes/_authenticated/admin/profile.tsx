@@ -14,9 +14,9 @@ import {
   EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
-import { db } from "@/integrations/firebase/config";
-import { firebaseAuth } from "@/integrations/firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/integrations/aws/config";
+import { firebaseAuth } from "@/integrations/aws/auth-wrapper";
+import { doc, getDoc, updateDoc } from "@/integrations/aws/firestore";
 import { ROLE_LABELS, fetchUserRole, routeForRole } from "@/hooks/use-user-role";
 import type { Role } from "@/hooks/use-user-role";
 

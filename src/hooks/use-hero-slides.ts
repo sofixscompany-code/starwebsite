@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, onSnapshot, orderBy, query } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { featuredSlides, type FeatureSlide } from "@/components/site/hero/slides";
 
 type HeroSlideDoc = {

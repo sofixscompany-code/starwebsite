@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, onSnapshot } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { toppers as fallbackToppers } from "@/lib/site-config";
 
 export interface Selection {

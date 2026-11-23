@@ -25,7 +25,6 @@ export default defineConfig({
               name: "vendor-charts",
               test: /[\\/]node_modules[\\/](recharts|victory-vendor|d3-[a-z-]+|vdate|internmap|delaunator|robust-predicates)[\\/]/,
             },
-            { name: "vendor-firebase", test: /[\\/]node_modules[\\/]firebase[\\/]/ },
             {
               name: "vendor-react",
               test: /[\\/]node_modules[\\/](@remix-run|react|react-dom|react-router)[-/]/,

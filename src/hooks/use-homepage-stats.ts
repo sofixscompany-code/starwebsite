@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, limit } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, query, limit } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface HomepageStat {
   id: string;

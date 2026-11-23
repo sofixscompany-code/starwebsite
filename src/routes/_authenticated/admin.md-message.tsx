@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { doc, getDoc, setDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel } from "@/components/admin/ui";
 import { Save, Loader2, Quote, User } from "lucide-react";

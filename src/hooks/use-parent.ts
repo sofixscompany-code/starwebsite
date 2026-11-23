@@ -1,6 +1,6 @@
 ﻿import { useQuery } from "@tanstack/react-query";
-import { collection, query, getDocs, where } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, query, getDocs, where } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface Child {
   id: string;

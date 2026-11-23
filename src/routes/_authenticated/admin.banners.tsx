@@ -24,9 +24,15 @@ import {
   orderBy,
   getDocs,
   serverTimestamp,
-} from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { db } from "@/integrations/firebase/config";
+} from "@/integrations/aws/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "@/integrations/aws/storage";
+import { db } from "@/integrations/aws/config";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel, Badge, Modal } from "@/components/admin/ui";
 

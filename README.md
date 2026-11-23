@@ -2,9 +2,9 @@
 
 Official website + ERP/LMS for **Star Coaching Institute, Janakpurdham, Nepal**.
 
-Live: https://starcoachinginstitutenepal.web.app
+Built with Vite, React 19, TypeScript, Tailwind CSS, AWS (Cognito + DynamoDB + S3/CloudFront) and TanStack Query.
 
-Built with Vite, React 19, TypeScript, Tailwind CSS, Firebase (Auth + Firestore + Storage) and TanStack Query.
+The live URL is the `WebsiteUrl` value in `../infra/outputs.json` after provisioning.
 
 ## Getting started
 
@@ -13,17 +13,26 @@ npm install
 npm run dev
 ```
 
+Copy the values from `../infra/outputs.json` into `.env`:
+
+```
+VITE_AWS_API_URL=<ApiUrl>
+VITE_AWS_USER_POOL_ID=<UserPoolId>
+VITE_AWS_APP_CLIENT_ID=<AppClientId>
+VITE_AWS_MEDIA_BASE=<WebsiteUrl>/media
+VITE_AWS_WEB_BUCKET=<WebBucketName>
+VITE_AWS_DISTRIBUTION_ID=<DistributionId>
+```
+
 ## Roles
 
 5 roles: `super_admin`, `teacher`, `student`, `parent`, `accountant`.
 
-- Login: https://starcoachinginstitutenepal.web.app/auth
-- Demo accounts (local `npm run dev` only): `{role}@demo.starcoaching.edu.np` / password `Star#Demo2026!Kx7` — the demo buttons, `demoLogin()`, and `demo_role` sessions are stripped/disabled in production builds
-- Super Admin: Starcoaching@gmail.com
+- Demo accounts: `{role}@demo.starcoaching.edu.np` / `Star#Demo2026!Kx7`
+- Super Admin: `Starcoaching@gmail.com`
+- New student/parent accounts created on admission verification use `<mobile>@starcoaching.edu.np` / `Star123@`
 
-All accounts live in Firebase Auth with role stored in Firestore `users/{uid}`.
-Dashboards read live data from Firestore collections (students, classes,
-payments, attendance, results, notices, ...).
+Accounts live in Cognito with their role stored in the `users` DynamoDB collection. All other collections (students, classes, payments, attendance, results, notices, …) are in DynamoDB, read through the Lambda `/data` endpoint.
 
 ## Commands
 
@@ -31,9 +40,10 @@ payments, attendance, results, notices, ...).
 npm run build                               # typecheck + production build
 npm run lint                                # eslint (0 errors)
 npx prettier --write .                      # format
-npx firebase deploy --only hosting          # deploy website
-npx firebase deploy --only firestore:rules  # deploy security rules
-node scripts/seed-dashboard-data.mjs        # re-seed demo data
+node scripts/seed-aws.mjs                   # seed demo role accounts (once backend is live)
+npm run deploy                              # build + S3 sync + CloudFront invalidation
 ```
+
+Infrastructure is provisioned from the repository root with `python infra/provision.py` (see `infra/`). CDK cannot be used in this AWS organisation because an SCP denies CloudFormation/SSM bootstrap actions.
 
 See `AGENTS.md` for architecture details.

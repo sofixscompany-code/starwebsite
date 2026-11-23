@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "@/integrations/aws/firestore";
 import { toast } from "sonner";
 import { Loader2, Save, Phone, Mail, MapPin, Globe, Upload, Trash2 } from "lucide-react";
-import { db } from "@/integrations/firebase/config";
+import { db } from "@/integrations/aws/config";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Panel } from "@/components/admin/ui";
 import { site } from "@/lib/site-config";

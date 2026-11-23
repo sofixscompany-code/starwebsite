@@ -8,8 +8,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { doc, getDoc } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/admission-form/types";
 import { whatsappHref } from "@/lib/links";
 import { site } from "@/lib/site-config";

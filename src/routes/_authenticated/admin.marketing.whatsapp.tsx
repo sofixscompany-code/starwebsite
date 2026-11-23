@@ -2,8 +2,8 @@
 import { FirestoreModulePage } from "@/components/admin/FirestoreModulePage";
 import { Modal } from "@/components/admin/ui";
 import { useModuleData } from "@/hooks/use-module-data";
-import { db } from "@/integrations/firebase/config";
-import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/integrations/aws/config";
+import { addDoc, collection } from "@/integrations/aws/firestore";
 import { toast } from "sonner";
 import { MessageCircle, FileText, Save, Loader2, Info } from "lucide-react";
 

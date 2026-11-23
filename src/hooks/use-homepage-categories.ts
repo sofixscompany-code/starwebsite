@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, limit } from "firebase/firestore";
+import { collection, getDocs, query, limit } from "@/integrations/aws/firestore";
 import {
   ShieldCheck,
   Stethoscope,
@@ -9,7 +9,7 @@ import {
   BookOpen,
   type LucideIcon,
 } from "lucide-react";
-import { db } from "@/integrations/firebase/config";
+import { db } from "@/integrations/aws/config";
 
 export interface HomepageCategory {
   id: string;

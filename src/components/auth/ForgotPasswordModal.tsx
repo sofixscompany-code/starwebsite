@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/integrations/firebase/config";
+import { sendPasswordResetEmail } from "@/integrations/aws/auth";
+import { auth } from "@/integrations/aws/config";
 
 interface ForgotPasswordModalProps {
   open: boolean;

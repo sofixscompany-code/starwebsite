@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, limit, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, limit, query } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface DashRecord {
   id: string;

@@ -9,8 +9,8 @@ import { NAV_ITEMS, getNavItemsForRole } from "./nav";
 import { LiveClock, LangSwitcher } from "./TopBarWidgets";
 import { StarLogo } from "@/components/site/StarLogo";
 import { useAdminT, shortDate } from "@/lib/admin-i18n";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 import {
   Bell,
   Calendar,

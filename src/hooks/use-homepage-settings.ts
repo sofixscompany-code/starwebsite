@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, limit, doc, getDoc, query } from "firebase/firestore";
-import { db } from "@/integrations/firebase/config";
+import { collection, getDocs, limit, doc, getDoc, query } from "@/integrations/aws/firestore";
+import { db } from "@/integrations/aws/config";
 
 export interface WhyChooseUsItem {
   id: string;

@@ -19,9 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StarLogo } from "@/components/site/StarLogo";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth, db } from "@/integrations/firebase/config";
-import { doc, setDoc, collection, getDocs } from "firebase/firestore";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "@/integrations/aws/auth";
+import { auth, db } from "@/integrations/aws/config";
+import { doc, setDoc, collection, getDocs } from "@/integrations/aws/firestore";
 
 // Public self-registration is for students only. Staff and parent accounts are
 // issued by the institute (super admin) — they are never self-assignable here.
