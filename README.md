@@ -19,7 +19,7 @@ Copy the values from `../infra/outputs.json` into `.env`:
 VITE_AWS_API_URL=<ApiUrl>
 VITE_AWS_USER_POOL_ID=<UserPoolId>
 VITE_AWS_APP_CLIENT_ID=<AppClientId>
-VITE_AWS_MEDIA_BASE=<WebsiteUrl>/media
+VITE_AWS_MEDIA_BASE=<WebsiteUrl>
 VITE_AWS_WEB_BUCKET=<WebBucketName>
 VITE_AWS_DISTRIBUTION_ID=<DistributionId>
 ```
